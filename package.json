@@ -1,0 +1,21 @@
+{
+  "name": "alarm-robot",
+  "version": "1.0.0",
+  "description": "robot for alarm to parse kia site",
+  "main": "index.js",
+  "dependencies": {
+    "cheerio": "^1.0.0-rc.2",
+    "puppeteer": "^1.8.0",
+    "request-promise": "^4.2.2"
+  },
+  "devDependencies": {},
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git@git.pve.turbodealer.ru:dev/alarm-robot.git"
+  },
+  "author": "",
+  "license": "ISC"
+}
