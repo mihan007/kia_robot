@@ -14,6 +14,8 @@ const FREE_SKLAD_IFRAME_SELECTOR = '#contentAreaFrame';
 const FREE_SKLAD_CONTENT_IFRAME = '#isolatedWorkArea';
 const FORM_MODEL_SELECTOR = '#model';
 const MANUFACTURE_CODE_SELECTOR = '#fsc';
+const COLOR_INSIDE_SELECTOR = '#intcolor';
+const COLOR_OUTSIDE_SELECTOR = '#extcolor';
 
 run();
 
@@ -73,6 +75,8 @@ async function sync(connection) {
     let $ = cheerio.load(innerHtml);
 
     let models = [];
+    await cleanUpTable(connection, 'color_inside');
+    await cleanUpTable(connection, 'color_outside');
     await cleanUpTable(connection, 'manufacture_code');
     await cleanUpTable(connection, 'model');
     $('option').each(function () {
@@ -87,8 +91,8 @@ async function sync(connection) {
         console.log('Processing ', models[i]);
         await formFrame.select(FORM_MODEL_SELECTOR, models[i].value);
         await formFrame.waitFor(2000);
-        let innerManufactureHtml = await (await (await formFrame.$(MANUFACTURE_CODE_SELECTOR)).getProperty('innerHTML')).jsonValue();
 
+        let innerManufactureHtml = await (await (await formFrame.$(MANUFACTURE_CODE_SELECTOR)).getProperty('innerHTML')).jsonValue();
         let $manufacture = cheerio.load(innerManufactureHtml);
         let manufactures = [];
         $manufacture('option').each(function () {
@@ -102,6 +106,38 @@ async function sync(connection) {
 
         for (const j in manufactures) {
             await saveOptionToDb(connection, 'manufacture_code', manufactures[j]);
+        }
+
+        let innerInsideColorHtml = await (await (await formFrame.$(COLOR_INSIDE_SELECTOR)).getProperty('innerHTML')).jsonValue();
+        let $insideColor = cheerio.load(innerInsideColorHtml);
+        let insideColors = [];
+        $insideColor('option').each(function () {
+            let insideColor = {
+                name: $(this).text(),
+                value: $(this).attr('value'),
+                model_id: models[i].id
+            };
+            insideColors.push(insideColor);
+        });
+
+        for (const j in insideColors) {
+            await saveOptionToDb(connection, 'color_inside', insideColors[j]);
+        }
+
+        let innerOutsideColorHtml = await (await (await formFrame.$(COLOR_OUTSIDE_SELECTOR)).getProperty('innerHTML')).jsonValue();
+        let $outsideColor = cheerio.load(innerOutsideColorHtml);
+        let outsideColors = [];
+        $outsideColor('option').each(function () {
+            let outsideColor = {
+                name: $(this).text(),
+                value: $(this).attr('value'),
+                model_id: models[i].id
+            };
+            outsideColors.push(outsideColor);
+        });
+
+        for (const j in outsideColors) {
+            await saveOptionToDb(connection, 'color_outside', outsideColors[j]);
         }
     }
 
