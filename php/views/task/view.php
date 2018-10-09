@@ -61,7 +61,7 @@ $this->params['breadcrumbs'][] = $this->title;
                 'class' => 'yii\grid\DataColumn',
                 'format' => 'raw',
                 'value' => function ($data) {
-                    return Yii::$app->formatter->format($data->created_at, 'datetime');
+                    return Yii::$app->formatter->format(strtotime($data->created_at), 'datetime');
                 },
             ],
             'model_name',

@@ -15,8 +15,8 @@ $this->params['breadcrumbs'][] = $this->title;
 $items = [];
 foreach ($taskRun->taskRunScreenshots as $screenshot) {
     $item = [
-        'url' => $screenshot->filepath,
-        'src' => $screenshot->filepath,
+        'url' => str_replace('../php/web', Yii::$app->params['domainMail'], $screenshot->filepath),
+        'src' => str_replace('../php/web', Yii::$app->params['domainMail'], $screenshot->filepath),
         'options' => ['title' => $screenshot->name]
     ];
     $items[] = $item;
@@ -42,7 +42,7 @@ foreach ($taskRun->taskRunScreenshots as $screenshot) {
                 'class' => 'yii\grid\DataColumn',
                 'format' => 'raw',
                 'value' => function ($data) {
-                    return Yii::$app->formatter->format($data->created_at, 'datetime');
+                    return Yii::$app->formatter->format(strtotime($data->created_at), 'datetime');
                 },
             ],
             'model_name',
@@ -54,5 +54,9 @@ foreach ($taskRun->taskRunScreenshots as $screenshot) {
     ]) ?>
 
     <?= dosamigos\gallery\Carousel::widget(['items' => $items]); ?>
+
+    <h2>Лог</h2>
+
+    <?php echo $taskRun->description ?>
 
 </div>
