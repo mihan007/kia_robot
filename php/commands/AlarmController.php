@@ -7,6 +7,8 @@
 
 namespace app\commands;
 
+use app\models\Task;
+use app\models\TaskRun;
 use yii\console\Controller;
 use yii\console\ExitCode;
 
@@ -20,17 +22,38 @@ use yii\console\ExitCode;
  */
 class AlarmController extends Controller
 {
-    const LOGIN_PAGE = 'https://kmr.dealer-portal.net/irj/portal';
-    const USERNAME = 'KRU7802400';
-    const PASSWORD = 'KIAoptima@78024';
-
-    public function actionIndex()
+    public function actionNotification()
     {
-        $this->login();
-    }
+        $tasks = Task::find()
+            ->where(['deleted_at' => null])
+            ->orderBy(['id' => 'ASC'])
+            ->all();
+        $viewData = [];
+        foreach ($tasks as $task) {
+            $taskRuns = TaskRun::find()
+                ->where(['task_id' => $task->id])
+                ->andWhere(['>', 'created_at', date('Y-m-d').' 00:00:00'])
+                ->all();
+            $item = [
+                'task' => $task,
+                'taskRuns' => $taskRuns
+            ];
+            $viewData[] = $item;
+        }
 
-    private function login()
-    {
-
+        $from = [
+            'mailer@turbodealer.ru' => 'Робот Турбодилера'
+        ];
+        $to = [
+            'mihan007@ya.ru' => 'Куклин Михаил',
+        ];
+        $subject = 'Результат работы системы автозаказа';
+        \Yii::$app->mailer->compose('/email/robot', [
+            'data' => $viewData
+        ])
+            ->setFrom($from)
+            ->setTo($to)
+            ->setSubject($subject)
+            ->send();
     }
 }

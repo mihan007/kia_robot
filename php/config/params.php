@@ -2,5 +2,5 @@
 
 return [
     'adminEmail' => 'admin@example.com',
-    'domainMail' => 'http://alarm-robot.lcl'
+    'domainMain' => 'http://alarm-robot.lcl'
 ];

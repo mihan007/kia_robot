@@ -15,8 +15,8 @@ $this->params['breadcrumbs'][] = $this->title;
 $items = [];
 foreach ($taskRun->taskRunScreenshots as $screenshot) {
     $item = [
-        'url' => str_replace('../php/web', Yii::$app->params['domainMail'], $screenshot->filepath),
-        'src' => str_replace('../php/web', Yii::$app->params['domainMail'], $screenshot->filepath),
+        'url' => str_replace('../php/web', Yii::$app->params['domainMain'], $screenshot->filepath),
+        'src' => str_replace('../php/web', Yii::$app->params['domainMain'], $screenshot->filepath),
         'options' => ['title' => $screenshot->name]
     ];
     $items[] = $item;
