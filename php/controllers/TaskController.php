@@ -7,6 +7,7 @@ use app\models\ColorOutside;
 use app\models\ManufactureCode;
 use Yii;
 use app\models\Task;
+use app\models\TaskRun;
 use yii\data\ActiveDataProvider;
 use yii\helpers\ArrayHelper;
 use yii\web\Controller;
@@ -73,8 +74,14 @@ class TaskController extends Controller
      */
     public function actionView($id)
     {
+        $task = $this->findModel($id);
+        $taskRunDataProvider = new ActiveDataProvider([
+            'query' => TaskRun::find()->where(['task_id' => $task->id])->orderBy('id DESC'),
+        ]);
+
         return $this->render('view', [
-            'model' => $this->findModel($id),
+            'model' => $task,
+            'taskRunDataProvider' => $taskRunDataProvider
         ]);
     }
 

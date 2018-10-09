@@ -80,3 +80,6 @@ typings/
 # Composer folder
 php/vendor
 
+#screenshot folder
+php/web/screenshots
+

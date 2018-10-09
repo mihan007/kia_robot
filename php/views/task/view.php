@@ -1,10 +1,13 @@
 <?php
 
 use yii\helpers\Html;
+use yii\helpers\Url;
 use yii\widgets\DetailView;
+use yii\grid\GridView;
 
 /* @var $this yii\web\View */
 /* @var $model app\models\Task */
+/* @var $taskRunDataProvider yii\data\ActiveDataProvider */
 
 $this->title = "Задача #" . $model->id;
 if ($model->deleted_at == null) {
@@ -35,6 +38,10 @@ $this->params['breadcrumbs'][] = $this->title;
     <?= DetailView::widget([
         'model' => $model,
         'attributes' => [
+            [
+                'label' => 'Дата создания',
+                'value' => Yii::$app->formatter->format($model->created_at, 'datetime')
+            ],
             'model_name',
             'manufacture_code_name',
             'color_inside_name',
@@ -43,4 +50,36 @@ $this->params['breadcrumbs'][] = $this->title;
         ],
     ]) ?>
 
+    <h2>Запуски задачи</h2>
+
+    <?= GridView::widget([
+        'dataProvider' => $taskRunDataProvider,
+        'columns' => [
+            'id',
+            [
+                'label' => 'Дата запуска',
+                'class' => 'yii\grid\DataColumn',
+                'format' => 'raw',
+                'value' => function ($data) {
+                    return Yii::$app->formatter->format($data->created_at, 'datetime');
+                },
+            ],
+            'model_name',
+            'manufacture_code_name',
+            'color_inside_name',
+            'color_outside_name',
+            'amount',
+
+            [
+                'class' => 'yii\grid\ActionColumn',
+                'template' => '{view}',
+                'urlCreator' => function ($action, $model, $key, $index) {
+                    if ($action === 'view') {
+                        $url = Url::to(['task-run/view', 'id' => $model->id]);
+                        return $url;
+                    }
+                }
+            ],
+        ],
+    ]); ?>
 </div>
