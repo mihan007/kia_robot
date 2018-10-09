@@ -3,7 +3,7 @@ module.exports = {
     password: 'KIAoptima@78024',
 
     mysqlHost: 'localhost',
-    mysqlUsername: 'root',
-    mysqlPassword: '',
-    mysqlDatabase: 'alarm'
+    mysqlUsername: 'alarmuser',
+    mysqlPassword: 'CW8OFDmz1yp6',
+    mysqlDatabase: 'alarmdb'
 }

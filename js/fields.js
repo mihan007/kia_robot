@@ -32,7 +32,7 @@ function delay(timeout) {
 
 async function sync(connection) {
     const browser = await puppeteer.launch({
-        headless: false
+        headless: true
     });
     const page = await browser.newPage();
 
