@@ -39,13 +39,13 @@ AppAsset::register($this);
     $items[] = ['label' => 'Домой', 'url' => ['/site/index']];
     if (!Yii::$app->user->isGuest) {
         $items[] = ['label' => 'Текущие задачи', 'url' => ['/task/index']];
-        $items[] = ['label' => 'Архивные задачи', 'url' => ['/task/archive']];
+        $items[] = ['label' => 'Архив задач', 'url' => ['/task/archive']];
     }
     $items[] = Yii::$app->user->isGuest ?  ['label' => 'Войти', 'url' => ['/site/login']] :
                 '<li>'
                 . Html::beginForm(['/site/logout'], 'post')
                 . Html::submitButton(
-                    'Logout (' . Yii::$app->user->identity->username . ')',
+                    'Выйти (' . Yii::$app->user->identity->username . ')',
                     ['class' => 'btn btn-link logout']
                 )
                 . Html::endForm()

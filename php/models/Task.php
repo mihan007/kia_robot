@@ -19,9 +19,9 @@ use yii\db\Expression;
  * @property string $color_outside_name
  * @property string $color_outside_value
  * @property int $amount
- * @property string $created
- * @property string $updated
- * @property string $deleted
+ * @property int $created_at
+ * @property int $updated_at
+ * @property int $deleted_at
  */
 class Task extends \yii\db\ActiveRecord
 {
@@ -49,6 +49,7 @@ class Task extends \yii\db\ActiveRecord
     {
         return [
             [['amount'], 'integer'],
+            [['amount'], 'required'],
             [['deleted'], 'safe'],
             [['model_name', 'model_value', 'manufacture_code_name', 'manufacture_code_value', 'color_inside_name', 'color_inside_value', 'color_outside_name', 'color_outside_value'], 'string', 'max' => 255],
         ];
@@ -61,18 +62,18 @@ class Task extends \yii\db\ActiveRecord
     {
         return [
             'id' => 'ID',
-            'model_name' => 'Model Name',
-            'model_value' => 'Model Value',
-            'manufacture_code_name' => 'Manufacture Code Name',
-            'manufacture_code_value' => 'Manufacture Code Value',
-            'color_inside_name' => 'Color Inside Name',
-            'color_inside_value' => 'Color Inside Value',
-            'color_outside_name' => 'Color Outside Name',
-            'color_outside_value' => 'Color Outside Value',
-            'amount' => 'Amount',
-            'created' => 'Created',
-            'updated' => 'Updated',
-            'deleted' => 'Deleted',
+            'model_name' => 'Модель',
+            'model_value' => 'Модель',
+            'manufacture_code_name' => 'Код производителя',
+            'manufacture_code_value' => 'Код производителя',
+            'color_inside_name' => 'Цвет Салон',
+            'color_inside_value' => 'Цвет Салон',
+            'color_outside_name' => 'Цвет Кузов',
+            'color_outside_value' => 'Цвет Кузов',
+            'amount' => 'Количество',
+            'created_at' => 'Дата создания',
+            'updated_at' => 'Updated',
+            'deleted_at' => 'Deleted',
         ];
     }
 }

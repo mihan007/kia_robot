@@ -4,11 +4,14 @@ use yii\helpers\Html;
 
 /* @var $this yii\web\View */
 /* @var $model app\models\Task */
+/* @var array $manufactureCodes */
+/* @var array $colorsInside */
+/* @var array $colorsOutside */
 
-$this->title = 'Update Task: ' . $model->id;
-$this->params['breadcrumbs'][] = ['label' => 'Tasks', 'url' => ['index']];
-$this->params['breadcrumbs'][] = ['label' => $model->id, 'url' => ['view', 'id' => $model->id]];
-$this->params['breadcrumbs'][] = 'Update';
+$this->title = 'Редактировать задачу #' . $model->id;
+$this->params['breadcrumbs'][] = ['label' => 'Текущие задачи', 'url' => ['index']];
+$this->params['breadcrumbs'][] = ['label' => 'Задача #'.$model->id, 'url' => ['view', 'id' => $model->id]];
+$this->params['breadcrumbs'][] = 'Редактировать';
 ?>
 <div class="task-update">
 
@@ -16,6 +19,9 @@ $this->params['breadcrumbs'][] = 'Update';
 
     <?= $this->render('_form', [
         'model' => $model,
+        'manufactureCodes' => $manufactureCodes,
+        'colorsInside' => $colorsInside,
+        'colorsOutside' => $colorsOutside
     ]) ?>
 
 </div>

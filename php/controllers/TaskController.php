@@ -42,10 +42,25 @@ class TaskController extends Controller
     public function actionIndex()
     {
         $dataProvider = new ActiveDataProvider([
-            'query' => Task::find(),
+            'query' => Task::find()->where(['deleted_at' => null])->orderBy('id DESC'),
         ]);
 
         return $this->render('index', [
+            'dataProvider' => $dataProvider,
+        ]);
+    }
+
+    /**
+     * Lists all Task models.
+     * @return mixed
+     */
+    public function actionArchive()
+    {
+        $dataProvider = new ActiveDataProvider([
+            'query' => Task::find()->where(['not', ['deleted_at' => null]])->orderBy('id DESC'),
+        ]);
+
+        return $this->render('archive', [
             'dataProvider' => $dataProvider,
         ]);
     }
@@ -71,13 +86,19 @@ class TaskController extends Controller
     public function actionCreate()
     {
         $model = new Task();
+        $manufactureCodes = [];
+        $colorsInside = [];
+        $colorsOutside = [];
 
         if ($model->load(Yii::$app->request->post()) && $model->save()) {
-            return $this->redirect(['view', 'id' => $model->id]);
+            return $this->redirect(['index']);
         }
 
         return $this->render('create', [
             'model' => $model,
+            'manufactureCodes' => $manufactureCodes,
+            'colorsInside' => $colorsInside,
+            'colorsOutside' => $colorsOutside
         ]);
     }
 
@@ -90,14 +111,21 @@ class TaskController extends Controller
      */
     public function actionUpdate($id)
     {
-        $model = $this->findModel($id);
+        $task = $this->findModel($id);
+        $model = Model::findOne(['value' => $task->model_value]);
+        $manufactureCodes = ArrayHelper::map(ManufactureCode::findAll(['model_id' => $model->id]), 'value', 'name');
+        $colorsInside = ArrayHelper::map(ColorInside::findAll(['model_id' => $model->id]), 'value', 'name');
+        $colorsOutside = ArrayHelper::map(ColorOutside::findAll(['model_id' => $model->id]), 'value', 'name');
 
-        if ($model->load(Yii::$app->request->post()) && $model->save()) {
-            return $this->redirect(['view', 'id' => $model->id]);
+        if ($task->load(Yii::$app->request->post()) && $task->save()) {
+            return $this->redirect(['index']);
         }
 
         return $this->render('update', [
-            'model' => $model,
+            'model' => $task,
+            'manufactureCodes' => $manufactureCodes,
+            'colorsInside' => $colorsInside,
+            'colorsOutside' => $colorsOutside
         ]);
     }
 
@@ -110,7 +138,9 @@ class TaskController extends Controller
      */
     public function actionDelete($id)
     {
-        $this->findModel($id)->delete();
+        $model = $this->findModel($id);
+        $model->deleted_at = time();
+        $model->save();
 
         return $this->redirect(['index']);
     }

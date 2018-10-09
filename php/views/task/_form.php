@@ -10,6 +10,10 @@ use kartik\depdrop\DepDrop;
 /* @var $this yii\web\View */
 /* @var $model app\models\Task */
 /* @var $form yii\widgets\ActiveForm */
+/* @var array $manufactureCodes */
+/* @var array $colorsInside */
+/* @var array $colorsOutside */
+
 ?>
 
     <div class="task-form">
@@ -25,32 +29,32 @@ use kartik\depdrop\DepDrop;
 
         <?= $form->field($model, 'manufacture_code_name')->hiddenInput(['id' => 'manufacture_code_name'])->label(false) ?>
 
-        <?= $form->field($model, 'manufacture_code_value')->dropDownList([], [
+        <?= $form->field($model, 'manufacture_code_value')->dropDownList($manufactureCodes, [
             'id' => 'manufacture_code_id',
             'prompt' => 'Выберите код производителя...',
-            'disabled' => true
+            'disabled' => $model->isNewRecord ? true : false
         ]) ?>
 
         <?= $form->field($model, 'color_inside_name')->hiddenInput(['id' => 'color_inside_name'])->label(false) ?>
 
-        <?= $form->field($model, 'color_inside_value')->dropDownList([], [
+        <?= $form->field($model, 'color_inside_value')->dropDownList($colorsInside, [
             'id' => 'color_inside_id',
             'prompt' => 'Выберите цвет салона...',
-            'disabled' => true
+            'disabled' => $model->isNewRecord ? true : false
         ]) ?>
 
         <?= $form->field($model, 'color_outside_name')->hiddenInput(['id' => 'color_outside_name'])->label(false) ?>
 
-        <?= $form->field($model, 'color_outside_value')->dropDownList([], [
+        <?= $form->field($model, 'color_outside_value')->dropDownList($colorsOutside, [
             'id' => 'color_outside_id',
             'prompt' => 'Выберите цвет кузова...',
-            'disabled' => true
+            'disabled' => $model->isNewRecord ? true : false
         ]) ?>
 
         <?= $form->field($model, 'amount')->textInput() ?>
 
         <div class="form-group">
-            <?= Html::submitButton('Save', ['class' => 'btn btn-success']) ?>
+            <?= Html::submitButton('Сохранить', ['class' => 'btn btn-success']) ?>
         </div>
 
         <?php ActiveForm::end(); ?>

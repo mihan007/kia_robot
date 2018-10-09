@@ -6,8 +6,12 @@ use yii\widgets\DetailView;
 /* @var $this yii\web\View */
 /* @var $model app\models\Task */
 
-$this->title = $model->id;
-$this->params['breadcrumbs'][] = ['label' => 'Tasks', 'url' => ['index']];
+$this->title = "Задача #" . $model->id;
+if ($model->deleted_at == null) {
+    $this->params['breadcrumbs'][] = ['label' => 'Текущие задачи', 'url' => ['index']];
+} else {
+    $this->params['breadcrumbs'][] = ['label' => 'Архив задач', 'url' => ['archive']];
+}
 $this->params['breadcrumbs'][] = $this->title;
 \yii\web\YiiAsset::register($this);
 ?>
@@ -15,29 +19,26 @@ $this->params['breadcrumbs'][] = $this->title;
 
     <h1><?= Html::encode($this->title) ?></h1>
 
-    <p>
-        <?= Html::a('Update', ['update', 'id' => $model->id], ['class' => 'btn btn-primary']) ?>
-        <?= Html::a('Delete', ['delete', 'id' => $model->id], [
-            'class' => 'btn btn-danger',
-            'data' => [
-                'confirm' => 'Are you sure you want to delete this item?',
-                'method' => 'post',
-            ],
-        ]) ?>
-    </p>
+    <?php if ($model->deleted_at == null): ?>
+        <p>
+            <?= Html::a('Редактировать', ['update', 'id' => $model->id], ['class' => 'btn btn-primary']) ?>
+            <?= Html::a('Удалить', ['delete', 'id' => $model->id], [
+                'class' => 'btn btn-danger',
+                'data' => [
+                    'confirm' => 'Вы уверены, что хотите удалить текущую задачу?',
+                    'method' => 'post',
+                ],
+            ]) ?>
+        </p>
+    <?php endif ?>
 
     <?= DetailView::widget([
         'model' => $model,
         'attributes' => [
-            'id',
             'model_name',
-            'model_value',
             'manufacture_code_name',
-            'manufacture_code_value',
             'color_inside_name',
-            'color_inside_value',
             'color_outside_name',
-            'color_outside_value',
             'amount',
         ],
     ]) ?>
