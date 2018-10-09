@@ -8,7 +8,12 @@ use yii\widgets\DetailView;
 /* @var $taskRun app\models\TaskRun */
 
 $this->title = 'Запуск задачи #' . $task->id . " от " . Yii::$app->formatter->format($task->created_at, 'datetime');
-$this->params['breadcrumbs'][] = ['label' => 'Текущие задачи', 'url' => ['task/index']];
+if ($task->deleted_at == null) {
+    $this->params['breadcrumbs'][] = ['label' => 'Текущие задачи', 'url' => ['index']];
+} else {
+    $this->params['breadcrumbs'][] = ['label' => 'Архив задач', 'url' => ['archive']];
+}
+
 $this->params['breadcrumbs'][] = ['label' => 'Задача #' . $task->id, 'url' => ['task/view', 'id' => $task->id]];
 $this->params['breadcrumbs'][] = $this->title;
 \yii\web\YiiAsset::register($this);

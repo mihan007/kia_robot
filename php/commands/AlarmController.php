@@ -46,6 +46,7 @@ class AlarmController extends Controller
         ];
         $to = [
             'mihan007@ya.ru' => 'Куклин Михаил',
+            'ae@alarm-motors.ru' => 'Евстюшкин Александр'
         ];
         $subject = 'Результат работы системы автозаказа';
         \Yii::$app->mailer->compose('/email/robot', [
