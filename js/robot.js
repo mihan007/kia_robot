@@ -58,8 +58,6 @@ function currentDate() {
 async function robot(connection) {
 
     let tasks = await getTasksFromDb(connection);
-    console.log(tasks);
-    return;
 
     let requestExist = true;
 
@@ -103,6 +101,8 @@ async function robot(connection) {
     let formFrame, description, screenshots;
 
     for (const i in tasks) {
+        console.log('running ', tasks[i]);
+
         screenshots = [];
         await page.click(FREE_SKLAD_LEFT_SIDEBAR_SELECTOR);
         await page.waitFor(FREE_SKLAD_IFRAME_SELECTOR);
