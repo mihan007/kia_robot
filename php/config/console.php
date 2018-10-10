@@ -41,7 +41,7 @@ $config = [
         ],
         'urlManager' => [
             'class' => 'yii\web\UrlManager',
-            'scriptUrl' => 'http://alarm-robot.lcl'
+            'scriptUrl' => getenv('APP_ROLE') == 'production' ? 'http://alarm-robot.turbodealer.ru' : 'http://alarm-robot.lcl'
         ]
     ],
     'params' => $params,
