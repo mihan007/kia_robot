@@ -43,7 +43,7 @@ class TaskController extends Controller
     public function actionIndex()
     {
         $dataProvider = new ActiveDataProvider([
-            'query' => Task::find()->where(['deleted_at' => null])->orderBy('id DESC'),
+            'query' => Task::find()->where(['deleted_at' => 0])->orderBy('id DESC'),
         ]);
 
         return $this->render('index', [
@@ -58,7 +58,7 @@ class TaskController extends Controller
     public function actionArchive()
     {
         $dataProvider = new ActiveDataProvider([
-            'query' => Task::find()->where(['not', ['deleted_at' => null]])->orderBy('id DESC'),
+            'query' => Task::find()->where(['not', ['deleted_at' => 0]])->orderBy('id DESC'),
         ]);
 
         return $this->render('archive', [

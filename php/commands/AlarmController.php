@@ -25,7 +25,7 @@ class AlarmController extends Controller
     public function actionNotification()
     {
         $tasks = Task::find()
-            ->where(['deleted_at' => null])
+            ->where(['deleted_at' => 0])
             ->orderBy(['id' => 'ASC'])
             ->all();
         $viewData = [];
