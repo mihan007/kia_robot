@@ -58,6 +58,8 @@ function currentDate() {
 async function robot(connection) {
 
     let tasks = await getTasksFromDb(connection);
+    console.log(tasks);
+    return;
 
     let requestExist = true;
 
@@ -311,7 +313,7 @@ function getTasksFromDb(connection) {
     return new Promise((resolve, reject) => {
         connection.select(
             'task', '*',
-            {},
+            {deleted_at: null},
             {},
             (err, results) => {
                 if (err) {
