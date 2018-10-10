@@ -240,8 +240,8 @@ async function robot(connection) {
                 await page.screenshot({path: fullpath, fullPage: true});
                 screenshots.push({name: 'Скриншот #' + (ind++)  + '. Результат выбора первого нужного набора авто', filepath: fullpath});
 
-                //await formFrame.click(ORDER_BUTTON);
-                //await formFrame.waitFor(5000);
+                await formFrame.click(ORDER_BUTTON);
+                await formFrame.waitFor(5000);
 
                 description += currentDate() + " всего авто с нужными параметрами заказано " + totalOrdered + " штук<br>";
                 description += currentDate() + " осталось заказать " + remainingAmount + " штук<br>";
