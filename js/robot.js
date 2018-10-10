@@ -136,7 +136,12 @@ async function robot(connection) {
             await formFrame.select(FORM_MANUFACTURE_CODE_SELECTOR, tasks[i].manufacture_code);
             await formFrame.select(FORM_COLOR_INSIDE_SELECTOR, tasks[i].color_inside);
             await formFrame.select(FORM_COLOR_OUTSIDE_SELECTOR, tasks[i].color_outside);
-            await formFrame.click(FORM_ONLY_AVAILABLE_SELECTOR);
+            const checkbox = formFrame.$(FORM_ONLY_AVAILABLE_SELECTOR);
+            const isChecked = await (await checkbox.getProperty('checked')).jsonValue();
+            console.log('isChecked', isChecked);
+            if (!isChecked) {
+                await formFrame.click(FORM_ONLY_AVAILABLE_SELECTOR);
+            }
             await formFrame.click(FORM_REQUEST_BUTTON_SELECTOR);
             await formFrame.waitFor(5000);
 
@@ -235,8 +240,8 @@ async function robot(connection) {
                 await page.screenshot({path: fullpath, fullPage: true});
                 screenshots.push({name: 'Скриншот #' + (ind++)  + '. Результат выбора первого нужного набора авто', filepath: fullpath});
 
-                await formFrame.click(ORDER_BUTTON);
-                await formFrame.waitFor(5000);
+                //await formFrame.click(ORDER_BUTTON);
+                //await formFrame.waitFor(5000);
 
                 description += currentDate() + " всего авто с нужными параметрами заказано " + totalOrdered + " штук<br>";
                 description += currentDate() + " осталось заказать " + remainingAmount + " штук<br>";
