@@ -313,7 +313,7 @@ function getTasksFromDb(connection) {
     return new Promise((resolve, reject) => {
         connection.select(
             'task', '*',
-            {deleted_at: 'IS NULL'},
+            {deleted_at: 0},
             {},
             (err, results) => {
                 if (err) {
