@@ -15,6 +15,7 @@ $config = [
     ],
     'components' => [
         'formatter' => [
+            'timeZone' => 'Europe/Moscow',
             'dateFormat' => 'd.m.Y',
         ],
         'request' => [
