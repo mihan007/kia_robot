@@ -136,7 +136,7 @@ async function robot(connection) {
             await formFrame.select(FORM_MANUFACTURE_CODE_SELECTOR, tasks[i].manufacture_code);
             await formFrame.select(FORM_COLOR_INSIDE_SELECTOR, tasks[i].color_inside);
             await formFrame.select(FORM_COLOR_OUTSIDE_SELECTOR, tasks[i].color_outside);
-            const checkbox = formFrame.$(FORM_ONLY_AVAILABLE_SELECTOR);
+            const checkbox = await formFrame.$(FORM_ONLY_AVAILABLE_SELECTOR);
             const isChecked = await (await checkbox.getProperty('checked')).jsonValue();
             console.log('isChecked', isChecked);
             if (!isChecked) {
