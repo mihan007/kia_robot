@@ -15,6 +15,10 @@ $config = [
         '@tests' => '@app/tests',
     ],
     'components' => [
+        'formatter' => [
+            'timeZone' => 'Europe/Minsk',
+            'dateFormat' => 'd.m.Y',
+        ],
         'cache' => [
             'class' => 'yii\caching\FileCache',
         ],
