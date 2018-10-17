@@ -69,6 +69,7 @@ $this->params['breadcrumbs'][] = $this->title;
             'color_inside_name',
             'color_outside_name',
             'amount',
+            'amount_ordered',
 
             [
                 'class' => 'yii\grid\ActionColumn',

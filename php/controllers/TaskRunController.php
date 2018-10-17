@@ -14,6 +14,22 @@ use yii\filters\VerbFilter;
  */
 class TaskRunController extends Controller
 {
+
+    /**
+     * Lists all Task models.
+     * @return mixed
+     */
+    public function actionIndex()
+    {
+        $dataProvider = new ActiveDataProvider([
+            'query' => TaskRun::find()->orderBy('id DESC'),
+        ]);
+
+        return $this->render('index', [
+            'dataProvider' => $dataProvider,
+        ]);
+    }
+
     /**
      * Displays a single TaskRun model.
      * @param integer $id

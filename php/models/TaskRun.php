@@ -62,7 +62,8 @@ class TaskRun extends \yii\db\ActiveRecord
             'color_inside_value' => 'Цвет Салон',
             'color_outside_name' => 'Цвет Кузов',
             'color_outside_value' => 'Цвет Кузов',
-            'amount' => 'Количество',
+            'amount' => 'План, шт.',
+            'amount_ordered' => 'Факт, шт.',
             'created_at' => 'Дата запуска',
             'updated_at' => 'Updated At',
         ];

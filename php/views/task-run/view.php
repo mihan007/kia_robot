@@ -54,7 +54,8 @@ foreach ($taskRun->taskRunScreenshots as $screenshot) {
             'manufacture_code_name',
             'color_inside_name',
             'color_outside_name',
-            'amount'
+            'amount',
+            'amount_ordered'
         ],
     ]) ?>
 

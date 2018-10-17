@@ -1,6 +1,11 @@
 const puppeteer = require('puppeteer');
 const cheerio = require('cheerio');
-const CREDS = require('./creds');
+const env = process.env.APP_ROLE || 'local';
+if (env == 'production') {
+    const CREDS = require('./creds_production');
+} else {
+    const CREDS = require('./creds_local');
+}
 const mysql = require('mysql');
 const mysqlUtilities = require('mysql-utilities');
 const loginUrl = 'https://kmr.dealer-portal.net/irj/portal';

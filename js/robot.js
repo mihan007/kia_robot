@@ -1,6 +1,11 @@
 const puppeteer = require('puppeteer');
 const cheerio = require('cheerio');
-const CREDS = require('./creds');
+const env = process.env.APP_ROLE || 'local';
+if (env == 'production') {
+    const CREDS = require('./creds_production');
+} else {
+    const CREDS = require('./creds_local');
+}
 const mysql = require('mysql');
 const fs = require('fs');
 const mysqlUtilities = require('mysql-utilities');
@@ -123,6 +128,7 @@ async function robot(connection) {
         description += "<li><b>Код производителя</b>: " + tasks[i].manufacture_code_name + "</li>";
         description += "<li><b>Цвет салона</b>: " + tasks[i].color_inside_name + "</li>";
         description += "<li><b>Цвет кузова</b>: " + tasks[i].color_outside_name + "</li>";
+        description += "<li><b>Требуемое количество</b>: " + tasks[i].amount + "</li>";
         description += "</ul>";
         let flag = true;
         let remainingAmount = tasks[i].amount;
@@ -148,7 +154,7 @@ async function robot(connection) {
             let filename = +new Date() + '_' + Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15) + '.png';
             let fullpath = currentScreenshotPath + "/" + filename;
             await page.screenshot({path: fullpath, fullPage: true});
-            screenshots.push({name: 'Скриншот #' + (ind++) +'. Результат поискового запроса', filepath: fullpath});
+            screenshots.push({name: 'Скриншот #' + (ind++) + '. Результат поискового запроса', filepath: fullpath});
             description += currentDate() + " послали поисковый запрос<br>";
 
             if (requestExist) {
@@ -238,7 +244,10 @@ async function robot(connection) {
                 let filename = +new Date() + '_' + Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15) + '.png';
                 let fullpath = currentScreenshotPath + "/" + filename;
                 await page.screenshot({path: fullpath, fullPage: true});
-                screenshots.push({name: 'Скриншот #' + (ind++)  + '. Результат выбора первого нужного набора авто', filepath: fullpath});
+                screenshots.push({
+                    name: 'Скриншот #' + (ind++) + '. Результат выбора первого нужного набора авто',
+                    filepath: fullpath
+                });
 
                 await formFrame.click(ORDER_BUTTON);
                 await formFrame.waitFor(5000);
@@ -275,11 +284,12 @@ async function robot(connection) {
             let filename = +new Date() + '_' + Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15) + '.png';
             let fullpath = currentScreenshotPath + "/" + filename;
             await page.screenshot({path: fullpath, fullPage: true});
-            screenshots.push({name: 'Скриншот #' + (ind++) +'. Результат заказа авто', filepath: fullpath});
+            screenshots.push({name: 'Скриншот #' + (ind++) + '. Результат заказа авто', filepath: fullpath});
         }
 
         tasks[i].task_id = tasks[i].id;
         tasks[i].description = description;
+        tasks[i].amount_ordered = totalOrdered;
         let taskRunId = await saveTaskRunToDb(connection, tasks[i]);
         for (let iScr in screenshots) {
             screenshots[iScr].task_run_id = taskRunId;
@@ -361,7 +371,8 @@ function saveTaskRunToDb(connection, taskInfo) {
                 color_outside_value: taskInfo.color_outside,
                 color_outside_name: taskInfo.color_outside_name,
                 amount: taskInfo.amount,
-                description: taskInfo.description
+                description: taskInfo.description,
+                amount_ordered: taskInfo.amount_ordered
             },
             (err, recordId) => {
                 if (err) {
