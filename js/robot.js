@@ -5,6 +5,7 @@ const CREDS = (env === 'production') ? require('./creds_production') : require('
 const mysql = require('mysql');
 const fs = require('fs');
 const mysqlUtilities = require('mysql-utilities');
+const { Cluster } = require('puppeteer-cluster');
 const loginUrl = 'https://kmr.dealer-portal.net/irj/portal';
 const USERNAME_SELECTOR = '#logonForm > center > table > tbody > tr > td > table:nth-child(1) > tbody > tr:nth-child(2) > td:nth-child(2) > table > tbody > tr:nth-child(1) > td:nth-child(3) > input[type="text"]';
 const PASSWORD_SELECTOR = '#logonForm > center > table > tbody > tr > td > table:nth-child(1) > tbody > tr:nth-child(2) > td:nth-child(2) > table > tbody > tr:nth-child(3) > td:nth-child(3) > input[type="password"]';
@@ -28,11 +29,14 @@ const ORDER_BUTTON = '#commonparam > table > tbody > tr:nth-child(4) > td > div 
 const ORDER_FREE_SKLAD = '#L2N2';
 const ORDER_FREE_SKLAD_BUTTON = '#subContents > div.buttons > a';
 
+const MAX_CONCURRENCY = 5;
+
 run();
 
 async function run() {
     const connection = await connectToDb();
     await robot(connection);
+    disconnectFromDb(connection);
 }
 
 function formattedDate(date) {
@@ -70,41 +74,42 @@ async function robot(connection) {
     if (!fs.existsSync(currentScreenshotPath)) {
         fs.mkdirSync(currentScreenshotPath);
     }
-
-    const browser = await puppeteer.launch({
-        headless: true
-    });
-    const page = await browser.newPage();
-
-    page.on('dialog', async dialog => {
-        requestExist = false;
-        await dialog.dismiss();
+    
+    const cluster = await Cluster.launch({
+        concurrency: Cluster.CONCURRENCY_CONTEXT,
+        maxConcurrency: MAX_CONCURRENCY
     });
 
-    await page.setViewport({width: 1280, height: 800});
+    const processTask = async ({page, data: task}) => {
+        console.log('running ', task);
+        
+        page.on('dialog', async dialog => {
+            requestExist = false;
+            await dialog.dismiss();
+        });
 
-    await page.goto(loginUrl);
+        await page.setViewport({width: 1280, height: 800});
 
-    await page.click(USERNAME_SELECTOR);
-    await page.keyboard.type(CREDS.username);
+        await page.goto(loginUrl);
 
-    await page.click(PASSWORD_SELECTOR);
-    await page.keyboard.type(CREDS.password);
+        await page.click(USERNAME_SELECTOR);
+        await page.keyboard.type(CREDS.username);
 
-    await page.click(BUTTON_SELECTOR);
+        await page.click(PASSWORD_SELECTOR);
+        await page.keyboard.type(CREDS.password);
 
-    await page.waitFor(SELL_TAB_SELECTOR);
+        await page.click(BUTTON_SELECTOR);
 
-    await page.click(SELL_TAB_SELECTOR);
+        await page.waitFor(SELL_TAB_SELECTOR);
 
-    await page.waitFor(FREE_SKLAD_LEFT_SIDEBAR_SELECTOR);
+        await page.click(SELL_TAB_SELECTOR);
 
-    let formFrame, description, screenshots;
+        await page.waitFor(FREE_SKLAD_LEFT_SIDEBAR_SELECTOR);
 
-    for (const i in tasks) {
-        console.log('running ', tasks[i]);
+        let formFrame, description;
 
-        screenshots = [];
+        let screenshots = [];
+        
         await page.click(FREE_SKLAD_LEFT_SIDEBAR_SELECTOR);
         await page.waitFor(FREE_SKLAD_IFRAME_SELECTOR);
         let firstFrame = await page.frames().find(f => f.name() === 'contentAreaFrame');
@@ -120,24 +125,24 @@ async function robot(connection) {
 
         description = currentDate() + " начали выполнять задачу:<br>";
         description += "<ul>";
-        description += "<li><b>Модель</b>: " + tasks[i].model_name + "</li>";
-        description += "<li><b>Код производителя</b>: " + tasks[i].manufacture_code_name + "</li>";
-        description += "<li><b>Цвет салона</b>: " + tasks[i].color_inside_name + "</li>";
-        description += "<li><b>Цвет кузова</b>: " + tasks[i].color_outside_name + "</li>";
-        description += "<li><b>Требуемое количество</b>: " + tasks[i].amount + "</li>";
+        description += "<li><b>Модель</b>: " + task.model_name + "</li>";
+        description += "<li><b>Код производителя</b>: " + task.manufacture_code_name + "</li>";
+        description += "<li><b>Цвет салона</b>: " + task.color_inside_name + "</li>";
+        description += "<li><b>Цвет кузова</b>: " + task.color_outside_name + "</li>";
+        description += "<li><b>Требуемое количество</b>: " + task.amount + "</li>";
         description += "</ul>";
         let flag = true;
-        let remainingAmount = tasks[i].amount;
+        let remainingAmount = task.amount;
         let totalOrdered = 0;
         let ind = 1;
         while (flag) {
             requestExist = true;
 
-            await formFrame.select(FORM_MODEL_SELECTOR, tasks[i].model);
+            await formFrame.select(FORM_MODEL_SELECTOR, task.model);
             await formFrame.waitFor(2000);
-            await formFrame.select(FORM_MANUFACTURE_CODE_SELECTOR, tasks[i].manufacture_code);
-            await formFrame.select(FORM_COLOR_INSIDE_SELECTOR, tasks[i].color_inside);
-            await formFrame.select(FORM_COLOR_OUTSIDE_SELECTOR, tasks[i].color_outside);
+            await formFrame.select(FORM_MANUFACTURE_CODE_SELECTOR, task.manufacture_code);
+            await formFrame.select(FORM_COLOR_INSIDE_SELECTOR, task.color_inside);
+            await formFrame.select(FORM_COLOR_OUTSIDE_SELECTOR, task.color_outside);
             const checkbox = await formFrame.$(FORM_ONLY_AVAILABLE_SELECTOR);
             const isChecked = await (await checkbox.getProperty('checked')).jsonValue();
             console.log('isChecked', isChecked);
@@ -283,18 +288,22 @@ async function robot(connection) {
             screenshots.push({name: 'Скриншот #' + (ind++) + '. Результат заказа авто', filepath: fullpath});
         }
 
-        tasks[i].task_id = tasks[i].id;
-        tasks[i].description = description;
-        tasks[i].amount_ordered = totalOrdered;
-        let taskRunId = await saveTaskRunToDb(connection, tasks[i]);
+        task.task_id = task.id;
+        task.description = description;
+        task.amount_ordered = totalOrdered;
+        let taskRunId = await saveTaskRunToDb(connection, task);
         for (let iScr in screenshots) {
             screenshots[iScr].task_run_id = taskRunId;
             await saveScreenshotToDb(connection, screenshots[iScr]);
         }
+    };
+
+    for (const i in tasks) {
+        await cluster.queue(tasks[i], processTask);
     }
 
-    browser.close();
-    disconnectFromDb(connection);
+    await cluster.idle();
+    await cluster.close();
 }
 
 async function connectToDb() {
