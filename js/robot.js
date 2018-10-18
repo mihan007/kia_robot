@@ -33,7 +33,9 @@ const MAX_CONCURRENCY = 5;
 
 run();
 
-const delay = ms => new Promise(resolve => setTimeout(resolve, ms));
+function delay(ms) {
+    return new Promise(resolve => setTimeout(resolve, ms));
+}
 
 async function run() {
     await delay(10000);
