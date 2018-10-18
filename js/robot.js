@@ -33,7 +33,10 @@ const MAX_CONCURRENCY = 5;
 
 run();
 
+const delay = ms => new Promise(resolve => setTimeout(resolve, ms));
+
 async function run() {
+    await delay(10000);
     const connection = await connectToDb();
     await robot(connection);
     disconnectFromDb(connection);
@@ -81,7 +84,7 @@ async function robot(connection) {
     });
 
     const processTask = async ({page, data: task}) => {
-        console.log('running ', task);
+        console.log(currentDate() + ' running ', task);
         
         page.on('dialog', async dialog => {
             requestExist = false;
@@ -145,7 +148,6 @@ async function robot(connection) {
             await formFrame.select(FORM_COLOR_OUTSIDE_SELECTOR, task.color_outside);
             const checkbox = await formFrame.$(FORM_ONLY_AVAILABLE_SELECTOR);
             const isChecked = await (await checkbox.getProperty('checked')).jsonValue();
-            console.log('isChecked', isChecked);
             if (!isChecked) {
                 await formFrame.click(FORM_ONLY_AVAILABLE_SELECTOR);
             }
