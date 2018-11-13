@@ -87,6 +87,15 @@ async function robot(connection) {
 
     const processTask = async ({page, data: task}) => {
         console.log(currentDate() + ' running ', task);
+
+        description = currentDate() + " начали выполнять задачу:<br>";
+        description += "<ul>";
+        description += "<li><b>Модель</b>: " + task.model_name + "</li>";
+        description += "<li><b>Код производителя</b>: " + task.manufacture_code_name + "</li>";
+        description += "<li><b>Цвет салона</b>: " + task.color_inside_name + "</li>";
+        description += "<li><b>Цвет кузова</b>: " + task.color_outside_name + "</li>";
+        description += "<li><b>Требуемое количество</b>: " + task.amount + "</li>";
+        description += "</ul>";
         
         page.on('dialog', async dialog => {
             requestExist = false;
@@ -128,14 +137,6 @@ async function robot(connection) {
             }
         }
 
-        description = currentDate() + " начали выполнять задачу:<br>";
-        description += "<ul>";
-        description += "<li><b>Модель</b>: " + task.model_name + "</li>";
-        description += "<li><b>Код производителя</b>: " + task.manufacture_code_name + "</li>";
-        description += "<li><b>Цвет салона</b>: " + task.color_inside_name + "</li>";
-        description += "<li><b>Цвет кузова</b>: " + task.color_outside_name + "</li>";
-        description += "<li><b>Требуемое количество</b>: " + task.amount + "</li>";
-        description += "</ul>";
         let flag = true;
         let remainingAmount = task.amount;
         let totalOrdered = 0;
@@ -143,6 +144,7 @@ async function robot(connection) {
         while (flag) {
             requestExist = true;
 
+            description += currentDate() + " послали поисковый запрос<br>";
             await formFrame.select(FORM_MODEL_SELECTOR, task.model);
             await formFrame.waitFor(2000);
             await formFrame.select(FORM_MANUFACTURE_CODE_SELECTOR, task.manufacture_code);
@@ -160,7 +162,6 @@ async function robot(connection) {
             let fullpath = currentScreenshotPath + "/" + filename;
             await page.screenshot({path: fullpath, fullPage: true});
             screenshots.push({name: 'Скриншот #' + (ind++) + '. Результат поискового запроса', filepath: fullpath});
-            description += currentDate() + " послали поисковый запрос<br>";
 
             if (requestExist) {
                 description += currentDate() + " требуемые авто найдены<br>";
