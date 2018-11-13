@@ -88,7 +88,7 @@ async function robot(connection) {
     const processTask = async ({page, data: task}) => {
         console.log(currentDate() + ' running ', task);
 
-        description = currentDate() + " начали выполнять задачу:<br>";
+        let description = currentDate() + " начали выполнять задачу:<br>";
         description += "<ul>";
         description += "<li><b>Модель</b>: " + task.model_name + "</li>";
         description += "<li><b>Код производителя</b>: " + task.manufacture_code_name + "</li>";
@@ -120,7 +120,7 @@ async function robot(connection) {
 
         await page.waitFor(FREE_SKLAD_LEFT_SIDEBAR_SELECTOR);
 
-        let formFrame, description;
+        let formFrame;
 
         let screenshots = [];
         
