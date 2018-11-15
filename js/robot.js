@@ -38,7 +38,7 @@ function delay(ms) {
 }
 
 async function run() {
-    await delay(59000);
+    await delay(5000);
     const connection = await connectToDb();
     await robot(connection);
     disconnectFromDb(connection);
