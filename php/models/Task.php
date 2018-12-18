@@ -76,4 +76,17 @@ class Task extends \yii\db\ActiveRecord
             'deleted_at' => 'Deleted',
         ];
     }
+
+    public function getDescription()
+    {
+        $result = [
+            'Модель: '.$this->model_name,
+            'Код производителя: '.$this->manufacture_code_name,
+            'Цвет Салона: '.$this->color_inside_name,
+            'Цвет Кузова: '.$this->color_outside_name,
+            'Количество: '.$this->amount
+        ];
+
+        return implode('<br>', $result);
+    }
 }
