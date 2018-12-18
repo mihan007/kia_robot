@@ -26,8 +26,8 @@
         <tr valign="middle">
             <td><?php echo $taskInfo['create_date'] ?></td>
             <td><?php echo $taskInfo['description'] ?></td>
-            <td><?php echo $taskInfo['count'] ?></td>
-            <td><?php echo $taskInfo['total'] ?></td>
+            <td align="center"><?php echo $taskInfo['count'] ?></td>
+            <td align="center"><?php echo $taskInfo['total'] ?></td>
         </tr>
         <?php endforeach; ?>
         </tbody>
