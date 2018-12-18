@@ -95,7 +95,10 @@ class AlarmController extends Controller
         }
 
         $from = [
-            'robot@turbodealer.ru' => 'Робот Турбодилера'
+            'robot@turbodealer.ru' => 'Робот Турбодилера',
+            'reports_turbo@mail.ru' => 'Сборщик почты',
+            'is@turbodealer.ru' => 'Сняткова Ирина',
+            'dav.kirill.86@gmail.com' => 'Давыдовский Кирилл'
         ];
         $to = [
             'mihan007@ya.ru' => 'Куклин Михаил'
