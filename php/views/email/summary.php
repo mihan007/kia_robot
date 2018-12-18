@@ -34,7 +34,7 @@
         <tfoot>
             <tr>
                 <td colspan="3" align="left"><b>Итого</b></td>
-                <td><b><?php echo $greatTotal ?></b></td>
+                <td align="center"><b><?php echo $greatTotal ?></b></td>
             </tr>
         </tfoot>
     </table>
