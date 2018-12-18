@@ -36,9 +36,9 @@ $config = [
             'useFileTransport' => false,
             'transport' => [
                 'class' => 'Swift_SmtpTransport',
-                'host' => 'smtp.yandex.ru',
-                'username' => 'mailer@turbodealer.ru',
-                'password' => 'sqNqRhF35vV4M8JRnxR21bmR1pfVXc',
+                'host' => 'smtp-pulse.com',
+                'username' => 'mihail.kuklin@gmail.com',
+                'password' => 'FMHj2Rkort6ma9',
                 'port' => '465',
                 'encryption' => 'ssl',
             ],

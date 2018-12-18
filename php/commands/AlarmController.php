@@ -42,7 +42,7 @@ class AlarmController extends Controller
         }
 
         $from = [
-            'mailer@turbodealer.ru' => 'Робот Турбодилера'
+            'robot@turbodealer.ru' => 'Робот Турбодилера'
         ];
         $to = [
             'mihan007@ya.ru' => 'Куклин Михаил',
@@ -95,7 +95,7 @@ class AlarmController extends Controller
         }
 
         $from = [
-            'mailer@turbodealer.ru' => 'Робот Турбодилера'
+            'robot@turbodealer.ru' => 'Робот Турбодилера'
         ];
         $to = [
             'mihan007@ya.ru' => 'Куклин Михаил'
