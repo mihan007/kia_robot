@@ -96,12 +96,12 @@ class AlarmController extends Controller
 
         $from = [
             'robot@turbodealer.ru' => 'Робот Турбодилера',
+        ];
+        $to = [
+            'mihan007@ya.ru' => 'Куклин Михаил',
             'reports_turbo@mail.ru' => 'Сборщик почты',
             'is@turbodealer.ru' => 'Сняткова Ирина',
             'dav.kirill.86@gmail.com' => 'Давыдовский Кирилл'
-        ];
-        $to = [
-            'mihan007@ya.ru' => 'Куклин Михаил'
         ];
         $subject = 'Робот Аларма: отчет о заказанных авто за '.date('d.m.Y', $yesterday);
         \Yii::$app->mailer->compose('/email/summary', [
