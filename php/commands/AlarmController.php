@@ -7,6 +7,7 @@
 
 namespace app\commands;
 
+use app\models\Model;
 use app\models\Task;
 use app\models\TaskRun;
 use yii\console\Controller;
@@ -108,6 +109,29 @@ class AlarmController extends Controller
             'data' => $tasks,
             'date' => date('d.m.Y', $yesterday),
             'greatTotal' => $greatTotal
+        ])
+            ->setFrom($from)
+            ->setTo($to)
+            ->setSubject($subject)
+            ->send();
+    }
+
+    public function actionFields()
+    {
+        $from = [
+            'robot@turbodealer.ru' => 'Робот Турбодилера',
+        ];
+        $to = [
+            'mihan007@ya.ru' => 'Куклин Михаил',
+            'reports_turbo@mail.ru' => 'Сборщик почты',
+            'is@turbodealer.ru' => 'Сняткова Ирина',
+            'dav.kirill.86@gmail.com' => 'Давыдовский Кирилл'
+        ];
+        $subject = 'Робот Аларма: отчет о комплектациях за '.date('d.m.Y');
+        $models = Model::find()->all();
+        \Yii::$app->mailer->compose('/email/fields', [
+            'models' => $models,
+            'header' => $subject,
         ])
             ->setFrom($from)
             ->setTo($to)
