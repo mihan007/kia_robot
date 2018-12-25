@@ -110,13 +110,13 @@ class AlarmController extends Controller
             'date' => date('d.m.Y', $yesterday),
             'greatTotal' => $greatTotal
         ];
+        $this->saveSummaryReport($subject, $viewData);
+
         \Yii::$app->mailer->compose('/email/summary', $viewData)
             ->setFrom($from)
             ->setTo($to)
             ->setSubject($subject)
             ->send();
-
-        $this->saveSummaryReport($subject, $viewData);
     }
 
     public function saveSummaryReport($subject, $viewData)
@@ -144,7 +144,7 @@ class AlarmController extends Controller
         $report = new Report();
         $report->section = "alarm";
         $report->subject = $subject;
-        $report->url = \Yii::$app->params['domainMain'] . "/static/reports/{$subfolderName}/".$archiveName;
+        $report->url = \Yii::$app->params['turboDomainMain'] . "/static/reports/{$subfolderName}/".$archiveName;
         $report->save();
     }
 
@@ -165,13 +165,13 @@ class AlarmController extends Controller
             'models' => $models,
             'header' => $subject,
         ];
+        $this->saveFieldsReport($subject, $viewData);
+
         \Yii::$app->mailer->compose('/email/fields', $viewData)
             ->setFrom($from)
             ->setTo($to)
             ->setSubject($subject)
             ->send();
-
-        $this->saveFieldsReport($subject, $viewData);
     }
 
     public function saveFieldsReport($subject, $viewData)
@@ -199,7 +199,7 @@ class AlarmController extends Controller
         $report = new Report();
         $report->section = "alarm";
         $report->subject = $subject;
-        $report->url = \Yii::$app->params['domainMain'] . "/static/reports/{$subfolderName}/".$archiveName;
+        $report->url = \Yii::$app->params['turboDomainMain'] . "/static/reports/{$subfolderName}/".$archiveName;
         $report->save();
     }
 }
