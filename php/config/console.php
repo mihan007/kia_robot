@@ -31,6 +31,13 @@ $config = [
             ],
         ],
         'db' => $db,
+        'db2' => [
+            'class' => 'yii\db\Connection',
+            'dsn' => 'mysql:host=localhost;dbname=prod', // Maybe other DBMS such as psql (PostgreSQL),...
+            'username' => 'site',
+            'password' => 'uGahch7e',
+            'charset' => 'utf8',
+        ],
         'mailer' => [
             'class' => 'yii\swiftmailer\Mailer',
             'useFileTransport' => false,

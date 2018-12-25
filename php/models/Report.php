@@ -26,6 +26,11 @@ class Report extends \yii\db\ActiveRecord
         return 'report';
     }
 
+    public static function getDb()
+    {
+        return Yii::$app->db2;
+    }
+
     /**
      * {@inheritdoc}
      */
