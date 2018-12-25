@@ -10,8 +10,8 @@ namespace app\commands;
 use app\models\Model;
 use app\models\Task;
 use app\models\TaskRun;
+use app\models\Report;
 use yii\console\Controller;
-use yii\console\ExitCode;
 
 /**
  * This command echoes the first argument that you have entered.
@@ -105,15 +105,47 @@ class AlarmController extends Controller
             'dav.kirill.86@gmail.com' => 'Давыдовский Кирилл'
         ];
         $subject = 'Робот Аларма: отчет о заказанных авто за '.date('d.m.Y', $yesterday);
-        \Yii::$app->mailer->compose('/email/summary', [
+        $viewData = [
             'data' => $tasks,
             'date' => date('d.m.Y', $yesterday),
             'greatTotal' => $greatTotal
-        ])
+        ];
+        \Yii::$app->mailer->compose('/email/summary', $viewData)
             ->setFrom($from)
             ->setTo($to)
             ->setSubject($subject)
             ->send();
+
+        $this->saveSummaryReport($subject, $viewData);
+    }
+
+    public function saveSummaryReport($subject, $viewData)
+    {
+        $reportPath = \Yii::getAlias('@app/../../web/static/reports/');
+        $subfolderName = 'alarm';
+        if (!is_dir($reportPath. $subfolderName)) {
+            mkdir($reportPath. $subfolderName);
+        }
+
+        $fullReportPath = realpath($reportPath.$subfolderName.'/');
+        if (substr($fullReportPath, -1) !== '/') {
+            $fullReportPath .= '/';
+        }
+        $reportName = 'alarm_summary_last.html';
+        $string = \Yii::$app->mailer->render('/email/summary', $viewData, '@app/mail/layouts/html');
+
+        echo "Store report(".sizeof($string).") to {$fullReportPath}{$reportName}\n";
+        file_put_contents($fullReportPath . $reportName, $string);
+
+        $archiveName = "alarm_summary_".date('Y_m_d_H_i_s').".html";
+        $archiveReportPath = $fullReportPath.$archiveName;
+        file_put_contents($archiveReportPath, $string);
+
+        $report = new Report();
+        $report->section = "alarm";
+        $report->subject = $subject;
+        $report->url = \Yii::$app->params['domainMain'] . "/static/reports/{$subfolderName}/".$archiveName;
+        $report->save();
     }
 
     public function actionFields()
@@ -129,13 +161,45 @@ class AlarmController extends Controller
         ];
         $subject = 'Робот Аларма: отчет о комплектациях за '.date('d.m.Y');
         $models = Model::find()->all();
-        \Yii::$app->mailer->compose('/email/fields', [
+        $viewData = [
             'models' => $models,
             'header' => $subject,
-        ])
+        ];
+        \Yii::$app->mailer->compose('/email/fields', $viewData)
             ->setFrom($from)
             ->setTo($to)
             ->setSubject($subject)
             ->send();
+
+        $this->saveFieldsReport($subject, $viewData);
+    }
+
+    public function saveFieldsReport($subject, $viewData)
+    {
+        $reportPath = \Yii::getAlias('@app/../../web/static/reports/');
+        $subfolderName = 'alarm';
+        if (!is_dir($reportPath. $subfolderName)) {
+            mkdir($reportPath. $subfolderName);
+        }
+
+        $fullReportPath = realpath($reportPath.$subfolderName.'/');
+        if (substr($fullReportPath, -1) !== '/') {
+            $fullReportPath .= '/';
+        }
+        $reportName = 'alarm_fields_last.html';
+        $string = \Yii::$app->mailer->render('/email/fields', $viewData, '@app/mail/layouts/html');
+
+        echo "Store report(".sizeof($string).") to {$fullReportPath}{$reportName}\n";
+        file_put_contents($fullReportPath . $reportName, $string);
+
+        $archiveName = "alarm_fields_".date('Y_m_d_H_i_s').".html";
+        $archiveReportPath = $fullReportPath.$archiveName;
+        file_put_contents($archiveReportPath, $string);
+
+        $report = new Report();
+        $report->section = "alarm";
+        $report->subject = $subject;
+        $report->url = \Yii::$app->params['domainMain'] . "/static/reports/{$subfolderName}/".$archiveName;
+        $report->save();
     }
 }
