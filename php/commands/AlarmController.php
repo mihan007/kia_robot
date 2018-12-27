@@ -46,7 +46,7 @@ class AlarmController extends Controller
             'robot@turbodealer.ru' => 'Робот Турбодилера'
         ];
         $to = [
-            'mihan007@ya.ru' => 'Куклин Михаил',
+            'mk@turbodealer.ru' => 'Куклин Михаил',
             'ae@alarm-motors.ru' => 'Евстюшкин Александр'
         ];
         $subject = 'Результат работы системы автозаказа';
@@ -99,7 +99,7 @@ class AlarmController extends Controller
             'robot@turbodealer.ru' => 'Робот Турбодилера',
         ];
         $to = [
-            'mihan007@ya.ru' => 'Куклин Михаил',
+            'mk@turbodealer.ru' => 'Куклин Михаил',
             'reports_turbo@mail.ru' => 'Сборщик почты',
             'is@turbodealer.ru' => 'Сняткова Ирина',
             'dav.kirill.86@gmail.com' => 'Давыдовский Кирилл'
@@ -154,7 +154,7 @@ class AlarmController extends Controller
             'robot@turbodealer.ru' => 'Робот Турбодилера',
         ];
         $to = [
-            'mihan007@ya.ru' => 'Куклин Михаил',
+            'mk@turbodealer.ru' => 'Куклин Михаил',
             'reports_turbo@mail.ru' => 'Сборщик почты',
             'is@turbodealer.ru' => 'Сняткова Ирина',
             'dav.kirill.86@gmail.com' => 'Давыдовский Кирилл'
