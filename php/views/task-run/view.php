@@ -19,9 +19,11 @@ $this->params['breadcrumbs'][] = $this->title;
 \yii\web\YiiAsset::register($this);
 $items = [];
 foreach ($taskRun->taskRunScreenshots as $screenshot) {
+    $normalizedUrl = str_replace('/var/www/html/turbo.prod/alarm-robot/js/', '', $screenshot->filepath);
+    $normalizedUrl = str_replace('../php/web', Yii::$app->params['domainMain'], $normalizedUrl);
     $item = [
-        'url' => str_replace('../php/web', Yii::$app->params['domainMain'], $screenshot->filepath),
-        'src' => str_replace('../php/web', Yii::$app->params['domainMain'], $screenshot->filepath),
+        'url' => $normalizedUrl,
+        'src' => $normalizedUrl,
         'options' => ['title' => $screenshot->name]
     ];
     $items[] = $item;
