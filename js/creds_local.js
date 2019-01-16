@@ -5,5 +5,7 @@ module.exports = {
     mysqlHost: 'localhost',
     mysqlUsername: 'root',
     mysqlPassword: '',
-    mysqlDatabase: 'alarm'
+    mysqlDatabase: 'alarm',
+
+    chromeVisible: true
 }

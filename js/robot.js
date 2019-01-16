@@ -84,7 +84,7 @@ async function robot(connection) {
         concurrency: Cluster.CONCURRENCY_CONTEXT,
         maxConcurrency: MAX_CONCURRENCY,
         puppeteerOptions: {
-            headless: false
+            headless: !CREDS.chromeVisible
         }
     });
 
