@@ -22,14 +22,14 @@ const FORM_COLOR_INSIDE_SELECTOR = '#intcolor';
 const FORM_COLOR_OUTSIDE_SELECTOR = '#extcolor';
 const FORM_ONLY_AVAILABLE_SELECTOR = '#board1 > tbody > tr:nth-child(6) > td:nth-child(4) > input[type="checkbox"]';
 const FORM_REQUEST_BUTTON_SELECTOR = '#subContents > table > tbody > tr > td:nth-child(2) > form > div.buttons > a';
-const ORDER_TABLE = '#board2';
+const ORDER_TABLE = '#resultTable';
 const FORM_CHANGE_ORDER_BUTTON = '#subContents > table > tbody > tr > td:nth-child(2) > form > div.buttons > a.negative';
 const FORM_AMOUNT_FIELD = '#commonparam > table > tbody > tr:nth-child(2) > td > input[type="text"]';
 const ORDER_BUTTON = '#commonparam > table > tbody > tr:nth-child(4) > td > div > a:nth-child(2)';
 const ORDER_FREE_SKLAD = '#L2N2';
 const ORDER_FREE_SKLAD_BUTTON = '#subContents > div.buttons > a';
 
-const MAX_CONCURRENCY = 5;
+const MAX_CONCURRENCY = 1;
 
 run();
 
@@ -71,7 +71,7 @@ async function robot(connection) {
 
     let requestExist = true;
 
-    let currentScreenshotPath = SCREENSHOT_PATH;
+    let currentScreenshotPath = __dirname + "/" + SCREENSHOT_PATH;
     if (!fs.existsSync(currentScreenshotPath)) {
         fs.mkdirSync(currentScreenshotPath);
     }
@@ -82,7 +82,10 @@ async function robot(connection) {
     
     const cluster = await Cluster.launch({
         concurrency: Cluster.CONCURRENCY_CONTEXT,
-        maxConcurrency: MAX_CONCURRENCY
+        maxConcurrency: MAX_CONCURRENCY,
+        puppeteerOptions: {
+            headless: false
+        }
     });
 
     const processTask = async ({page, data: task}) => {
@@ -164,7 +167,9 @@ async function robot(connection) {
 
             if (requestExist) {
                 description += currentDate() + " требуемые авто найдены<br>";
-                let ordersTableHtml = await (await (await formFrame.$(ORDER_TABLE)).getProperty('outerHTML')).jsonValue();
+                let orderTable = await formFrame.$(ORDER_TABLE);
+                let outerHtmlOrderTable = await orderTable.getProperty('outerHTML');
+                let ordersTableHtml = await outerHtmlOrderTable.jsonValue();
                 let $ordersTable = cheerio.load(ordersTableHtml);
                 let orders = [];
                 let isDisabled = false;
@@ -254,8 +259,8 @@ async function robot(connection) {
                     filepath: fullpath
                 });
 
-                await formFrame.click(ORDER_BUTTON);
-                await formFrame.waitFor(5000);
+                //await formFrame.click(ORDER_BUTTON);
+                //await formFrame.waitFor(5000);
 
                 description += currentDate() + " всего авто с нужными параметрами заказано " + totalOrdered + " штук<br>";
                 description += currentDate() + " осталось заказать " + remainingAmount + " штук<br>";
