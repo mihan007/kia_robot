@@ -19,6 +19,7 @@ use yii\db\Expression;
  * @property string $color_outside_name
  * @property string $color_outside_value
  * @property int $amount
+ * @property boolean $more_auto
  * @property int $created_at
  * @property int $updated_at
  * @property int $deleted_at
@@ -48,7 +49,7 @@ class Task extends \yii\db\ActiveRecord
     public function rules()
     {
         return [
-            [['amount'], 'integer'],
+            [['amount', 'more_auto'], 'integer'],
             [['amount'], 'required'],
             [['deleted'], 'safe'],
             [['model_name', 'model_value', 'manufacture_code_name', 'manufacture_code_value', 'color_inside_name', 'color_inside_value', 'color_outside_name', 'color_outside_value'], 'string', 'max' => 255],
@@ -71,6 +72,7 @@ class Task extends \yii\db\ActiveRecord
             'color_outside_name' => 'Цвет Кузов',
             'color_outside_value' => 'Цвет Кузов',
             'amount' => 'Количество',
+            'more_auto' => 'Если авто с нужным кодом производителя недостаточно, то заказывать альтернативные',
             'created_at' => 'Дата создания',
             'updated_at' => 'Updated',
             'deleted_at' => 'Deleted',
