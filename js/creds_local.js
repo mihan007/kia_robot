@@ -7,5 +7,8 @@ module.exports = {
     mysqlPassword: '',
     mysqlDatabase: 'alarm',
 
-    chromeVisible: true
+    chromeVisible: false,
+    enableLogging: true,
+
+    maxConcurrency: 5
 }

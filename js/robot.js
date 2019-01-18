@@ -9,9 +9,10 @@ const { Cluster } = require('puppeteer-cluster');
 const loginUrl = 'https://kmr.dealer-portal.net/irj/portal';
 const USERNAME_SELECTOR = '#logonForm > center > table > tbody > tr > td > table:nth-child(1) > tbody > tr:nth-child(2) > td:nth-child(2) > table > tbody > tr:nth-child(1) > td:nth-child(3) > input[type="text"]';
 const PASSWORD_SELECTOR = '#logonForm > center > table > tbody > tr > td > table:nth-child(1) > tbody > tr:nth-child(2) > td:nth-child(2) > table > tbody > tr:nth-child(3) > td:nth-child(3) > input[type="password"]';
-const BUTTON_SELECTOR = '#logonForm > center > table > tbody > tr > td > table:nth-child(1) > tbody > tr:nth-child(2) > td:nth-child(2) > table > tbody > tr:nth-child(1) > td:nth-child(5) > a';
+const LOGIN_BUTTON_SELECTOR = '#logonForm > center > table > tbody > tr > td > table:nth-child(1) > tbody > tr:nth-child(2) > td:nth-child(2) > table > tbody > tr:nth-child(1) > td:nth-child(5) > a';
 const SELL_TAB_SELECTOR = '#tabIndex1';
 const FREE_SKLAD_LEFT_SIDEBAR_SELECTOR = '#L2N1';
+const NEXT_PAGE_SELECTOR = "#board1 > tbody > tr > td > table > tbody > tr > td.ar > a";
 const SCREENSHOT_PATH = '../php/web/screenshots';
 
 const FREE_SKLAD_IFRAME_SELECTOR = '#contentAreaFrame';
@@ -29,7 +30,7 @@ const ORDER_BUTTON = '#commonparam > table > tbody > tr:nth-child(4) > td > div 
 const ORDER_FREE_SKLAD = '#L2N2';
 const ORDER_FREE_SKLAD_BUTTON = '#subContents > div.buttons > a';
 
-const MAX_CONCURRENCY = 1;
+const MAX_CONCURRENCY = CREDS.maxConcurrency;
 
 run();
 
@@ -64,6 +65,14 @@ function currentDate() {
         + ' ' + pad2(date.getHours()) + ':' + pad2(date.getMinutes()) + ':' + pad2(date.getSeconds()) + ']';
 }
 
+function log(...messages) {
+    if (!CREDS.enableLogging) {
+        return;
+    }
+    for (let i=0; i<messages.length; i++) {
+        console.log(currentDate() + " " + messages[i]);
+    }
+}
 
 async function robot(connection) {
 
@@ -85,11 +94,17 @@ async function robot(connection) {
         maxConcurrency: MAX_CONCURRENCY,
         puppeteerOptions: {
             headless: !CREDS.chromeVisible
-        }
+        },
+        timeout: 9 * 60000 //14 minutes
+    });
+
+    // Event handler to be called in case of problems
+    cluster.on('taskerror', (err, data) => {
+        console.log(`Error crawling `, data, `: ${err.message}`);
     });
 
     const processTask = async ({page, data: task}) => {
-        console.log(currentDate() + ' running ', task);
+        log('Running ', task);
         
         page.on('dialog', async dialog => {
             requestExist = false;
@@ -98,24 +113,21 @@ async function robot(connection) {
 
         await page.setViewport({width: 1280, height: 800});
 
+        log("Start logging in");
         await page.goto(loginUrl);
-
         await page.click(USERNAME_SELECTOR);
         await page.keyboard.type(CREDS.username);
-
         await page.click(PASSWORD_SELECTOR);
         await page.keyboard.type(CREDS.password);
+        await page.click(LOGIN_BUTTON_SELECTOR);
+        log("Logged in");
 
-        await page.click(BUTTON_SELECTOR);
-
+        log("Switching to free sklad search page");
         await page.waitFor(SELL_TAB_SELECTOR);
-
         await page.click(SELL_TAB_SELECTOR);
-
         await page.waitFor(FREE_SKLAD_LEFT_SIDEBAR_SELECTOR);
 
         let formFrame, description;
-
         let screenshots = [];
         
         await page.click(FREE_SKLAD_LEFT_SIDEBAR_SELECTOR);
@@ -130,6 +142,7 @@ async function robot(connection) {
                 formFrame = secondFrame
             }
         }
+        log("Switched to free sklad search page");
 
         description = currentDate() + " начали выполнять задачу:<br>";
         description += "<ul>";
@@ -143,21 +156,42 @@ async function robot(connection) {
         let remainingAmount = task.amount;
         let totalOrdered = 0;
         let ind = 1;
+        /**
+         * 0 - ищем строго по данным из фильтра для параметра "Код производителя"
+         * 1 - ищем с параметром "Код производителя"="Все" (этот параметр жестко задан при создании задачи)
+         * @type {number}
+         */
+        let stage;
+        if (task.manufacture_code.length > 0) {
+            stage = 0;
+        } else {
+            stage = 1;
+        }
+        let orderedManufactureCodes = [];
         while (flag) {
             requestExist = true;
 
+            log("Setup search params");
             await formFrame.select(FORM_MODEL_SELECTOR, task.model);
+            log("Task model: " + task.model);
             await formFrame.waitFor(2000);
-            await formFrame.select(FORM_MANUFACTURE_CODE_SELECTOR, task.manufacture_code);
+            const manufactureCode = (stage < 1) ? task.manufacture_code : '';
+            await formFrame.select(FORM_MANUFACTURE_CODE_SELECTOR, manufactureCode);
+            log("Manufacture code: " + manufactureCode);
             await formFrame.select(FORM_COLOR_INSIDE_SELECTOR, task.color_inside);
+            log("Color inside: " + task.color_inside);
             await formFrame.select(FORM_COLOR_OUTSIDE_SELECTOR, task.color_outside);
+            log("Color outside: " + task.color_outside);
             const checkbox = await formFrame.$(FORM_ONLY_AVAILABLE_SELECTOR);
             const isChecked = await (await checkbox.getProperty('checked')).jsonValue();
             if (!isChecked) {
                 await formFrame.click(FORM_ONLY_AVAILABLE_SELECTOR);
+                log("Setup only available checkbox to true");
             }
+            log("Send search request");
             await formFrame.click(FORM_REQUEST_BUTTON_SELECTOR);
             await formFrame.waitFor(5000);
+            log("Sent search request");
 
             let filename = +new Date() + '_' + Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15) + '.png';
             let fullpath = currentScreenshotPath + "/" + filename;
@@ -166,116 +200,169 @@ async function robot(connection) {
             description += currentDate() + " послали поисковый запрос<br>";
 
             if (requestExist) {
-                description += currentDate() + " требуемые авто найдены<br>";
-                let orderTable = await formFrame.$(ORDER_TABLE);
-                let outerHtmlOrderTable = await orderTable.getProperty('outerHTML');
-                let ordersTableHtml = await outerHtmlOrderTable.jsonValue();
-                let $ordersTable = cheerio.load(ordersTableHtml);
-                let orders = [];
-                let isDisabled = false;
-                $ordersTable('tr').each(function (i) {
-                    let order = {};
-                    $ordersTable(this).find('td').each(function (j) {
-                        if (j === 0) {
-                            isDisabled = $ordersTable(this).find('input').is(':disabled');
-                        }
-                        if (!isDisabled) {
-                            switch (j) {
-                                case 0:
-                                    //#board2 > tbody > tr:nth-child(7) > td:nth-child(1) > input[type="radio"]
-                                    order.radioSelector = '#board2 > tbody > tr:nth-child(' + (i + 1) + ') > td:nth-child(1) > input[type="radio"]';
-                                    break;
-                                case 1:
-                                    order.model = $ordersTable(this).text();
-                                    break;
-                                case 2:
-                                    order.manufacture_code = $ordersTable(this).text();
-                                    break;
-                                case 3:
-                                    order.description = $ordersTable(this).text();
-                                    break;
-                                case 4:
-                                    order.color_outside = $ordersTable(this).text();
-                                    break;
-                                case 5:
-                                    order.color_inside = $ordersTable(this).text();
-                                    break;
-                                case 6:
-                                    order.year = $ordersTable(this).text();
-                                    break;
-                                case 7:
-                                    order.storage_code = $ordersTable(this).text();
-                                    break;
-                                case 8:
-                                    order.available = parseInt($ordersTable(this).text());
-                                    break;
-                                case 9:
-                                    order.reserved = parseInt($ordersTable(this).text());
-                                    break;
+                log("Search result exists");
+                let pageCount = 1;
+                let badManufactureCode = false;
+                let chosen;
+                let orders;
+                const currentOrderAmount = 1;
+                do {
+                    log("Look through page " + pageCount);
+                    description += currentDate() + " Страница " + pageCount + "<br>";
+                    let orderTable = await formFrame.$(ORDER_TABLE);
+                    let outerHtmlOrderTable = await orderTable.getProperty('outerHTML');
+                    let ordersTableHtml = await outerHtmlOrderTable.jsonValue();
+                    let $ordersTable = cheerio.load(ordersTableHtml);
+                    orders = [];
+                    let isDisabled = false;
+                    $ordersTable('tr').each(function (i) {
+                        let order = {};
+                        $ordersTable(this).find('td').each(function (j) {
+                            if (j === 0) {
+                                isDisabled = $ordersTable(this).find('input').is(':disabled');
                             }
+                            if (!isDisabled) {
+                                switch (j) {
+                                    case 0:
+                                        //#board2 > tbody > tr:nth-child(7) > td:nth-child(1) > input[type="radio"]
+                                        order.radioSelector = '#board2 > tbody > tr:nth-child(' + (i + 1) + ') > td:nth-child(1) > input[type="radio"]';
+                                        break;
+                                    case 1:
+                                        order.model = $ordersTable(this).text();
+                                        break;
+                                    case 2:
+                                        order.manufacture_code = $ordersTable(this).text();
+                                        break;
+                                    case 3:
+                                        order.description = $ordersTable(this).text();
+                                        break;
+                                    case 4:
+                                        order.color_outside = $ordersTable(this).text();
+                                        break;
+                                    case 5:
+                                        order.color_inside = $ordersTable(this).text();
+                                        break;
+                                    case 6:
+                                        order.year = $ordersTable(this).text();
+                                        break;
+                                    case 7:
+                                        order.storage_code = $ordersTable(this).text();
+                                        break;
+                                    case 8:
+                                        order.available = parseInt($ordersTable(this).text());
+                                        break;
+                                    case 9:
+                                        order.reserved = parseInt($ordersTable(this).text());
+                                        break;
+                                }
+                            }
+                        });
+                        if (order.hasOwnProperty('available')) {
+                            orders.push(order);
                         }
                     });
-                    if (order.hasOwnProperty('available')) {
-                        orders.push(order);
+                    log("Rows at searct result table: " + orders.length);
+
+                    if (stage === 0) {
+                        chosen = 0;
+                    } else {
+                        chosen = false;
+                        for (let i in orders) {
+                            if (!orderedManufactureCodes.includes(orders[i].manufacture_code)) {
+                                chosen = i;
+                                break;
+                            }
+                        }
                     }
-                });
+                    log("Current chosen row: " + chosen);
 
-                let currentOrderAmount = 0;
+                    if (chosen !== false) {
+                        log("Ordering using " + chosen + " row radio selector, manufacture_code: " + orders[chosen].manufacture_code);
+                        await formFrame.click(orders[chosen].radioSelector);
+                        await formFrame.click(FORM_CHANGE_ORDER_BUTTON);
+                        log("Ordered using " + chosen + " row radio selector, manufacture_code: " + orders[chosen].manufacture_code);
 
-                let currentRowAmount = orders[0].available;
-                if (remainingAmount <= currentRowAmount) {
-                    currentOrderAmount = remainingAmount;
+                        orderedManufactureCodes.push(orders[chosen].manufacture_code);
+                        badManufactureCode = false;
+                        description += currentDate() + " Требуемые авто с кодом производителя " + orders[chosen].manufacture_code + " найдены<br>";
+
+                        remainingAmount -= currentOrderAmount;
+                        totalOrdered += currentOrderAmount;
+                        log("remainingAmount: " + remainingAmount);
+                        log("totalOrdered: " + totalOrdered);
+                    } else {
+                        log("Could not find suitable auto at page " + pageCount);
+                        description += currentDate() + " Требуемые авто на странице " + pageCount + " не найдены<br>";
+                        if (await formFrame.$(NEXT_PAGE_SELECTOR) !== null) {
+                            log("Next page exists, switch to it");
+                            description += currentDate() + " Есть следующая страница, идем на нее<br>";
+                            badManufactureCode = true;
+                            await formFrame.click(NEXT_PAGE_SELECTOR);
+                            await formFrame.waitFor(2000);
+                            pageCount++;
+                        } else {
+                            log("No next page exists, stop search");
+                            description += currentDate() + " Следующей страницы нет, прекращаем поиски<br>";
+                            badManufactureCode = false;
+                        }
+                    }
+                } while (badManufactureCode);
+
+                if (chosen !== false) {
+                    description += currentDate() + " заказали " + currentOrderAmount + " авто с параметрами:<br>";
+                    description += "<ul>";
+                    description += "<li><b>Модель</b>: " + orders[chosen].model + "</li>";
+                    description += "<li><b>Код производителя</b>: " + orders[chosen].manufacture_code + "</li>";
+                    description += "<li><b>Описание</b>: " + orders[chosen].description + "</li>";
+                    description += "<li><b>Цвет салона</b>: " + orders[chosen].color_inside + "</li>";
+                    description += "<li><b>Цвет кузова</b>: " + orders[chosen].color_outside + "</li>";
+                    description += "<li><b>Год выпуска</b>: " + orders[chosen].year + "</li>";
+                    description += "<li><b>Код склада</b>: " + orders[chosen].storage_code + "</li>";
+                    description += "</ul>";
+
+                    let filename = +new Date() + '_' + Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15) + '.png';
+                    let fullpath = currentScreenshotPath + "/" + filename;
+                    await page.screenshot({path: fullpath, fullPage: true});
+                    screenshots.push({
+                        name: 'Скриншот #' + (ind++) + '. Результат выбора нужного набора авто',
+                        filepath: fullpath
+                    });
+
+                    await formFrame.click(ORDER_BUTTON);
+                    await formFrame.waitFor(5000);
+
+                    description += currentDate() + " всего авто с нужными параметрами заказано " + totalOrdered + " штук<br>";
+                    description += currentDate() + " осталось заказать " + remainingAmount + " штук<br>";
+
+                    if (remainingAmount <= 0) {
+                        flag = false;
+                        break;
+                    }
                 } else {
-                    currentOrderAmount = currentRowAmount;
-                }
-                remainingAmount -= currentOrderAmount;
-                totalOrdered += currentOrderAmount;
-
-                await formFrame.click(orders[0].radioSelector);
-                await formFrame.click(FORM_CHANGE_ORDER_BUTTON);
-                const formAmount = await formFrame.$(FORM_AMOUNT_FIELD);
-                await formAmount.click();
-                await formAmount.focus();
-                await formAmount.click({clickCount: 3});
-                await formAmount.press('Backspace');
-                await formAmount.type(currentOrderAmount.toString());
-
-                description += currentDate() + " заказали " + currentOrderAmount + " авто с параметрами:<br>";
-                description += "<ul>";
-                description += "<li><b>Модель</b>: " + orders[0].model + "</li>";
-                description += "<li><b>Код производителя</b>: " + orders[0].manufacture_code + "</li>";
-                description += "<li><b>Описание</b>: " + orders[0].description + "</li>";
-                description += "<li><b>Цвет салона</b>: " + orders[0].color_inside + "</li>";
-                description += "<li><b>Цвет кузова</b>: " + orders[0].color_outside + "</li>";
-                description += "<li><b>Год выпуска</b>: " + orders[0].year + "</li>";
-                description += "<li><b>Код склада</b>: " + orders[0].storage_code + "</li>";
-                description += "</ul>";
-
-                let filename = +new Date() + '_' + Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15) + '.png';
-                let fullpath = currentScreenshotPath + "/" + filename;
-                await page.screenshot({path: fullpath, fullPage: true});
-                screenshots.push({
-                    name: 'Скриншот #' + (ind++) + '. Результат выбора первого нужного набора авто',
-                    filepath: fullpath
-                });
-
-                //await formFrame.click(ORDER_BUTTON);
-                //await formFrame.waitFor(5000);
-
-                description += currentDate() + " всего авто с нужными параметрами заказано " + totalOrdered + " штук<br>";
-                description += currentDate() + " осталось заказать " + remainingAmount + " штук<br>";
-
-                if (remainingAmount <= 0) {
-                    flag = false;
-                    break;
+                    description += currentDate() + " требуемые авто не найдены<br>";
+                    if (task.more_auto && stage < 1) {
+                        stage++;
+                        flag = true;
+                    } else {
+                        flag = false;
+                    }
                 }
             } else {
+                log("Search result does not exists");
                 description += currentDate() + " требуемые авто не найдены<br>";
-                flag = false;
+                if (task.more_auto && stage < 1) {
+                    log("More auto mode enabled, go to next stage");
+                    stage++;
+                    flag = true;
+                } else {
+                    log("Search done");
+                    flag = false;
+                }
             }
         }
 
         if (totalOrdered > 0) {
+            log("So we have ordered: " + totalOrdered);
             await page.click(ORDER_FREE_SKLAD);
             await page.waitFor(FREE_SKLAD_IFRAME_SELECTOR);
             firstFrame = await page.frames().find(f => f.name() === 'contentAreaFrame');
@@ -295,6 +382,8 @@ async function robot(connection) {
             let fullpath = currentScreenshotPath + "/" + filename;
             await page.screenshot({path: fullpath, fullPage: true});
             screenshots.push({name: 'Скриншот #' + (ind++) + '. Результат заказа авто', filepath: fullpath});
+        } else {
+            log("So we have ordered nothing");
         }
 
         task.task_id = task.id;
@@ -361,6 +450,7 @@ function getTasksFromDb(connection) {
                             color_outside: results[i].color_outside_value,
                             color_outside_name: results[i].color_outside_name,
                             amount: results[i].amount,
+                            more_auto: (results[i].more_auto === 1)
                         };
                         tasks.push(task);
                     }
