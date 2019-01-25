@@ -41,6 +41,7 @@ AppAsset::register($this);
         $items[] = ['label' => 'Текущие задачи', 'url' => ['/task/index']];
         $items[] = ['label' => 'Архив задач', 'url' => ['/task/archive']];
         $items[] = ['label' => 'Запуски задач', 'url' => ['/task-run/index']];
+        $items[] = ['label' => 'Приоритет цветов', 'url' => ['/color-preferences/index']];
     }
     $items[] = Yii::$app->user->isGuest ?  ['label' => 'Войти', 'url' => ['/site/login']] :
                 '<li>'
