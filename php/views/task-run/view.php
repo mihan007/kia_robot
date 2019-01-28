@@ -21,6 +21,7 @@ $items = [];
 foreach ($taskRun->taskRunScreenshots as $screenshot) {
     $normalizedUrl = str_replace('/var/www/html/turbo.prod/alarm-robot/js/', '', $screenshot->filepath);
     $normalizedUrl = str_replace('/Users/mihan007/Sites/alarm-robot/js/', '', $screenshot->filepath);
+    $normalizedUrl = str_replace('/Users/mihan007/Projects/alarm-robot/js/', '', $screenshot->filepath);
     $normalizedUrl = str_replace('../php/web', Yii::$app->params['domainMain'], $normalizedUrl);
     $item = [
         'url' => $normalizedUrl,
