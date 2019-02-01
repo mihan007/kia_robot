@@ -122,7 +122,8 @@ async function getTasksFromDb(connection) {
                             color_outside_name: results[i].color_outside_name,
                             amount: results[i].amount,
                             remain: results[i].amount,
-                            more_auto: (results[i].more_auto === 1)
+                            more_auto: (results[i].more_auto === 1),
+                            searchDialogHandled: false
                         };
                         tasks.push(task);
                     }
@@ -270,18 +271,16 @@ function logInfoAboutSearch(task, isFirstStage) {
     return description;
 }
 
-let dialogHandled = false;
-let requestExists = true;
-
 async function sendSearchRequest(page, formFrame, task) {
-    if (!dialogHandled) {
+    if (!task.searchDialogHandled) {
         page.on('dialog', async dialog => {
-            requestExists = false;
+            task.searchResultExists = false;
             await dialog.dismiss();
         });
-        dialogHandled = true;
+        task.searchDialogHandled = true;
     }
 
+    task.searchResultExists = true;
     log("Setup search params");
     await formFrame.select(FORM_MODEL_SELECTOR, task.model);
     log("Task model: " + task.model);
@@ -306,7 +305,7 @@ async function sendSearchRequest(page, formFrame, task) {
     await formFrame.waitFor(5000);
     log("Sent search request");
 
-    return requestExists;
+    return task.searchResultExists;
 }
 
 function makeUniqueScreenshotName() {
@@ -322,128 +321,153 @@ async function saveScreenshot(currentScreenshotPath, page, name) {
     };
 }
 
-async function orderTask(page, formFrame, task, description, manufactureCodes, screenshots)
-{
-    let searchResultExists = await sendSearchRequest(page, formFrame, task);
-    if (searchResultExists) {
+async function orderTask(page, formFrame, task, description, manufactureCodes, screenshots) {
+    let orderMore = true;
+    let currentPage = 1;
+
+    do {
+        let searchResultExists = await sendSearchRequest(page, formFrame, task);
+        screenshots.push(await saveScreenshot(task.currentScreenshotPath, page, 'Результат поиска нужного авто'));
+        if (!searchResultExists) {
+            log("No search result");
+            break;
+        }
+
         log("Search result exists");
-        let orderMore = true;
-        let currentPage = 1;
-        while (orderMore) {
-            description += currentDate() + " Страница " + currentPage + "<br>";
-            let orderTable = await formFrame.$(ORDER_TABLE);
-            let outerHtmlOrderTable = await orderTable.getProperty('outerHTML');
-            let ordersTableHtml = await outerHtmlOrderTable.jsonValue();
-            let $ordersTable = cheerio.load(ordersTableHtml);
-            let orders = [];
-            let isDisabled = false;
-            $ordersTable('tr').each(function (i) {
-                let order = {};
-                $ordersTable(this).find('td').each(function (j) {
-                    if (j === 0) {
-                        isDisabled = $ordersTable(this).find('input').is(':disabled');
+        description += currentDate() + " Страница " + currentPage + "<br>";
+        let orderTable = await formFrame.$(ORDER_TABLE);
+        let outerHtmlOrderTable = await orderTable.getProperty('outerHTML');
+        let ordersTableHtml = await outerHtmlOrderTable.jsonValue();
+        let $ordersTable = cheerio.load(ordersTableHtml);
+        let orders = [];
+        let isDisabled = false;
+        $ordersTable('tr').each(function (i) {
+            let order = {};
+            $ordersTable(this).find('td').each(function (j) {
+                if (j === 0) {
+                    isDisabled = $ordersTable(this).find('input').is(':disabled');
+                }
+                if (!isDisabled) {
+                    switch (j) {
+                        case 0:
+                            //#board2 > tbody > tr:nth-child(7) > td:nth-child(1) > input[type="radio"]
+                            order.radioSelector = '#board2 > tbody > tr:nth-child(' + (i + 1) + ') > td:nth-child(1) > input[type="radio"]';
+                            break;
+                        case 1:
+                            order.model = $ordersTable(this).text();
+                            break;
+                        case 2:
+                            order.manufacture_code = $ordersTable(this).text();
+                            break;
+                        case 3:
+                            order.description = $ordersTable(this).text();
+                            break;
+                        case 4:
+                            order.color_outside = $ordersTable(this).text();
+                            break;
+                        case 5:
+                            order.color_inside = $ordersTable(this).text();
+                            break;
+                        case 6:
+                            order.year = $ordersTable(this).text();
+                            break;
+                        case 7:
+                            order.storage_code = $ordersTable(this).text();
+                            break;
+                        case 8:
+                            order.available = parseInt($ordersTable(this).text());
+                            break;
+                        case 9:
+                            order.reserved = parseInt($ordersTable(this).text());
+                            break;
                     }
-                    if (!isDisabled) {
-                        switch (j) {
-                            case 0:
-                                //#board2 > tbody > tr:nth-child(7) > td:nth-child(1) > input[type="radio"]
-                                order.radioSelector = '#board2 > tbody > tr:nth-child(' + (i + 1) + ') > td:nth-child(1) > input[type="radio"]';
-                                break;
-                            case 1:
-                                order.model = $ordersTable(this).text();
-                                break;
-                            case 2:
-                                order.manufacture_code = $ordersTable(this).text();
-                                break;
-                            case 3:
-                                order.description = $ordersTable(this).text();
-                                break;
-                            case 4:
-                                order.color_outside = $ordersTable(this).text();
-                                break;
-                            case 5:
-                                order.color_inside = $ordersTable(this).text();
-                                break;
-                            case 6:
-                                order.year = $ordersTable(this).text();
-                                break;
-                            case 7:
-                                order.storage_code = $ordersTable(this).text();
-                                break;
-                            case 8:
-                                order.available = parseInt($ordersTable(this).text());
-                                break;
-                            case 9:
-                                order.reserved = parseInt($ordersTable(this).text());
-                                break;
-                        }
-                    }
-                });
-                if (order.hasOwnProperty('available')) {
-                    orders.push(order);
                 }
             });
+            if (order.hasOwnProperty('available')) {
+                orders.push(order);
+            }
+        });
 
-            let chosen = 0;
-            if (manufactureCodes === false) {
-                chosen = 0;
-            } else {
-                chosen = false;
-                for (let i in orders) {
-                    if (!manufactureCodes.includes(orders[i].manufacture_code)) {
-                        chosen = i;
-                        break;
-                    }
+        let chosen = 0;
+        if (manufactureCodes === false) {
+            chosen = 0;
+        } else {
+            chosen = false;
+            for (let i in orders) {
+                if (!manufactureCodes.includes(orders[i].manufacture_code)) {
+                    chosen = i;
+                    break;
                 }
             }
-            log("Current chosen row: " + chosen);
+        }
+        log("Current chosen row: " + chosen);
 
-            if (chosen !== false) {
-                log("Ordering using " + chosen + " row radio selector, manufacture_code: " + orders[chosen].manufacture_code);
-                await formFrame.click(orders[chosen].radioSelector);
+        if (chosen !== false) {
+            log("Ordering using " + chosen + " row radio selector, manufacture_code: " + orders[chosen].manufacture_code);
+            await formFrame.click(orders[chosen].radioSelector);
 
-                screenshots.push(await saveScreenshot(task.currentScreenshotPath, page, 'Результат выбора нужного авто'));
+            screenshots.push(await saveScreenshot(task.currentScreenshotPath, page, 'Результат выбора нужного авто'));
 
-                await formFrame.click(FORM_CHANGE_ORDER_BUTTON);
-                log("Ordered using " + chosen + " row radio selector, manufacture_code: " + orders[chosen].manufacture_code);
+            await formFrame.click(FORM_CHANGE_ORDER_BUTTON);
+            log("Ordered using " + chosen + " row radio selector, manufacture_code: " + orders[chosen].manufacture_code);
 
-                screenshots.push(await saveScreenshot(task.currentScreenshotPath, page, 'Окно заказа нужной комплектации авто'));
+            screenshots.push(await saveScreenshot(task.currentScreenshotPath, page, 'Окно заказа нужной комплектации авто'));
 
-                await formFrame.click(ORDER_BUTTON);
-                await formFrame.waitFor(5000);
+            await formFrame.click(ORDER_BUTTON);
+            await formFrame.waitFor(5000);
 
-                manufactureCodes.push(orders[chosen].manufacture_code);
+            manufactureCodes.push(orders[chosen].manufacture_code);
+            orderMore = true;
+            description += currentDate() + " Требуемые авто с кодом производителя " + orders[chosen].manufacture_code + " найдены и заказаны<br>";
+
+            task.remain -= 1;
+            log("remainingAmount: " + task.remain);
+        } else {
+            log("Could not find suitable auto at page " + currentPage);
+            description += currentDate() + " Требуемые авто на странице " + currentPage + " не найдены<br>";
+            if (await formFrame.$(NEXT_PAGE_SELECTOR) !== null) {
+                log("Next page exists, switch to it");
+                description += currentDate() + " Есть следующая страница, идем на нее<br>";
                 orderMore = true;
-                description += currentDate() + " Требуемые авто с кодом производителя " + orders[chosen].manufacture_code + " найдены и заказаны<br>";
-
-                task.remain -= 1;
-                log("remainingAmount: " + task.remain);
+                await formFrame.click(NEXT_PAGE_SELECTOR);
+                await formFrame.waitFor(2000);
+                currentPage++;
             } else {
-                log("Could not find suitable auto at page " + currentPage);
-                description += currentDate() + " Требуемые авто на странице " + currentPage + " не найдены<br>";
-                if (await formFrame.$(NEXT_PAGE_SELECTOR) !== null) {
-                    log("Next page exists, switch to it");
-                    description += currentDate() + " Есть следующая страница, идем на нее<br>";
-                    orderMore = true;
-                    await formFrame.click(NEXT_PAGE_SELECTOR);
-                    await formFrame.waitFor(2000);
-                    currentPage++;
-                } else {
-                    log("No next page exists, stop search");
-                    description += currentDate() + " Следующей страницы нет, прекращаем поиски<br>";
-                    orderMore = false;
-                }
-            }
-
-            if (task.remain <= 0) {
-                log('We have ordered enough, stop');
-                description += currentDate() + " Заказали достаточно, останавливаемся<br>";
+                log("No next page exists, stop search");
+                description += currentDate() + " Следующей страницы нет, прекращаем поиски<br>";
                 orderMore = false;
             }
         }
-    }
+
+        if (task.remain <= 0) {
+            log('We have ordered enough, stop');
+            description += currentDate() + " Заказали достаточно, останавливаемся<br>";
+            orderMore = false;
+        }
+    } while (orderMore);
 
     return task;
+}
+
+async function switchToFreeSkladAndSaveScreenshot(page, formFrame, screenshots, task) {
+    await page.click(ORDER_FREE_SKLAD);
+    await page.waitFor(FREE_SKLAD_IFRAME_SELECTOR);
+    let firstFrame = await page.frames().find(f => f.name() === 'contentAreaFrame');
+    await firstFrame.waitFor(FREE_SKLAD_CONTENT_IFRAME);
+    await firstFrame.waitFor(2000);
+
+    for (const secondFrame of firstFrame.childFrames()) {
+        const modelField = await secondFrame.$(FORM_MODEL_SELECTOR);
+        if (modelField) {
+            formFrame = secondFrame
+        }
+    }
+
+    await formFrame.click(ORDER_FREE_SKLAD_BUTTON);
+    await formFrame.waitFor(5000);
+    const name = 'Результат заказа авто';
+    screenshots.push(await saveScreenshot(task.currentScreenshotPath, page, name));
+    return formFrame;
 }
 
 /**
@@ -745,27 +769,6 @@ const processSimpleTask = async ({page, data: task}) => {
     }
 };
 
-async function switchToFreeSkladAndSaveScreenshot(page, formFrame, screenshots, task) {
-    await page.click(ORDER_FREE_SKLAD);
-    await page.waitFor(FREE_SKLAD_IFRAME_SELECTOR);
-    let firstFrame = await page.frames().find(f => f.name() === 'contentAreaFrame');
-    await firstFrame.waitFor(FREE_SKLAD_CONTENT_IFRAME);
-    await firstFrame.waitFor(2000);
-
-    for (const secondFrame of firstFrame.childFrames()) {
-        const modelField = await secondFrame.$(FORM_MODEL_SELECTOR);
-        if (modelField) {
-            formFrame = secondFrame
-        }
-    }
-
-    await formFrame.click(ORDER_FREE_SKLAD_BUTTON);
-    await formFrame.waitFor(5000);
-    const name = 'Результат заказа авто';
-    screenshots.push(await saveScreenshot(task.currentScreenshotPath, page, name));
-    return formFrame;
-}
-
 /**
  * Задача - поиск автомобилей с разными цветами кузова, отобранными по приоритетам
  * @param page
@@ -941,7 +944,7 @@ const processComplexTask = async ({page, data: task}) => {
             task.color_outside = colorCode;
             let remainBefore = task.remain;
             description += logInfoAboutSearch(task, false);
-            task = await orderTask(page, formFrame, task, description,false, screenshots);
+            task = await orderTask(page, formFrame, task, description, false, screenshots);
             let remainAfter = task.remain;
             let ordered = remainBefore - remainAfter;
             totalOrdered += ordered;
@@ -951,9 +954,10 @@ const processComplexTask = async ({page, data: task}) => {
             }
         }
     }
-    let manufactureCodes = [];
+
     for (let colorCode in commonManufactureCodeQueue) {
         if (commonManufactureCodeQueue.hasOwnProperty(colorCode)) {
+            let manufactureCodes = [];
             log("Order task with any manufacture_code and color " + colorCode);
             description += currentDate() + " Теперь заказываем произвольный код производителя и приоритетный цвет: " + colorCode + "<br>";
             task.manufacture_code = "";
@@ -989,8 +993,47 @@ const processComplexTask = async ({page, data: task}) => {
     }
 };
 
+async function getCountOfOrderedCars(connection, task_id) {
+    return new Promise((resolve, reject) => {
+        connection.select(
+            'task_run', '*',
+            {task_id: task_id},
+            {},
+            (err, results) => {
+                if (err) {
+                    reject(err);
+                } else {
+                    let ordered = 0;
+                    for (const i in results) {
+                        ordered += results[i].amount_ordered;
+                    }
+                    resolve(ordered);
+                }
+            }
+        );
+    })
+}
+
+async function filterTasks(connection, allTasks) {
+    let result = [];
+    for (let i in allTasks) {
+        let alreadyOrdered = await getCountOfOrderedCars(connection, allTasks[i].id);
+        if (allTasks[i].amount > alreadyOrdered) {
+            let newTask = allTasks[i];
+            newTask.amount = allTasks[i].amount - alreadyOrdered;
+            newTask.remain = newTask.amount;
+
+            result.push(newTask);
+        }
+    }
+
+    return result;
+}
+
 async function robot(connection) {
-    let tasks = await getTasksFromDb(connection);
+    let allTasks = await getTasksFromDb(connection);
+    let tasks = await filterTasks(connection, allTasks);
+
     let colorPreferences = await getColorPreferences(connection);
 
     let currentScreenshotPath = __dirname + "/" + SCREENSHOT_PATH;
