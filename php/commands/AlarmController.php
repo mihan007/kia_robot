@@ -25,38 +25,44 @@ class AlarmController extends Controller
 {
     public function actionNotification()
     {
-        $tasks = Task::find()
-            ->where(['deleted_at' => 0])
+        $taskRuns = TaskRun::find()
+            ->where(['notified' => 0])
             ->orderBy(['id' => 'ASC'])
             ->all();
-        $viewData = [];
-        foreach ($tasks as $task) {
-            $taskRuns = TaskRun::find()
-                ->where(['task_id' => $task->id])
-                ->andWhere(['>', 'created_at', date('Y-m-d') . ' 00:00:00'])
-                ->all();
-            $item = [
-                'task' => $task,
-                'taskRuns' => $taskRuns
-            ];
-            $viewData[] = $item;
-        }
 
         $from = [
             'robot@turbodealer.ru' => 'Робот Турбодилера'
         ];
         $to = [
-            'mk@turbodealer.ru' => 'Куклин Михаил',
-            'ae@alarm-motors.ru' => 'Евстюшкин Александр'
+            'mk@turbodealer.ru',
+            'asmirnov@alarm-motors.ru',
+            'apimkin@alarm-motors.ru',
+            'alpronin@alarm-motors.ru',
+            'apozigun@alarm-motors.ru'
         ];
-        $subject = 'Результат работы системы автозаказа';
-        \Yii::$app->mailer->compose('/email/robot', [
-            'data' => $viewData
-        ])
-            ->setFrom($from)
-            ->setTo($to)
-            ->setSubject($subject)
-            ->send();
+
+        $filtered = [];
+        foreach ($taskRuns as $taskRun) {
+            if ($taskRun->amount_ordered > 0) {
+                $filtered[] = $taskRun;
+            }
+            $taskRun->notified = 1;
+            $taskRun->update(false, ['notified']);
+        }
+
+        if (sizeof($filtered) > 0) {
+            echo "Sending notification about ".sizeof($filtered)." task runs\n";
+            $subject = 'Результат работы системы автозаказа';
+            \Yii::$app->mailer->compose('/email/robot', [
+                'taskRuns' => $filtered
+            ])
+                ->setFrom($from)
+                ->setTo($to)
+                ->setSubject($subject)
+                ->send();
+        } else {
+            echo "No notification as of now\n";
+        }
     }
 
     public function actionSummary($date = false)
@@ -104,7 +110,7 @@ class AlarmController extends Controller
             'is@turbodealer.ru' => 'Сняткова Ирина',
             'dav.kirill.86@gmail.com' => 'Давыдовский Кирилл'
         ];
-        $subject = 'Робот Аларма: отчет о заказанных авто за '.date('d.m.Y', $yesterday);
+        $subject = 'Робот Аларма: отчет о заказанных авто за ' . date('d.m.Y', $yesterday);
         $viewData = [
             'data' => $tasks,
             'date' => date('d.m.Y', $yesterday),
@@ -123,28 +129,28 @@ class AlarmController extends Controller
     {
         $reportPath = \Yii::getAlias('@app/../../web/static/reports/');
         $subfolderName = 'alarm';
-        if (!is_dir($reportPath. $subfolderName)) {
-            mkdir($reportPath. $subfolderName);
+        if (!is_dir($reportPath . $subfolderName)) {
+            mkdir($reportPath . $subfolderName);
         }
 
-        $fullReportPath = realpath($reportPath.$subfolderName.'/');
+        $fullReportPath = realpath($reportPath . $subfolderName . '/');
         if (substr($fullReportPath, -1) !== '/') {
             $fullReportPath .= '/';
         }
         $reportName = 'alarm_summary_last.html';
         $string = \Yii::$app->mailer->render('/email/summary', $viewData, '@app/mail/layouts/html');
 
-        echo "Store report(".sizeof($string).") to {$fullReportPath}{$reportName}\n";
+        echo "Store report(" . sizeof($string) . ") to {$fullReportPath}{$reportName}\n";
         file_put_contents($fullReportPath . $reportName, $string);
 
-        $archiveName = "alarm_summary_".date('Y_m_d_H_i_s').".html";
-        $archiveReportPath = $fullReportPath.$archiveName;
+        $archiveName = "alarm_summary_" . date('Y_m_d_H_i_s') . ".html";
+        $archiveReportPath = $fullReportPath . $archiveName;
         file_put_contents($archiveReportPath, $string);
 
         $report = new Report();
         $report->section = "alarm";
         $report->subject = $subject;
-        $report->url = \Yii::$app->params['turboDomainMain'] . "/static/reports/{$subfolderName}/".$archiveName;
+        $report->url = \Yii::$app->params['turboDomainMain'] . "/static/reports/{$subfolderName}/" . $archiveName;
         $report->save();
     }
 
@@ -159,7 +165,7 @@ class AlarmController extends Controller
             'is@turbodealer.ru' => 'Сняткова Ирина',
             'dav.kirill.86@gmail.com' => 'Давыдовский Кирилл'
         ];
-        $subject = 'Робот Аларма: отчет о комплектациях за '.date('d.m.Y');
+        $subject = 'Робот Аларма: отчет о комплектациях за ' . date('d.m.Y');
         $models = Model::find()->all();
         $viewData = [
             'models' => $models,
@@ -178,28 +184,28 @@ class AlarmController extends Controller
     {
         $reportPath = \Yii::getAlias('@app/../../web/static/reports/');
         $subfolderName = 'alarm';
-        if (!is_dir($reportPath. $subfolderName)) {
-            mkdir($reportPath. $subfolderName);
+        if (!is_dir($reportPath . $subfolderName)) {
+            mkdir($reportPath . $subfolderName);
         }
 
-        $fullReportPath = realpath($reportPath.$subfolderName.'/');
+        $fullReportPath = realpath($reportPath . $subfolderName . '/');
         if (substr($fullReportPath, -1) !== '/') {
             $fullReportPath .= '/';
         }
         $reportName = 'alarm_fields_last.html';
         $string = \Yii::$app->mailer->render('/email/fields', $viewData, '@app/mail/layouts/html');
 
-        echo "Store report(".sizeof($string).") to {$fullReportPath}{$reportName}\n";
+        echo "Store report(" . sizeof($string) . ") to {$fullReportPath}{$reportName}\n";
         file_put_contents($fullReportPath . $reportName, $string);
 
-        $archiveName = "alarm_fields_".date('Y_m_d_H_i_s').".html";
-        $archiveReportPath = $fullReportPath.$archiveName;
+        $archiveName = "alarm_fields_" . date('Y_m_d_H_i_s') . ".html";
+        $archiveReportPath = $fullReportPath . $archiveName;
         file_put_contents($archiveReportPath, $string);
 
         $report = new Report();
         $report->section = "alarm";
         $report->subject = $subject;
-        $report->url = \Yii::$app->params['turboDomainMain'] . "/static/reports/{$subfolderName}/".$archiveName;
+        $report->url = \Yii::$app->params['turboDomainMain'] . "/static/reports/{$subfolderName}/" . $archiveName;
         $report->save();
     }
 }
