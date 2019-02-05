@@ -170,7 +170,8 @@ async function saveTaskRunToDb(connection, taskInfo) {
                 color_outside_name: taskInfo.color_outside_name,
                 amount: taskInfo.amount,
                 description: taskInfo.description,
-                amount_ordered: taskInfo.amount_ordered
+                amount_ordered: taskInfo.amount_ordered,
+                ordered_manufacture_codes: taskInfo.ordered_manufacture_codes
             },
             (err, recordId) => {
                 if (err) {
@@ -391,7 +392,9 @@ async function orderTask(page, formFrame, task, description, manufactureCodes, s
         let chosen = 0;
         if (manufactureCodes === false) {
             chosen = 0;
+            orderMore = true;
         } else {
+            orderMore = false; //мы будем заказывать по 1 авто каждого цвета, ротируя цвета
             chosen = false;
             for (let i in orders) {
                 if (!manufactureCodes.includes(orders[i].manufacture_code)) {
@@ -417,12 +420,13 @@ async function orderTask(page, formFrame, task, description, manufactureCodes, s
             await formFrame.waitFor(5000);
 
             manufactureCodes.push(orders[chosen].manufacture_code);
-            orderMore = true;
             description += currentDate() + " Требуемые авто с кодом производителя " + orders[chosen].manufacture_code + " найдены и заказаны<br>";
 
             task.remain -= 1;
+            task.orderedManufactureCode = orders[chosen].manufacture_code;
             log("remainingAmount: " + task.remain);
         } else {
+            task.orderedManufactureCode = false;
             log("Could not find suitable auto at page " + currentPage);
             description += currentDate() + " Требуемые авто на странице " + currentPage + " не найдены<br>";
             if (await formFrame.$(NEXT_PAGE_SELECTOR) !== null) {
@@ -769,6 +773,16 @@ const processSimpleTask = async ({page, data: task}) => {
     }
 };
 
+function cleanCodes(specificManufactureCodeQueue) {
+    for (let colorCode in specificManufactureCodeQueue) {
+        if (specificManufactureCodeQueue.hasOwnProperty(colorCode)) {
+            if (specificManufactureCodeQueue[colorCode] === 0) {
+                delete specificManufactureCodeQueue[colorCode];
+            }
+        }
+    }
+}
+
 /**
  * Задача - поиск автомобилей с разными цветами кузова, отобранными по приоритетам
  * @param page
@@ -921,20 +935,9 @@ const processComplexTask = async ({page, data: task}) => {
         log("Search result does not exists");
         description += currentDate() + " требуемые авто не найдены<br>";
     }
-    for (let colorCode in specificManufactureCodeQueue) {
-        if (specificManufactureCodeQueue.hasOwnProperty(colorCode)) {
-            if (specificManufactureCodeQueue[colorCode] === 0) {
-                delete specificManufactureCodeQueue[colorCode];
-            }
-        }
-    }
-    for (let colorCode in commonManufactureCodeQueue) {
-        if (commonManufactureCodeQueue.hasOwnProperty(colorCode)) {
-            if (commonManufactureCodeQueue[colorCode] === 0) {
-                delete commonManufactureCodeQueue[colorCode];
-            }
-        }
-    }
+
+    cleanCodes(specificManufactureCodeQueue);
+    cleanCodes(commonManufactureCodeQueue);
 
     let totalOrdered = 0;
     for (let colorCode in specificManufactureCodeQueue) {
@@ -955,25 +958,35 @@ const processComplexTask = async ({page, data: task}) => {
         }
     }
 
-    for (let colorCode in commonManufactureCodeQueue) {
-        if (commonManufactureCodeQueue.hasOwnProperty(colorCode)) {
-            let manufactureCodes = [];
-            log("Order task with any manufacture_code and color " + colorCode);
-            description += currentDate() + " Теперь заказываем произвольный код производителя и приоритетный цвет: " + colorCode + "<br>";
-            task.manufacture_code = "";
-            task.color_outside = colorCode;
-            let remainBefore = task.remain;
-            description += logInfoAboutSearch(task, false);
-            task = await orderTask(page, formFrame, task, description, manufactureCodes, screenshots);
-            let remainAfter = task.remain;
-            let ordered = remainBefore - remainAfter;
-            totalOrdered += ordered;
-            description += currentDate() + " на данном этапе заказано: " + ordered + " штук, всего заказано: " + totalOrdered + ", осталось: " + task.remain + "<br>";
-            if (task.remain <= 0) {
-                break;
+    let orderedManufactureCodesByTaskRun = [];
+
+    let orderedForCycle;
+    do {
+        orderedForCycle = 0;
+        for (let colorCode in commonManufactureCodeQueue) {
+            if (commonManufactureCodeQueue.hasOwnProperty(colorCode)) {
+                let manufactureCodes = task.alreadyOrderedManufactureCodes;
+                log("Order task with any manufacture_code and color " + colorCode);
+                description += currentDate() + " Теперь заказываем произвольный код производителя и приоритетный цвет: " + colorCode + "<br>";
+                task.manufacture_code = "";
+                task.color_outside = colorCode;
+                let remainBefore = task.remain;
+                description += logInfoAboutSearch(task, false);
+                task = await orderTask(page, formFrame, task, description, manufactureCodes, screenshots);
+                let remainAfter = task.remain;
+                let ordered = remainBefore - remainAfter;
+                totalOrdered += ordered;
+                orderedForCycle += ordered;
+                if (task.orderedManufactureCode !== false) {
+                    orderedManufactureCodesByTaskRun.push(task.orderedManufactureCode);
+                }
+                description += currentDate() + " на данном этапе заказано: " + ordered + " штук, всего заказано: " + totalOrdered + ", осталось: " + task.remain + "<br>";
+                if (task.remain <= 0) {
+                    break;
+                }
             }
         }
-    }
+    } while (orderedForCycle > 0);
 
     if (totalOrdered > 0) {
         log("So we have ordered: " + totalOrdered);
@@ -985,6 +998,7 @@ const processComplexTask = async ({page, data: task}) => {
     task.task_id = task.id;
     task.description = description;
     task.amount_ordered = totalOrdered;
+    task.ordered_manufacture_codes = orderedManufactureCodesByTaskRun.join(",");
     let taskRunId = await saveTaskRunToDb(task.connection, task);
 
     for (let iScr in screenshots) {
@@ -993,7 +1007,7 @@ const processComplexTask = async ({page, data: task}) => {
     }
 };
 
-async function getCountOfOrderedCars(connection, task_id) {
+async function getOrderedCars(connection, task_id) {
     return new Promise((resolve, reject) => {
         connection.select(
             'task_run', '*',
@@ -1004,10 +1018,21 @@ async function getCountOfOrderedCars(connection, task_id) {
                     reject(err);
                 } else {
                     let ordered = 0;
+                    let alreadyOrderedManufactureCodes = [];
                     for (const i in results) {
                         ordered += results[i].amount_ordered;
+                        let alreadyOrdered;
+                        if (results[i].ordered_manufacture_codes !== null) {
+                            alreadyOrdered = results[i].ordered_manufacture_codes.split(',');
+                        } else {
+                            alreadyOrdered = [];
+                        }
+                        alreadyOrderedManufactureCodes.push(...alreadyOrdered);
                     }
-                    resolve(ordered);
+                    resolve({
+                        amount: ordered,
+                        alreadyOrderedManufactureCodes: alreadyOrderedManufactureCodes
+                    });
                 }
             }
         );
@@ -1017,11 +1042,12 @@ async function getCountOfOrderedCars(connection, task_id) {
 async function filterTasks(connection, allTasks) {
     let result = [];
     for (let i in allTasks) {
-        let alreadyOrdered = await getCountOfOrderedCars(connection, allTasks[i].id);
-        if (allTasks[i].amount > alreadyOrdered) {
+        let orderedCars = await getOrderedCars(connection, allTasks[i].id);
+        if (allTasks[i].amount > orderedCars.amount) {
             let newTask = allTasks[i];
-            newTask.amount = allTasks[i].amount - alreadyOrdered;
+            newTask.amount = allTasks[i].amount - orderedCars.amount;
             newTask.remain = newTask.amount;
+            newTask.alreadyOrderedManufactureCodes = orderedCars.alreadyOrderedManufactureCodes;
 
             result.push(newTask);
         }
