@@ -6,6 +6,7 @@ use Yii;
 use app\models\TaskRun;
 use yii\data\ActiveDataProvider;
 use yii\web\Controller;
+use yii\web\HttpException;
 use yii\web\NotFoundHttpException;
 use yii\filters\VerbFilter;
 
@@ -14,15 +15,22 @@ use yii\filters\VerbFilter;
  */
 class TaskRunController extends Controller
 {
-
     /**
      * Lists all Task models.
      * @return mixed
      */
     public function actionIndex()
     {
+        if (Yii::$app->user->isAdmin) {
+            $query = TaskRun::find()->orderBy('id DESC');
+        }
+        if (Yii::$app->user->isLeadManager) {
+            $query = TaskRun::find()->where(['company_id' => Yii::$app->user->companyId])->orderBy('id DESC');
+        } else {
+            $query = TaskRun::find()->where(['user_id' => Yii::$app->user->id])->orderBy('id DESC');
+        }
         $dataProvider = new ActiveDataProvider([
-            'query' => TaskRun::find()->orderBy('id DESC'),
+            'query' => $query,
         ]);
 
         return $this->render('index', [
@@ -40,6 +48,17 @@ class TaskRunController extends Controller
     {
         $taskRun = $this->findModel($id);
         $task = $taskRun->task;
+        if (Yii::$app->user->isAdmin) {
+
+        } else if (Yii::$app->user->isLeadManager) {
+            if ($taskRun->company_id != Yii::$app->user->companyId) {
+                throw new HttpException(403, 'Доступ запрещен');
+            }
+        } else {
+            if ($taskRun->user_id != Yii::$app->user->id) {
+                throw new HttpException(403, 'Доступ запрещен');
+            }
+        }
 
         return $this->render('view', [
             'task' => $task,

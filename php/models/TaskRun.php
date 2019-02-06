@@ -24,6 +24,8 @@ use Yii;
  *
  * @property Task $task
  * @property TaskRunScreenshot[] $taskRunScreenshots
+ * @property Company $company
+ * @property User $user
  */
 class TaskRun extends \yii\db\ActiveRecord
 {
@@ -84,5 +86,15 @@ class TaskRun extends \yii\db\ActiveRecord
     public function getTaskRunScreenshots()
     {
         return $this->hasMany(TaskRunScreenshot::className(), ['task_run_id' => 'id']);
+    }
+
+    public function getCompany()
+    {
+        return $this->hasOne(Company::className(), ['id' => 'company_id']);
+    }
+
+    public function getUser()
+    {
+        return $this->hasOne(User::className(), ['id' => 'user_id']);
     }
 }
