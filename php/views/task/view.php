@@ -17,6 +17,29 @@ if ($model->deleted_at == null) {
 }
 $this->params['breadcrumbs'][] = $this->title;
 \yii\web\YiiAsset::register($this);
+$rows = [
+    [
+        'label' => 'Дата создания',
+        'value' => Yii::$app->formatter->format($model->created_at, 'datetime')
+    ],
+    'model_name',
+    'manufacture_code_name',
+    'color_inside_name',
+    'color_outside_name',
+    'amount',
+];
+if (Yii::$app->user->isAdmin) {
+    $rows[] = [
+        'label' => 'Дилер',
+        'value' => $model->company->name
+    ];
+}
+if (Yii::$app->user->isAdmin || Yii::$app->user->isLeadManager) {
+    $rows[] = [
+        'label' => 'Сотрудник',
+        'value' => $model->user->username
+    ];
+}
 ?>
 <div class="task-view">
 
@@ -37,17 +60,7 @@ $this->params['breadcrumbs'][] = $this->title;
 
     <?= DetailView::widget([
         'model' => $model,
-        'attributes' => [
-            [
-                'label' => 'Дата создания',
-                'value' => Yii::$app->formatter->format($model->created_at, 'datetime')
-            ],
-            'model_name',
-            'manufacture_code_name',
-            'color_inside_name',
-            'color_outside_name',
-            'amount',
-        ],
+        'attributes' => $rows,
     ]) ?>
 
     <h2>Запуски задачи</h2>

@@ -8,42 +8,63 @@ use yii\grid\GridView;
 
 $this->title = 'Текущие задачи';
 $this->params['breadcrumbs'][] = $this->title;
+$columns = [
+    [
+        'label' => 'Дата создания',
+        'class' => 'yii\grid\DataColumn',
+        'format' => 'raw',
+        'value' => function ($data) {
+            return Yii::$app->formatter->format($data->created_at, 'datetime');
+        },
+    ],
+    'model_name',
+    'manufacture_code_name',
+    'color_inside_name',
+    'color_outside_name',
+    'amount',
+    [
+        'label' => 'Альтернативы',
+        'class' => 'yii\grid\DataColumn',
+        'format' => 'raw',
+        'value' => function ($model) {
+            return $model->more_auto ? 'Да' : 'Нет';
+        },
+    ],
+];
+if (Yii::$app->user->isAdmin) {
+    $columns[] = [
+        'label' => 'Дилер',
+        'class' => 'yii\grid\DataColumn',
+        'format' => 'raw',
+        'value' => function ($model) {
+            return $model->company->name;
+        },
+    ];
+}
+if (Yii::$app->user->isAdmin || Yii::$app->user->isLeadManager) {
+    $columns[] = [
+        'label' => 'Сотрудник',
+        'class' => 'yii\grid\DataColumn',
+        'format' => 'raw',
+        'value' => function ($model) {
+            return $model->user->username;
+        },
+    ];
+}
+$columns[] = ['class' => 'yii\grid\ActionColumn'];
 ?>
 <div class="task-index">
 
     <h1><?= Html::encode($this->title) ?></h1>
 
-    <p>
-        <?= Html::a('Добавить задачу', ['create'], ['class' => 'btn btn-success']) ?>
-    </p>
+    <?php if (!Yii::$app->user->isAdmin): ?>
+        <p>
+            <?= Html::a('Добавить задачу', ['create'], ['class' => 'btn btn-success']) ?>
+        </p>
+    <?php endif ?>
 
     <?= GridView::widget([
         'dataProvider' => $dataProvider,
-        'columns' => [
-            'id',
-            [
-                'label' => 'Дата создания',
-                'class' => 'yii\grid\DataColumn',
-                'format' => 'raw',
-                'value' => function ($data) {
-                    return Yii::$app->formatter->format($data->created_at, 'datetime');
-                },
-            ],
-            'model_name',
-            'manufacture_code_name',
-            'color_inside_name',
-            'color_outside_name',
-            'amount',
-            [
-                'label' => 'Альтернативы',
-                'class' => 'yii\grid\DataColumn',
-                'format' => 'raw',
-                'value' => function ($model) {
-                    return $model->more_auto ? 'Да' : 'Нет';
-                },
-            ],
-
-            ['class' => 'yii\grid\ActionColumn'],
-        ],
+        'columns' => $columns,
     ]); ?>
 </div>

@@ -6,7 +6,7 @@ $db = require __DIR__ . '/db.php';
 $config = [
     'id' => 'alarm-robot',
     'language' => 'ru',
-    'name' => 'Робот Аларм-Моторс',
+    'name' => 'Робот Киа',
     'basePath' => dirname(__DIR__),
     'bootstrap' => ['log'],
     'aliases' => [
@@ -28,6 +28,7 @@ $config = [
         'user' => [
             'identityClass' => 'app\models\User',
             'enableAutoLogin' => true,
+            'class' => 'app\components\User',
         ],
         'errorHandler' => [
             'errorAction' => 'site/error',

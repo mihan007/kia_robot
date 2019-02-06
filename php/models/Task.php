@@ -23,6 +23,11 @@ use yii\db\Expression;
  * @property int $created_at
  * @property int $updated_at
  * @property int $deleted_at
+ * @property int $company_id
+ * @property int $user_id
+ *
+ * @property Company $company
+ * @property User $user
  */
 class Task extends \yii\db\ActiveRecord
 {
@@ -90,5 +95,15 @@ class Task extends \yii\db\ActiveRecord
         ];
 
         return implode('<br>', $result);
+    }
+
+    public function getCompany()
+    {
+        return $this->hasOne(Company::className(), ['id' => 'company_id']);
+    }
+
+    public function getUser()
+    {
+        return $this->hasOne(User::className(), ['id' => 'user_id']);
     }
 }

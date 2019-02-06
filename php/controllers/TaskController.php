@@ -11,6 +11,7 @@ use app\models\TaskRun;
 use yii\data\ActiveDataProvider;
 use yii\helpers\ArrayHelper;
 use yii\web\Controller;
+use yii\web\HttpException;
 use yii\web\NotFoundHttpException;
 use yii\filters\VerbFilter;
 use app\models\Model;
@@ -42,8 +43,22 @@ class TaskController extends Controller
      */
     public function actionIndex()
     {
+        if (Yii::$app->user->isAdmin) {
+            $query = Task::find()->where(['deleted_at' => 0])->orderBy('id DESC');
+        } else if (Yii::$app->user->isLeadManager) {
+            $query = Task::find()->where([
+                'deleted_at' => 0,
+                'company_id' => Yii::$app->user->companyId
+            ])->orderBy('id DESC');
+        } else {
+            $query = Task::find()->where([
+                'deleted_at' => 0,
+                'user_id' => Yii::$app->user->id
+            ])->orderBy('id DESC');
+        }
+
         $dataProvider = new ActiveDataProvider([
-            'query' => Task::find()->where(['deleted_at' => 0])->orderBy('id DESC'),
+            'query' => $query
         ]);
 
         return $this->render('index', [
@@ -57,8 +72,26 @@ class TaskController extends Controller
      */
     public function actionArchive()
     {
+        if (Yii::$app->user->isAdmin) {
+            $query = Task::find()
+                ->where(['not', ['deleted_at' => 0]])
+                ->orderBy('id DESC');
+        } else if (Yii::$app->user->isLeadManager) {
+            $query = Task::find()
+                ->where(['not', ['deleted_at' => 0]])
+                ->andWhere([
+                    'company_id' => Yii::$app->user->companyId
+                ])->orderBy('id DESC');
+        } else {
+            $query = Task::find()
+                ->where(['not', ['deleted_at' => 0]])
+                ->andWhere([
+                    'user_id' => Yii::$app->user->id
+                ])->orderBy('id DESC');
+        }
+
         $dataProvider = new ActiveDataProvider([
-            'query' => Task::find()->where(['not', ['deleted_at' => 0]])->orderBy('id DESC'),
+            'query' => $query,
         ]);
 
         return $this->render('archive', [
@@ -75,8 +108,29 @@ class TaskController extends Controller
     public function actionView($id)
     {
         $task = $this->findModel($id);
+        if (Yii::$app->user->isAdmin) {
+            $query = TaskRun::find()->where(['task_id' => $task->id])->orderBy('id DESC');
+        } else if (Yii::$app->user->isLeadManager) {
+            if ($task->company_id != Yii::$app->user->companyId) {
+                throw new HttpException(403, 'Доступ запрещен');
+            }
+
+            $query = TaskRun::find()->where([
+                'task_id' => $task->id,
+                'company_id' => Yii::$app->user->companyId
+            ])->orderBy('id DESC');
+        } else {
+            if ($task->user_id != Yii::$app->user->id) {
+                throw new HttpException(403, 'Доступ запрещен');
+            }
+
+            $query = TaskRun::find()->where([
+                'task_id' => $task->id,
+                'user_id' => Yii::$app->user->id
+            ])->orderBy('id DESC');
+        }
         $taskRunDataProvider = new ActiveDataProvider([
-            'query' => TaskRun::find()->where(['task_id' => $task->id])->orderBy('id DESC'),
+            'query' => $query,
         ]);
 
         return $this->render('view', [
@@ -97,8 +151,12 @@ class TaskController extends Controller
         $colorsInside = [];
         $colorsOutside = [];
 
-        if ($model->load(Yii::$app->request->post()) && $model->save()) {
-            return $this->redirect(['index']);
+        if ($model->load(Yii::$app->request->post())) {
+            $model->company_id = Yii::$app->user->company_id;
+            $model->user_id = Yii::$app->user->id;
+            if ($model->save()) {
+                return $this->redirect(['index']);
+            }
         }
 
         return $this->render('create', [
@@ -124,8 +182,12 @@ class TaskController extends Controller
         $colorsInside = ArrayHelper::map(ColorInside::findAll(['model_id' => $model->id]), 'value', 'name');
         $colorsOutside = ArrayHelper::map(ColorOutside::findAll(['model_id' => $model->id]), 'value', 'name');
 
-        if ($task->load(Yii::$app->request->post()) && $task->save()) {
-            return $this->redirect(['index']);
+        if ($task->load(Yii::$app->request->post())) {
+            $task->company_id = Yii::$app->user->company_id;
+            $task->user_id = Yii::$app->user->id;
+            if ($task->save()) {
+                return $this->redirect(['index']);
+            }
         }
 
         return $this->render('update', [
@@ -172,7 +234,7 @@ class TaskController extends Controller
     {
         $modelValue = $_POST['model_id'];
         $model = Model::findOne(['value' => $modelValue]);
-        $manufactures = ArrayHelper::map(ManufactureCode::findAll(['model_id'=>$model->id]), 'value', 'name');
+        $manufactures = ArrayHelper::map(ManufactureCode::findAll(['model_id' => $model->id]), 'value', 'name');
         $out = [];
         foreach ($manufactures as $key => $value) {
             $out[] = [
@@ -180,14 +242,14 @@ class TaskController extends Controller
                 'name' => $value
             ];
         }
-        echo Json::encode(['output'=>$out, 'selected'=>'']);
+        echo Json::encode(['output' => $out, 'selected' => '']);
     }
 
     public function actionColorsInside()
     {
         $modelValue = $_POST['model_id'];
         $model = Model::findOne(['value' => $modelValue]);
-        $items = ArrayHelper::map(ColorInside::findAll(['model_id'=>$model->id]), 'value', 'name');
+        $items = ArrayHelper::map(ColorInside::findAll(['model_id' => $model->id]), 'value', 'name');
         $out = [];
         foreach ($items as $key => $value) {
             $out[] = [
@@ -195,14 +257,14 @@ class TaskController extends Controller
                 'name' => $value
             ];
         }
-        echo Json::encode(['output'=>$out, 'selected'=>'']);
+        echo Json::encode(['output' => $out, 'selected' => '']);
     }
 
     public function actionColorsOutside()
     {
         $modelValue = $_POST['model_id'];
         $model = Model::findOne(['value' => $modelValue]);
-        $items = ArrayHelper::map(ColorOutside::findAll(['model_id'=>$model->id]), 'value', 'name');
+        $items = ArrayHelper::map(ColorOutside::findAll(['model_id' => $model->id]), 'value', 'name');
         $out = [];
         foreach ($items as $key => $value) {
             $out[] = [
@@ -210,6 +272,6 @@ class TaskController extends Controller
                 'name' => $value
             ];
         }
-        echo Json::encode(['output'=>$out, 'selected'=>'']);
+        echo Json::encode(['output' => $out, 'selected' => '']);
     }
 }
