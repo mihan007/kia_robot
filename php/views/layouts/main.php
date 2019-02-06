@@ -38,6 +38,9 @@ AppAsset::register($this);
     $items = [];
     $items[] = ['label' => 'Домой', 'url' => ['/site/index']];
     if (!Yii::$app->user->isGuest) {
+        if (\Yii::$app->user->can('manageCompany')) {
+            $items[] = ['label' => 'Дилеры', 'url' => ['/company/index']];
+        }
         $items[] = ['label' => 'Текущие задачи', 'url' => ['/task/index']];
         $items[] = ['label' => 'Архив задач', 'url' => ['/task/archive']];
         $items[] = ['label' => 'Запуски задач', 'url' => ['/task-run/index']];
