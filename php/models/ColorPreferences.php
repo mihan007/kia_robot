@@ -11,6 +11,7 @@ use Yii;
  * @property string $model_name
  * @property string $model_value
  * @property string $colors
+ * @property string $company_id
  */
 class ColorPreferences extends \yii\db\ActiveRecord
 {

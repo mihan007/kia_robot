@@ -8,12 +8,12 @@ use yii\web\View;
 /* @var $signupForm app\models\SignupForm */
 $this->title = 'Добавить пользователя';
 $this->params['breadcrumbs'][] = ['label' => \Yii::$app->user->company->name];
-$this->params['breadcrumbs'][] = ['label' => 'Пользователи', 'url' => ['index']];
+$this->params['breadcrumbs'][] = ['label' => 'Сотрудники', 'url' => ['index']];
 $this->params['breadcrumbs'][] = $this->title;
 ?>
 <div class="company-user-create">
 
-    <h1>Добавить пользователя</h1>
+    <h1>Добавить сотрудника</h1>
 
     <?= $this->render('_form', [
         'signupForm' => $signupForm,

@@ -2,11 +2,13 @@
 
 namespace app\controllers;
 
+use app\models\Company;
 use app\models\Model;
 use Yii;
 use app\models\ColorPreferences;
 use yii\data\ActiveDataProvider;
 use yii\web\Controller;
+use yii\web\HttpException;
 use yii\web\NotFoundHttpException;
 use yii\filters\VerbFilter;
 
@@ -36,12 +38,38 @@ class ColorPreferencesController extends Controller
      */
     public function actionIndex()
     {
+        if (Yii::$app->user->isAdmin) {
+            $dataProvider = new ActiveDataProvider([
+                'query' => Company::find()->where('status != ' . Company::STATUS_DELETED),
+            ]);
+
+            return $this->render('companyList', [
+                'dataProvider' => $dataProvider,
+            ]);
+        } else {
+            $dataProvider = new ActiveDataProvider([
+                'query' => ColorPreferences::find()->where(['company_id' => Yii::$app->user->companyId]),
+            ]);
+
+            return $this->render('index', [
+                'dataProvider' => $dataProvider,
+                'company' => Yii::$app->user->company
+            ]);
+        }
+    }
+
+    public function actionViewUser($id)
+    {
+        if (!Yii::$app->user->isAdmin) {
+            throw new HttpException(403, 'Доступ запрещен');
+        }
         $dataProvider = new ActiveDataProvider([
-            'query' => ColorPreferences::find(),
+            'query' => ColorPreferences::find()->where(['company_id' => $id]),
         ]);
 
         return $this->render('index', [
             'dataProvider' => $dataProvider,
+            'company' => Company::findOne($id)
         ]);
     }
 
@@ -65,7 +93,9 @@ class ColorPreferencesController extends Controller
 
     public function prepareColorPreferences()
     {
-        $colorPreferences = ColorPreferences::find()->all();
+        $colorPreferences = ColorPreferences::find()
+            ->where(['company_id' => Yii::$app->user->companyId])
+            ->all();
         $models = Model::find()->all();
         foreach ($models as $model) {
             if (!$model->value) {
@@ -97,7 +127,9 @@ class ColorPreferencesController extends Controller
 
         foreach ($_POST['model_name'] as $modelValue => $modelName) {
             $colors = $_POST['colors'][$modelValue];
-            $colorPreference = ColorPreferences::find()->where(['model_value' => $modelValue])->one();
+            $colorPreference = ColorPreferences::find()
+                ->where(['model_value' => $modelValue, 'company_id' => Yii::$app->user->companyId])
+                ->one();
             if (!$colorPreference) {
                 $colorPreference = new ColorPreferences();
             }
@@ -105,6 +137,7 @@ class ColorPreferencesController extends Controller
             $colorPreference->model_name = $modelName;
             $colorPreference->model_value = $modelValue;
             $colorPreference->colors = $colors;
+            $colorPreference->company_id = Yii::$app->user->companyId;
             $colorPreference->save();
         }
 

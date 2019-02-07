@@ -6,7 +6,11 @@ use yii\widgets\ActiveForm;
 /* @var $this yii\web\View */
 /* @var $colorPreferences app\models\ColorPreferences[] */
 ?>
-
+<?php
+$this->title = 'Приоритет цветов';
+$this->params['breadcrumbs'][] = Yii::$app->user->company->name;
+$this->params['breadcrumbs'][] = $this->title;
+?>
 <div class="color-preferences-form">
 
     <p>Заполните приоритеты заказа цветов, введя цвета через запятую, где перый цвета - с наивысшим приоритетом и далее
