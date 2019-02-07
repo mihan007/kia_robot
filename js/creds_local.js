@@ -1,6 +1,6 @@
 module.exports = {
     username: 'KRU7802400',
-    password: 'ACoptima@78024',
+    password: 'Optima@0219',
 
     mysqlHost: 'localhost',
     mysqlUsername: 'root',
