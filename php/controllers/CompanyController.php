@@ -204,4 +204,16 @@ class CompanyController extends Controller
             'signupForm' => $signupForm
         ]);
     }
+
+    public function actionDeleteUser($id)
+    {
+        $user = User::findOne($id);
+        if (!$user) {
+            throw new HttpException(404, 'Not found');
+        }
+        $user->status = User::STATUS_DELETED;
+        $user->update(false, ['status']);
+
+        return $this->redirect(['view', 'id' => $user->company_id]);
+    }
 }
