@@ -1,6 +1,7 @@
 <?php
 namespace app\components;
 
+use app\models\Company;
 use Yii;
 
 /**
@@ -26,6 +27,11 @@ class User extends \yii\web\User
     public function getCompanyId()
     {
         return \Yii::$app->user->identity->company_id;
+    }
+
+    public function getCompany()
+    {
+        return Company::findOne($this->getCompanyId());
     }
 
     public function getIsAdmin()

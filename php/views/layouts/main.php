@@ -45,6 +45,9 @@ AppAsset::register($this);
         $items[] = ['label' => 'Архив задач', 'url' => ['/task/archive']];
         $items[] = ['label' => 'Запуски задач', 'url' => ['/task-run/index']];
         $items[] = ['label' => 'Приоритет цветов', 'url' => ['/color-preferences/index']];
+        if (\Yii::$app->user->isLeadManager) {
+            $items[] = ['label' => 'Сотрудники', 'url' => ['/user/index']];
+        }
     }
     $items[] = Yii::$app->user->isGuest ?  ['label' => 'Войти', 'url' => ['/site/login']] :
                 '<li>'
