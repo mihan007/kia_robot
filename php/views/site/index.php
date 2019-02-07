@@ -4,7 +4,7 @@ use yii\helpers\Url;
 
 /* @var $this yii\web\View */
 
-$this->title = 'Робот для Аларм-Моторс';
+$this->title = 'Робот для Киа';
 ?>
 <div class="site-index">
 
