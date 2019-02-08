@@ -28,6 +28,7 @@ use yii\db\Expression;
  *
  * @property Company $company
  * @property User $user
+ * @property TaskRun[] $taskRuns
  */
 class Task extends \yii\db\ActiveRecord
 {
@@ -105,5 +106,20 @@ class Task extends \yii\db\ActiveRecord
     public function getUser()
     {
         return $this->hasOne(User::className(), ['id' => 'user_id']);
+    }
+
+    public function getTaskRuns()
+    {
+        return $this->hasMany(TaskRun::className(), ['task_id' => 'id']);
+    }
+
+    public function getAmountOrdered()
+    {
+        $ordered = 0;
+        foreach ($this->taskRuns as $taskRun) {
+            $ordered += $taskRun->amount_ordered;
+        }
+
+        return $ordered;
     }
 }

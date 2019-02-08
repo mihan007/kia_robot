@@ -18,6 +18,7 @@ use Yii;
  * @property string $color_outside_name
  * @property string $color_outside_value
  * @property int $amount
+ * @property int $amount_ordered
  * @property int $created_at
  * @property int $updated_at
  * @property int $notified
