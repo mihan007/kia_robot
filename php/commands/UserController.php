@@ -80,11 +80,11 @@ class UserController extends Controller
             ];
             $to = [
                 'mk@turbodealer.ru',
-//                'is@turbodealer.ru',
-//                'dav.kirill.86@gmail.com'
+                'is@turbodealer.ru',
+                'dav.kirill.86@gmail.com'
             ];
             echo "Sending notification about ".sizeof($result)." similar tasks\n";
-            $subject = 'Найдены похожие задачи';
+            $subject = 'Робот Киа: найдены похожие задачи';
             \Yii::$app->mailer->compose('/email/similar', [
                 'result' => $result
             ])
