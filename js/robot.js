@@ -452,7 +452,9 @@ async function orderTask(page, formFrame, task, description, manufactureCodes, s
                 await formFrame.click(ORDER_BUTTON);
                 await formFrame.waitFor(5000);
 
-                manufactureCodes.push(orders[chosen].manufacture_code);
+                if (manufactureCodes !== false) {
+                    manufactureCodes.push(orders[chosen].manufacture_code);
+                }
                 description += currentDate() + " Требуемые авто с кодом производителя " + orders[chosen].manufacture_code + " найдены и заказаны<br>";
 
                 task.remain -= 1;
