@@ -30,6 +30,14 @@ $columns = [
     'color_inside_name',
     'color_outside_name',
     'amount',
+    [
+        'label' => 'Альтернативы',
+        'class' => 'yii\grid\DataColumn',
+        'format' => 'raw',
+        'value' => function ($model) {
+            return $model->more_auto ? 'Да' : 'Нет';
+        },
+    ],
 ];
 if (Yii::$app->user->isAdmin) {
     $columns[] = [
