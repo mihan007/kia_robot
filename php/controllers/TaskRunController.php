@@ -23,8 +23,7 @@ class TaskRunController extends Controller
     {
         if (Yii::$app->user->isAdmin) {
             $query = TaskRun::find()->orderBy('id DESC');
-        }
-        if (Yii::$app->user->isLeadManager) {
+        } elseif (Yii::$app->user->isLeadManager) {
             $query = TaskRun::find()->where(['company_id' => Yii::$app->user->companyId])->orderBy('id DESC');
         } else {
             $query = TaskRun::find()->where(['user_id' => Yii::$app->user->id])->orderBy('id DESC');
