@@ -177,6 +177,21 @@ class TaskController extends Controller
     public function actionUpdate($id)
     {
         $task = $this->findModel($id);
+        $access = false;
+        if (Yii::$app->user->isAdmin) {
+            $access = true;
+        } elseif (Yii::$app->user->isLeadManager) {
+            if (Yii::$app->user->companyId == $task->company_id) {
+                $access = true;
+            }
+        } else {
+            if (Yii::$app->user->id == $task->user_id) {
+                $access = true;
+            }
+        }
+        if (!$access) {
+            throw new HttpException(403, 'Доступ запрещен');
+        }
         $model = Model::findOne(['value' => $task->model_value]);
         $manufactureCodes = ArrayHelper::map(ManufactureCode::findAll(['model_id' => $model->id]), 'value', 'name');
         $colorsInside = ArrayHelper::map(ColorInside::findAll(['model_id' => $model->id]), 'value', 'name');
@@ -208,6 +223,21 @@ class TaskController extends Controller
     public function actionDelete($id)
     {
         $model = $this->findModel($id);
+        $access = false;
+        if (Yii::$app->user->isAdmin) {
+            $access = true;
+        } elseif (Yii::$app->user->isLeadManager) {
+            if (Yii::$app->user->companyId == $model->company_id) {
+                $access = true;
+            }
+        } else {
+            if (Yii::$app->user->id == $model->user_id) {
+                $access = true;
+            }
+        }
+        if (!$access) {
+            throw new HttpException(403, 'Доступ запрещен');
+        }
         $model->deleted_at = time();
         $model->save();
 
