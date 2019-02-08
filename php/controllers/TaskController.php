@@ -152,7 +152,7 @@ class TaskController extends Controller
         $colorsOutside = [];
 
         if ($model->load(Yii::$app->request->post())) {
-            $model->company_id = Yii::$app->user->company_id;
+            $model->company_id = Yii::$app->user->companyId;
             $model->user_id = Yii::$app->user->id;
             if ($model->save()) {
                 return $this->redirect(['index']);
@@ -198,7 +198,7 @@ class TaskController extends Controller
         $colorsOutside = ArrayHelper::map(ColorOutside::findAll(['model_id' => $model->id]), 'value', 'name');
 
         if ($task->load(Yii::$app->request->post())) {
-            $task->company_id = Yii::$app->user->company_id;
+            $task->company_id = Yii::$app->user->companyId;
             $task->user_id = Yii::$app->user->id;
             if ($task->save()) {
                 return $this->redirect(['index']);

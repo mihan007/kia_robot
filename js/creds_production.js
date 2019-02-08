@@ -1,5 +1,5 @@
 module.exports = {
-        username: 'KRU7802400',
+    username: 'KRU7802400',
     password: 'Optima@0219',
 
     mysqlHost: 'localhost',

@@ -12,7 +12,8 @@ const PASSWORD_SELECTOR = '#logonForm > center > table > tbody > tr > td > table
 const LOGIN_BUTTON_SELECTOR = '#logonForm > center > table > tbody > tr > td > table:nth-child(1) > tbody > tr:nth-child(2) > td:nth-child(2) > table > tbody > tr:nth-child(1) > td:nth-child(5) > a';
 const SELL_TAB_SELECTOR = '#tabIndex1';
 const FREE_SKLAD_LEFT_SIDEBAR_SELECTOR = '#L2N1';
-const NEXT_PAGE_SELECTOR = "#board1 > tbody > tr > td > table > tbody > tr > td.ar > a";
+const FIRST_PAGE_NEXT_SELECTOR = "#board1 > tbody > tr > td > table > tbody > tr > td.ar > a";
+const NON_FIRST_PAGE_NEXT_SELECTOR = '#board1 > tbody > tr > td > table > tbody > tr > td.ar > a:nth-child(2)';
 const SCREENSHOT_PATH = '../php/web/screenshots';
 
 const FREE_SKLAD_IFRAME_SELECTOR = '#contentAreaFrame';
@@ -25,7 +26,6 @@ const FORM_ONLY_AVAILABLE_SELECTOR = '#board1 > tbody > tr:nth-child(6) > td:nth
 const FORM_REQUEST_BUTTON_SELECTOR = '#subContents > table > tbody > tr > td:nth-child(2) > form > div.buttons > a';
 const ORDER_TABLE = '#resultTable';
 const FORM_CHANGE_ORDER_BUTTON = '#subContents > table > tbody > tr > td:nth-child(2) > form > div.buttons > a.negative';
-const FORM_AMOUNT_FIELD = '#commonparam > table > tbody > tr:nth-child(2) > td > input[type="text"]';
 const ORDER_BUTTON = '#commonparam > table > tbody > tr:nth-child(4) > td > div > a:nth-child(2)';
 const ORDER_FREE_SKLAD = '#L2N2';
 const ORDER_FREE_SKLAD_BUTTON = '#subContents > div.buttons > a';
@@ -123,7 +123,9 @@ async function getTasksFromDb(connection) {
                             amount: results[i].amount,
                             remain: results[i].amount,
                             more_auto: (results[i].more_auto === 1),
-                            searchDialogHandled: false
+                            searchDialogHandled: false,
+                            company_id: results[i].company_id,
+                            user_id: results[i].user_id
                         };
                         tasks.push(task);
                     }
@@ -134,11 +136,11 @@ async function getTasksFromDb(connection) {
     })
 }
 
-async function getColorPreferences(connection) {
+async function getColorPreferences(connection, company_id) {
     return new Promise((resolve, reject) => {
         connection.select(
             'color_preferences', '*',
-            {},
+            {company_id: company_id},
             {},
             (err, results) => {
                 if (err) {
@@ -149,6 +151,28 @@ async function getColorPreferences(connection) {
                         preferences[results[i].model_value] = results[i].colors.split(',');
                     }
                     resolve(preferences);
+                }
+            }
+        );
+    })
+}
+
+async function getCredentials(connection, company_id) {
+    return new Promise((resolve, reject) => {
+        connection.select(
+            'company', '*',
+            {id: company_id},
+            {},
+            (err, results) => {
+                if (err) {
+                    reject(err);
+                } else {
+                    let result = {};
+                    for (const i in results) {
+                        result.login = results[i].kia_login;
+                        result.password = results[i].kia_password;
+                    }
+                    resolve(result);
                 }
             }
         );
@@ -171,7 +195,9 @@ async function saveTaskRunToDb(connection, taskInfo) {
                 amount: taskInfo.amount,
                 description: taskInfo.description,
                 amount_ordered: taskInfo.amount_ordered,
-                ordered_manufacture_codes: taskInfo.ordered_manufacture_codes
+                ordered_manufacture_codes: taskInfo.ordered_manufacture_codes,
+                company_id: taskInfo.company_id,
+                user_id: taskInfo.user_id
             },
             (err, recordId) => {
                 if (err) {
@@ -216,7 +242,7 @@ function isSimpleTask(task, colorPreferences) {
     return true;
 }
 
-async function loginAndSwitchToFreeSklad(page) {
+async function loginAndSwitchToFreeSklad(page, login, password) {
     let formFrame;
 
     await page.setViewport({width: 1280, height: 800});
@@ -224,9 +250,9 @@ async function loginAndSwitchToFreeSklad(page) {
     log("Start logging in");
     await page.goto(loginUrl);
     await page.click(USERNAME_SELECTOR);
-    await page.keyboard.type(CREDS.username);
+    await page.keyboard.type(login);
     await page.click(PASSWORD_SELECTOR);
-    await page.keyboard.type(CREDS.password);
+    await page.keyboard.type(password);
     await page.click(LOGIN_BUTTON_SELECTOR);
     log("Logged in");
 
@@ -411,29 +437,47 @@ async function orderTask(page, formFrame, task, description, manufactureCodes, s
 
             screenshots.push(await saveScreenshot(task.currentScreenshotPath, page, 'Результат выбора нужного авто'));
 
+            task.reachedMaximum = false;
             await formFrame.click(FORM_CHANGE_ORDER_BUTTON);
-            log("Ordered using " + chosen + " row radio selector, manufacture_code: " + orders[chosen].manufacture_code);
+            if (task.searchResultExists === false) {
+                description += currentDate() + " Достигнут максимум заказа авто<br>";
+                log("Reached maximum cars");
+                orderMore = false;
+                task.reachedMaximum = true;
+            } else {
+                log("Ordered using " + chosen + " row radio selector, manufacture_code: " + orders[chosen].manufacture_code);
 
-            screenshots.push(await saveScreenshot(task.currentScreenshotPath, page, 'Окно заказа нужной комплектации авто'));
+                screenshots.push(await saveScreenshot(task.currentScreenshotPath, page, 'Окно заказа нужной комплектации авто'));
 
-            await formFrame.click(ORDER_BUTTON);
-            await formFrame.waitFor(5000);
+                await formFrame.click(ORDER_BUTTON);
+                await formFrame.waitFor(5000);
 
-            manufactureCodes.push(orders[chosen].manufacture_code);
-            description += currentDate() + " Требуемые авто с кодом производителя " + orders[chosen].manufacture_code + " найдены и заказаны<br>";
+                manufactureCodes.push(orders[chosen].manufacture_code);
+                description += currentDate() + " Требуемые авто с кодом производителя " + orders[chosen].manufacture_code + " найдены и заказаны<br>";
 
-            task.remain -= 1;
-            task.orderedManufactureCode = orders[chosen].manufacture_code;
-            log("remainingAmount: " + task.remain);
+                task.remain -= 1;
+                task.orderedManufactureCode = orders[chosen].manufacture_code;
+                log("remainingAmount: " + task.remain);
+            }
         } else {
             task.orderedManufactureCode = false;
             log("Could not find suitable auto at page " + currentPage);
             description += currentDate() + " Требуемые авто на странице " + currentPage + " не найдены<br>";
-            if (await formFrame.$(NEXT_PAGE_SELECTOR) !== null) {
+            let condition = false;
+            if (currentPage === 1) {
+                condition = await formFrame.$(FIRST_PAGE_NEXT_SELECTOR) !== null;
+            } else {
+                condition = await formFrame.$(NON_FIRST_PAGE_NEXT_SELECTOR) !== null;
+            }
+            if (condition) {
                 log("Next page exists, switch to it");
                 description += currentDate() + " Есть следующая страница, идем на нее<br>";
                 orderMore = true;
-                await formFrame.click(NEXT_PAGE_SELECTOR);
+                if (currentPage === 1) {
+                    await formFrame.click(FIRST_PAGE_NEXT_SELECTOR);
+                } else {
+                    await formFrame.click(NON_FIRST_PAGE_NEXT_SELECTOR);
+                }
                 await formFrame.waitFor(2000);
                 currentPage++;
             } else {
@@ -483,19 +527,22 @@ async function switchToFreeSkladAndSaveScreenshot(page, formFrame, screenshots, 
 const processSimpleTask = async ({page, data: task}) => {
     log('Running ', task.id);
 
-    page.on('dialog', async dialog => {
-        searchResultExists = false;
-        await dialog.dismiss();
-    });
+    if (!task.searchDialogHandled) {
+        page.on('dialog', async dialog => {
+            task.searchResultExists = false;
+            await dialog.dismiss();
+        });
+        task.searchDialogHandled = true;
+    }
 
     await page.setViewport({width: 1280, height: 800});
 
     log("Start logging in");
     await page.goto(loginUrl);
     await page.click(USERNAME_SELECTOR);
-    await page.keyboard.type(CREDS.username);
+    await page.keyboard.type(task.credentials.login);
     await page.click(PASSWORD_SELECTOR);
-    await page.keyboard.type(CREDS.password);
+    await page.keyboard.type(task.credentials.password);
     await page.click(LOGIN_BUTTON_SELECTOR);
     log("Logged in");
 
@@ -546,8 +593,7 @@ const processSimpleTask = async ({page, data: task}) => {
     }
     let orderedManufactureCodes = [];
     while (flag) {
-        let searchResultExists = true;
-
+        task.searchResultExists = true;
         log("Setup search params");
         await formFrame.select(FORM_MODEL_SELECTOR, task.model);
         log("Task model: " + task.model);
@@ -571,12 +617,12 @@ const processSimpleTask = async ({page, data: task}) => {
         log("Sent search request");
 
         let filename = +new Date() + '_' + Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15) + '.png';
-        let fullpath = currentScreenshotPath + "/" + filename;
+        let fullpath = task.currentScreenshotPath + "/" + filename;
         await page.screenshot({path: fullpath, fullPage: true});
         screenshots.push({name: 'Скриншот #' + (ind++) + '. Результат поискового запроса', filepath: fullpath});
         description += currentDate() + " послали поисковый запрос<br>";
 
-        if (searchResultExists) {
+        if (task.searchResultExists) {
             log("Search result exists");
             let pageCount = 1;
             let badManufactureCode = false;
@@ -656,25 +702,44 @@ const processSimpleTask = async ({page, data: task}) => {
                 if (chosen !== false) {
                     log("Ordering using " + chosen + " row radio selector, manufacture_code: " + orders[chosen].manufacture_code);
                     await formFrame.click(orders[chosen].radioSelector);
+                    task.reachedMaximum = false;
                     await formFrame.click(FORM_CHANGE_ORDER_BUTTON);
-                    log("Ordered using " + chosen + " row radio selector, manufacture_code: " + orders[chosen].manufacture_code);
+                    if (task.searchResultExists === false) {
+                        description += currentDate() + " Достигнут максимум заказа авто<br>";
+                        log("Reached maximum cars");
+                        badManufactureCode = false;
+                        flag = false;
+                        task.reachedMaximum = true;
+                    } else {
+                        log("Ordered using " + chosen + " row radio selector, manufacture_code: " + orders[chosen].manufacture_code);
 
-                    orderedManufactureCodes.push(orders[chosen].manufacture_code);
-                    badManufactureCode = false;
-                    description += currentDate() + " Требуемые авто с кодом производителя " + orders[chosen].manufacture_code + " найдены<br>";
+                        orderedManufactureCodes.push(orders[chosen].manufacture_code);
+                        badManufactureCode = false;
+                        description += currentDate() + " Требуемые авто с кодом производителя " + orders[chosen].manufacture_code + " найдены<br>";
 
-                    remainingAmount -= currentOrderAmount;
-                    totalOrdered += currentOrderAmount;
-                    log("remainingAmount: " + remainingAmount);
-                    log("totalOrdered: " + totalOrdered);
+                        remainingAmount -= currentOrderAmount;
+                        totalOrdered += currentOrderAmount;
+                        log("remainingAmount: " + remainingAmount);
+                        log("totalOrdered: " + totalOrdered)
+                    }
                 } else {
                     log("Could not find suitable auto at page " + pageCount);
                     description += currentDate() + " Требуемые авто на странице " + pageCount + " не найдены<br>";
-                    if (await formFrame.$(NEXT_PAGE_SELECTOR) !== null) {
+                    let condition = false;
+                    if (pageCount === 1) {
+                        condition = await formFrame.$(FIRST_PAGE_NEXT_SELECTOR) !== null;
+                    } else {
+                        condition = await formFrame.$(NON_FIRST_PAGE_NEXT_SELECTOR) !== null;
+                    }
+                    if (condition) {
                         log("Next page exists, switch to it");
                         description += currentDate() + " Есть следующая страница, идем на нее<br>";
                         badManufactureCode = true;
-                        await formFrame.click(NEXT_PAGE_SELECTOR);
+                        if (pageCount === 1) {
+                            await formFrame.click(FIRST_PAGE_NEXT_SELECTOR);
+                        } else {
+                            await formFrame.click(NON_FIRST_PAGE_NEXT_SELECTOR);
+                        }
                         await formFrame.waitFor(2000);
                         pageCount++;
                     } else {
@@ -685,7 +750,9 @@ const processSimpleTask = async ({page, data: task}) => {
                 }
             } while (badManufactureCode);
 
-            if (chosen !== false) {
+            if (task.reachedMaximum) {
+                flag = false;
+            } else if (chosen !== false) {
                 description += currentDate() + " заказали " + currentOrderAmount + " авто с параметрами:<br>";
                 description += "<ul>";
                 description += "<li><b>Модель</b>: " + orders[chosen].model + "</li>";
@@ -698,7 +765,7 @@ const processSimpleTask = async ({page, data: task}) => {
                 description += "</ul>";
 
                 let filename = +new Date() + '_' + Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15) + '.png';
-                let fullpath = currentScreenshotPath + "/" + filename;
+                let fullpath = task.currentScreenshotPath + "/" + filename;
                 await page.screenshot({path: fullpath, fullPage: true});
                 screenshots.push({
                     name: 'Скриншот #' + (ind++) + '. Результат выбора нужного набора авто',
@@ -756,7 +823,7 @@ const processSimpleTask = async ({page, data: task}) => {
         await formFrame.click(ORDER_FREE_SKLAD_BUTTON);
         await formFrame.waitFor(5000);
         let filename = +new Date() + '_' + Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15) + '.png';
-        let fullpath = currentScreenshotPath + "/" + filename;
+        let fullpath = task.currentScreenshotPath + "/" + filename;
         await page.screenshot({path: fullpath, fullPage: true});
         screenshots.push({name: 'Скриншот #' + (ind++) + '. Результат заказа авто', filepath: fullpath});
     } else {
@@ -766,10 +833,12 @@ const processSimpleTask = async ({page, data: task}) => {
     task.task_id = task.id;
     task.description = description;
     task.amount_ordered = totalOrdered;
-    let taskRunId = await saveTaskRunToDb(connection, task);
+    task.ordered_manufacture_codes = orderedManufactureCodes.join(",");
+    let taskRunId = await saveTaskRunToDb(task.connection, task);
+
     for (let iScr in screenshots) {
         screenshots[iScr].task_run_id = taskRunId;
-        await saveScreenshotToDb(connection, screenshots[iScr]);
+        await saveScreenshotToDb(task.connection, screenshots[iScr]);
     }
 };
 
@@ -793,7 +862,7 @@ const processComplexTask = async ({page, data: task}) => {
     log('Running ' + task.id);
     let screenshots = [];
 
-    let formFrame = await loginAndSwitchToFreeSklad(page);
+    let formFrame = await loginAndSwitchToFreeSklad(page, task.credentials.login, task.credentials.password);
     let description = logInfoAboutSearch(task, true);
 
     task.color_outside = '';
@@ -888,11 +957,19 @@ const processComplexTask = async ({page, data: task}) => {
             });
             for (let i in orders) {
                 if (orders[i].manufacture_code === task.manufacture_code) {
-                    specificManufactureCodeQueue[orders[i].color_outside]++;
-                    currentPageSpecificColors[orders[i].color_outside]++;
+                    if (typeof specificManufactureCodeQueue[orders[i].color_outside] !== 'undefined') {
+                        specificManufactureCodeQueue[orders[i].color_outside]++;
+                    }
+                    if (typeof currentPageSpecificColors[orders[i].color_outside] !== 'undefined') {
+                        currentPageSpecificColors[orders[i].color_outside]++;
+                    }
                 } else {
-                    commonManufactureCodeQueue[orders[i].color_outside]++;
-                    currentPageCommonColors[orders[i].color_outside]++;
+                    if (typeof commonManufactureCodeQueue[orders[i].color_outside] !== 'undefined') {
+                        commonManufactureCodeQueue[orders[i].color_outside]++;
+                    }
+                    if (typeof currentPageCommonColors[orders[i].color_outside] !== 'undefined') {
+                        currentPageCommonColors[orders[i].color_outside]++;
+                    }
                 }
             }
             for (let colorCode in currentPageSpecificColors) {
@@ -916,11 +993,21 @@ const processComplexTask = async ({page, data: task}) => {
                 }
             }
             log("Rows at search result table: " + orders.length);
-            if (await formFrame.$(NEXT_PAGE_SELECTOR) !== null) {
+            let condition = false;
+            if (currentPage === 1) {
+                condition = await formFrame.$(FIRST_PAGE_NEXT_SELECTOR) !== null;
+            } else {
+                condition = await formFrame.$(NON_FIRST_PAGE_NEXT_SELECTOR) !== null;
+            }
+            if (condition) {
                 log("Next page exists, switch to it");
                 description += currentDate() + " Есть следующая страница, идем на нее<br>";
                 nextPageExists = true;
-                await formFrame.click(NEXT_PAGE_SELECTOR);
+                if (currentPage === 1) {
+                    await formFrame.click(FIRST_PAGE_NEXT_SELECTOR);
+                } else {
+                    await formFrame.click(NON_FIRST_PAGE_NEXT_SELECTOR);
+                }
                 await formFrame.waitFor(2000);
                 currentPage++;
                 const name = `Результат поискового запроса, страница ${currentPage} из ${pageCount}`;
@@ -948,6 +1035,9 @@ const processComplexTask = async ({page, data: task}) => {
             let remainBefore = task.remain;
             description += logInfoAboutSearch(task, false);
             task = await orderTask(page, formFrame, task, description, false, screenshots);
+            if (task.reachedMaximum) {
+                break;
+            }
             let remainAfter = task.remain;
             let ordered = remainBefore - remainAfter;
             totalOrdered += ordered;
@@ -973,6 +1063,9 @@ const processComplexTask = async ({page, data: task}) => {
                 let remainBefore = task.remain;
                 description += logInfoAboutSearch(task, false);
                 task = await orderTask(page, formFrame, task, description, manufactureCodes, screenshots);
+                if (task.reachedMaximum) {
+                    break;
+                }
                 let remainAfter = task.remain;
                 let ordered = remainBefore - remainAfter;
                 totalOrdered += ordered;
@@ -985,6 +1078,9 @@ const processComplexTask = async ({page, data: task}) => {
                     break;
                 }
             }
+        }
+        if (task.reachedMaximum) {
+            break;
         }
     } while (orderedForCycle > 0);
 
@@ -1060,8 +1156,6 @@ async function robot(connection) {
     let allTasks = await getTasksFromDb(connection);
     let tasks = await filterTasks(connection, allTasks);
 
-    let colorPreferences = await getColorPreferences(connection);
-
     let currentScreenshotPath = __dirname + "/" + SCREENSHOT_PATH;
     if (!fs.existsSync(currentScreenshotPath)) {
         fs.mkdirSync(currentScreenshotPath);
@@ -1077,7 +1171,7 @@ async function robot(connection) {
         puppeteerOptions: {
             headless: !CREDS.chromeVisible
         },
-        timeout: 9 * 60000 //9 minutes
+        timeout: 20 * 60000 //20 minutes
     });
 
     // Event handler to be called in case of problems
@@ -1086,12 +1180,14 @@ async function robot(connection) {
     });
 
     for (const i in tasks) {
+        let colorPreferences = await getColorPreferences(connection, tasks[i].company_id);
         tasks[i].currentScreenshotPath = currentScreenshotPath;
+        tasks[i].connection = connection;
+        tasks[i].credentials = await getCredentials(connection, tasks[i].company_id);
         if (isSimpleTask(tasks[i], colorPreferences)) {
             await cluster.queue(tasks[i], processSimpleTask);
         } else {
             tasks[i].colorPreferences = colorPreferences[tasks[i].model];
-            tasks[i].connection = connection;
             await cluster.queue(tasks[i], processComplexTask);
         }
     }
