@@ -7,6 +7,7 @@
 
 namespace app\commands;
 
+use app\models\Company;
 use app\models\Model;
 use app\models\Task;
 use app\models\TaskRun;
@@ -25,43 +26,55 @@ class EmailController extends Controller
 {
     public function actionNotification()
     {
-        $taskRuns = TaskRun::find()
-            ->where(['notified' => 0])
-            ->orderBy(['id' => 'ASC'])
+        $companies = Company::find()
+            ->where(['status' => 1])
             ->all();
 
-        $from = [
-            'robot@turbodealer.ru' => 'Робот Турбодилера'
-        ];
-        $to = [
-            'mk@turbodealer.ru',
-            'asmirnov@alarm-motors.ru',
-            'apimkin@alarm-motors.ru',
-            'alpronin@alarm-motors.ru',
-            'apozigun@alarm-motors.ru'
-        ];
+        foreach ($companies as $company) {
+            $taskRuns = TaskRun::find()
+                ->where(['notified' => 0])
+                ->andWhere(['company_id' => $company->id])
+                ->orderBy(['id' => 'ASC'])
+                ->all();
 
-        $filtered = [];
-        foreach ($taskRuns as $taskRun) {
-            if ($taskRun->amount_ordered > 0) {
-                $filtered[] = $taskRun;
+            $from = [
+                'robot@turbodealer.ru' => 'Робот Турбодилера'
+            ];
+            $to = [
+                'mk@turbodealer.ru',
+            ];
+            $companyNotification = $company->notification_email;
+            if (strlen($companyNotification) == 0) {
+                echo "No notification email set for company {$company->name}({$company->id}) as of now, skip\n";
+            } else {
+                $companyEmails = explode(',', $company->notification_email);
+                foreach ($companyEmails as $companyEmail) {
+                    $to[] = $companyEmail;
+                }
             }
-            $taskRun->notified = 1;
-            $taskRun->update(false, ['notified']);
-        }
 
-        if (sizeof($filtered) > 0) {
-            echo "Sending notification about ".sizeof($filtered)." task runs\n";
-            $subject = 'Результат работы системы автозаказа';
-            \Yii::$app->mailer->compose('/email/robot', [
-                'taskRuns' => $filtered
-            ])
-                ->setFrom($from)
-                ->setTo($to)
-                ->setSubject($subject)
-                ->send();
-        } else {
-            echo "No notification as of now\n";
+            $filtered = [];
+            foreach ($taskRuns as $taskRun) {
+                if ($taskRun->amount_ordered > 0) {
+                    $filtered[] = $taskRun;
+                }
+                $taskRun->notified = 1;
+                $taskRun->update(false, ['notified']);
+            }
+
+            if (sizeof($filtered) > 0) {
+                echo "Sending notification about ".sizeof($filtered)." task runs for company {$company->name}({$company->id})\n";
+                $subject = 'Результат работы системы автозаказа';
+                \Yii::$app->mailer->compose('/email/robot', [
+                    'taskRuns' => $filtered
+                ])
+                    ->setFrom($from)
+                    ->setTo($to)
+                    ->setSubject($subject)
+                    ->send();
+            } else {
+                echo "No notification as of now for company {$company->name}({$company->id})\n";
+            }
         }
     }
 
