@@ -18,7 +18,12 @@ if (\Yii::$app->user->isAdmin) {
 ?>
 <div class="list-group">
     <?php foreach ($items as $topicSlug => $topicName): ?>
-        <?php $class = ($topic == $topicSlug) ? 'list-group-item active' : 'list-group-item'; ?>
+        <?php if ($topic == $topicSlug) {
+           $class = 'list-group-item active';
+           $this->title = $topicName . " | Помощь";
+        } else {
+            $class = 'list-group-item';
+        } ?>
         <?php echo Html::a($topicName, ['/help/topic', 'topic' => $topicSlug], ['class' => $class]) ?>
     <?php endforeach; ?>
 </div>
