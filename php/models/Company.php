@@ -4,6 +4,7 @@ namespace app\models;
 
 use Yii;
 use yii\behaviors\TimestampBehavior;
+use yii\validators\EmailValidator;
 
 /**
  * This is the model class for table "company".
@@ -12,6 +13,7 @@ use yii\behaviors\TimestampBehavior;
  * @property string $name
  * @property string $kia_login
  * @property string $kia_password
+ * @property string $notification_email
  * @property int $status
  * @property int $created_at
  * @property int $updated_at
@@ -86,5 +88,32 @@ class Company extends \yii\db\ActiveRecord
     public function getCreatedAt()
     {
         return date('Y-m-d H:i', $this->created_at);
+    }
+
+    public function setNotificationEmail($originalEmail)
+    {
+        $email = trim($originalEmail);
+        if (strlen($email) == 0) {
+            return true;
+        }
+        $emails = explode(',', $email);
+        $result = [];
+        $bad = [];
+        foreach ($emails as $email) {
+            $emailNormalized = trim($email);
+            $validator = new EmailValidator();
+            if ($validator->validate($emailNormalized, $error)) {
+                $result[] = $email;
+            } else {
+                $bad[] = $email;
+            }
+        }
+        if (sizeof($bad) == 0) {
+            $this->notification_email = implode(',', $result);
+            return true;
+        } else {
+            $this->notification_email = $originalEmail;
+            return $bad;
+        }
     }
 }

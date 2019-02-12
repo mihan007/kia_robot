@@ -36,7 +36,6 @@ AppAsset::register($this);
         ],
     ]);
     $items = [];
-    $items[] = ['label' => 'Домой', 'url' => ['/site/index']];
     if (!Yii::$app->user->isGuest) {
         if (\Yii::$app->user->can('manageCompany')) {
             $items[] = ['label' => 'Дилеры', 'url' => ['/company/index']];
@@ -47,6 +46,9 @@ AppAsset::register($this);
         $items[] = ['label' => 'Приоритет цветов', 'url' => ['/color-preferences/index']];
         if (\Yii::$app->user->isLeadManager) {
             $items[] = ['label' => 'Сотрудники', 'url' => ['/user/index']];
+        }
+        if (\Yii::$app->user->isAdmin || \Yii::$app->user->isLeadManager) {
+            $items[] = ['label' => 'Настройки', 'url' => ['/settings/index']];
         }
         $items[] = ['label' => 'Помощь', 'url' => ['/help/index']];
     }
