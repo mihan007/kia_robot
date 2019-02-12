@@ -11,7 +11,7 @@ use yii\bootstrap\Alert;
 
 <?php
 $this->title = 'Настройки';
-$this->params['breadcrumbs'][] = Yii::$app->user->company->name;
+$this->params['breadcrumbs'][] = $company->name;
 $this->params['breadcrumbs'][] = $this->title;
 ?>
 

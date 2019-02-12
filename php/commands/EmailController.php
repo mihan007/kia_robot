@@ -21,7 +21,7 @@ use yii\console\Controller;
  * @author Qiang Xue <qiang.xue@gmail.com>
  * @since 2.0
  */
-class AlarmController extends Controller
+class EmailController extends Controller
 {
     public function actionNotification()
     {
