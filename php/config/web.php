@@ -11,7 +11,7 @@ $config = [
     'bootstrap' => ['log'],
     'aliases' => [
         '@bower' => '@vendor/bower-asset',
-        '@npm'   => '@vendor/npm-asset',
+        '@npm' => '@vendor/npm-asset',
     ],
     'components' => [
         'formatter' => [
@@ -57,6 +57,12 @@ $config = [
             'assignmentTable' => 'auth_assignment',
             'ruleTable' => 'auth_rule'
         ],
+        'urlManager' => [
+            'rules' => [
+                'help' => 'help/index',
+                'help/<topic:[a-zA-Z0-9-]+>' => 'help/topic'
+            ]
+        ]
     ],
     'params' => $params,
 ];

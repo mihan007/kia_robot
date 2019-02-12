@@ -48,6 +48,7 @@ AppAsset::register($this);
         if (\Yii::$app->user->isLeadManager) {
             $items[] = ['label' => 'Сотрудники', 'url' => ['/user/index']];
         }
+        $items[] = ['label' => 'Помощь', 'url' => ['/help/index']];
     }
     $items[] = Yii::$app->user->isGuest ?  ['label' => 'Войти', 'url' => ['/site/login']] :
                 '<li>'

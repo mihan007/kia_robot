@@ -20,8 +20,8 @@ use yii\widgets\ActiveForm;
     <?= $form->field($model, 'kia_login')->textInput(['maxlength' => true]) ?>
     <?= $form->field($model, 'kia_password')->passwordInput(['maxlength' => true]) ?>
     <?= $form->field($model, 'status')->radioList([
-            \app\models\Company::STATUS_ACTIVE => 'Активна',
-            \app\models\Company::STATUS_INACTIVE => 'Неактивна',
+            \app\models\Company::STATUS_ACTIVE => 'Активен',
+            \app\models\Company::STATUS_INACTIVE => 'Неактивен',
         ]);
     ?>
 
