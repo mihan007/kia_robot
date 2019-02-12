@@ -15,6 +15,7 @@ if (\Yii::$app->user->isAdmin) {
 } else {
     $items['manager'] = 'Менеджеру салона';
 }
+$items['robot'] = 'Как работает робот';
 ?>
 <div class="list-group">
     <?php foreach ($items as $topicSlug => $topicName): ?>
