@@ -125,7 +125,8 @@ async function getTasksFromDb(connection) {
                             more_auto: (results[i].more_auto === 1),
                             searchDialogHandled: false,
                             company_id: results[i].company_id,
-                            user_id: results[i].user_id
+                            user_id: results[i].user_id,
+                            goal: results[i].goal
                         };
                         tasks.push(task);
                     }
@@ -298,7 +299,7 @@ function logInfoAboutSearch(task, isFirstStage) {
     return description;
 }
 
-async function sendSearchRequest(page, formFrame, task) {
+async function sendSearchRequest(page, formFrame, task, additionalDescription) {
     if (!task.searchDialogHandled) {
         page.on('dialog', async dialog => {
             task.searchResultExists = false;
@@ -309,18 +310,38 @@ async function sendSearchRequest(page, formFrame, task) {
 
     task.searchResultExists = true;
     log("Setup search params");
-    await formFrame.select(FORM_MODEL_SELECTOR, task.model);
+    let result = await formFrame.select(FORM_MODEL_SELECTOR, task.model);
     log("Task model: " + task.model);
     await formFrame.waitFor(2000);
+    if ((task.goal == 0) && (result.length === 0)) {
+        log("Could not setup task.model: " + task.model);
+        additionalDescription = `В фильтре не найдена модель ${task.model}`;
+        return false;
+    }
     const manufactureCode = task.more_auto ? '' : task.manufacture_code;
     const manufactureCodeDescription = task.more_auto ? task.manufacture_code + ' and other' : task.manufacture_code;
-    await formFrame.select(FORM_MANUFACTURE_CODE_SELECTOR, manufactureCode);
+    result = await formFrame.select(FORM_MANUFACTURE_CODE_SELECTOR, manufactureCode);
     log("Manufacture code: " + manufactureCodeDescription);
-    await formFrame.select(FORM_COLOR_INSIDE_SELECTOR, task.color_inside);
+    if ((task.goal == 0) && (result.length === 0)) {
+        log("Could not setup task.manufacture_code: " + task.manufacture_code);
+        additionalDescription = `В фильтре не найден код модели ${task.manufacture_code}`;
+        return false;
+    }
+    result = await formFrame.select(FORM_COLOR_INSIDE_SELECTOR, task.color_inside);
     log("Color inside: " + task.color_inside);
-    await formFrame.select(FORM_COLOR_OUTSIDE_SELECTOR, task.color_outside);
+    if ((task.goal == 0) && (result.length === 0)) {
+        log("Could not setup task.color_inside: " + task.color_inside);
+        additionalDescription = `В фильтре не найден цвет салона ${task.color_inside}`;
+        return false;
+    }
+    result = await formFrame.select(FORM_COLOR_OUTSIDE_SELECTOR, task.color_outside);
     const colorOutsideDescription = task.color_outside.length ? task.color_outside : 'all';
     log("Color outside: " + colorOutsideDescription);
+    if ((task.goal == 0) && (result.length === 0)) {
+        log("Could not setup task.color_outside: " + task.color_outside);
+        additionalDescription = `В фильтре не найден цвет кузова ${task.color_outside}`;
+        return false;
+    }
     const checkbox = await formFrame.$(FORM_ONLY_AVAILABLE_SELECTOR);
     const isChecked = await (await checkbox.getProperty('checked')).jsonValue();
     if (!isChecked) {
@@ -353,8 +374,9 @@ async function orderTask(page, formFrame, task, description, manufactureCodes, s
     let currentPage = 1;
 
     do {
-        let searchResultExists = await sendSearchRequest(page, formFrame, task);
-        screenshots.push(await saveScreenshot(task.currentScreenshotPath, page, 'Результат поиска нужного авто'));
+        let additionalInfo = '';
+        let searchResultExists = await sendSearchRequest(page, formFrame, task, additionalInfo);
+        screenshots.push(await saveScreenshot(task.currentScreenshotPath, page, 'Результат поиска нужного авто. ' + additionalInfo));
         if (!searchResultExists) {
             log("No search result");
             break;
@@ -594,19 +616,41 @@ const processSimpleTask = async ({page, data: task}) => {
         stage = 1;
     }
     let orderedManufactureCodes = [];
+    let additionalDescription = '';
     while (flag) {
+        let result = [];
         task.searchResultExists = true;
         log("Setup search params");
-        await formFrame.select(FORM_MODEL_SELECTOR, task.model);
+        result = await formFrame.select(FORM_MODEL_SELECTOR, task.model);
         log("Task model: " + task.model);
+        if ((task.goal == 0) && (result.length === 0)) {
+            log("Could not setup task.model: " + task.model);
+            additionalDescription = `В фильтре не найдена модель ${task.model}`;
+            break;
+        }
         await formFrame.waitFor(2000);
         const manufactureCode = (stage < 1) ? task.manufacture_code : '';
-        await formFrame.select(FORM_MANUFACTURE_CODE_SELECTOR, manufactureCode);
+        result = await formFrame.select(FORM_MANUFACTURE_CODE_SELECTOR, manufactureCode);
         log("Manufacture code: " + manufactureCode);
-        await formFrame.select(FORM_COLOR_INSIDE_SELECTOR, task.color_inside);
+        if ((task.goal == 0) && (result.length === 0)) {
+            log("Could not setup task.manufacture_code: " + manufactureCode);
+            additionalDescription = `В фильтре не найдена код производителя ${manufactureCode}`;
+            break;
+        }
+        result = await formFrame.select(FORM_COLOR_INSIDE_SELECTOR, task.color_inside);
         log("Color inside: " + task.color_inside);
-        await formFrame.select(FORM_COLOR_OUTSIDE_SELECTOR, task.color_outside);
+        if ((task.goal == 0) && (result.length === 0)) {
+            log("Could not setup task.color_inside: " + task.color_inside);
+            additionalDescription = `В фильтре не найдена цвет салона ${task.color_inside}`;
+            break;
+        }
+        result = await formFrame.select(FORM_COLOR_OUTSIDE_SELECTOR, task.color_outside);
         log("Color outside: " + task.color_outside);
+        if ((task.goal == 0) && (result.length === 0)) {
+            log("Could not setup task.color_outside: " + task.color_outside);
+            additionalDescription = `В фильтре не найдена цвет кузова ${task.color_outside}`;
+            break;
+        }
         const checkbox = await formFrame.$(FORM_ONLY_AVAILABLE_SELECTOR);
         const isChecked = await (await checkbox.getProperty('checked')).jsonValue();
         if (!isChecked) {
@@ -831,6 +875,9 @@ const processSimpleTask = async ({page, data: task}) => {
     } else {
         log("So we have ordered nothing");
     }
+    if (additionalDescription.length > 0) {
+        description += currentDate() + " " + additionalDescription + "<br>";
+    }
 
     task.task_id = task.id;
     task.description = description;
@@ -868,7 +915,8 @@ const processComplexTask = async ({page, data: task}) => {
     let description = logInfoAboutSearch(task, true);
 
     task.color_outside = '';
-    let searchResultExists = await sendSearchRequest(page, formFrame, task);
+    let additionalDescription = '';
+    let searchResultExists = await sendSearchRequest(page, formFrame, task, additionalDescription);
     let currentPage = 1;
     let pageCount = 0;
     let paginationSelector = await formFrame.$(PAGING_SELECTOR);
@@ -1022,6 +1070,9 @@ const processComplexTask = async ({page, data: task}) => {
         } while (nextPageExists);
     } else {
         log("Search result does not exists");
+        if (additionalDescription.length > 0) {
+            description += currentDate() + " " + additionalDescription + "<br>";
+        }
         description += currentDate() + " требуемые авто не найдены<br>";
     }
 
