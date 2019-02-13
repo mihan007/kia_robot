@@ -32,6 +32,9 @@ use yii\db\Expression;
  */
 class Task extends \yii\db\ActiveRecord
 {
+    const GOAL_SPECIFIC = 0;
+    const GOAL_COMMON = 1;
+
     /**
      * {@inheritdoc}
      */
@@ -82,6 +85,7 @@ class Task extends \yii\db\ActiveRecord
             'created_at' => 'Дата создания',
             'updated_at' => 'Updated',
             'deleted_at' => 'Deleted',
+            'goal' => 'Цель задачи',
         ];
     }
 

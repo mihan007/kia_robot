@@ -20,6 +20,12 @@ use kartik\depdrop\DepDrop;
 
         <?php $form = ActiveForm::begin(); ?>
 
+        <?= $form->field($model, 'goal')->radioList([
+            \app\models\Task::GOAL_SPECIFIC => 'Конкретные авто',
+            \app\models\Task::GOAL_COMMON => 'Наполнение склада',
+        ]);
+        ?>
+
         <?= $form->field($model, 'model_name')->hiddenInput(['id' => 'model_name'])->label(false) ?>
 
         <?= $form->field($model, 'model_value')->dropDownList(ArrayHelper::map(Model::find()->all(), 'value', 'name'), [
