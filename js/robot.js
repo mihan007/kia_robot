@@ -634,21 +634,21 @@ const processSimpleTask = async ({page, data: task}) => {
         log("Manufacture code: " + manufactureCode);
         if ((task.goal == 0) && (result.length === 0)) {
             log("Could not setup task.manufacture_code: " + manufactureCode);
-            additionalDescription = `В фильтре не найдена код производителя ${manufactureCode}`;
+            additionalDescription = `В фильтре не найден код производителя ${manufactureCode}`;
             break;
         }
         result = await formFrame.select(FORM_COLOR_INSIDE_SELECTOR, task.color_inside);
         log("Color inside: " + task.color_inside);
         if ((task.goal == 0) && (result.length === 0)) {
             log("Could not setup task.color_inside: " + task.color_inside);
-            additionalDescription = `В фильтре не найдена цвет салона ${task.color_inside}`;
+            additionalDescription = `В фильтре не найден цвет салона ${task.color_inside}`;
             break;
         }
         result = await formFrame.select(FORM_COLOR_OUTSIDE_SELECTOR, task.color_outside);
         log("Color outside: " + task.color_outside);
         if ((task.goal == 0) && (result.length === 0)) {
             log("Could not setup task.color_outside: " + task.color_outside);
-            additionalDescription = `В фильтре не найдена цвет кузова ${task.color_outside}`;
+            additionalDescription = `В фильтре не найден цвет кузова ${task.color_outside}`;
             break;
         }
         const checkbox = await formFrame.$(FORM_ONLY_AVAILABLE_SELECTOR);
