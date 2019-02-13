@@ -22,6 +22,7 @@ $rows = [
         'label' => 'Дата создания',
         'value' => Yii::$app->formatter->format($model->created_at, 'datetime')
     ],
+    'goalLabel',
     'model_name',
     'manufacture_code_name',
     'color_inside_name',

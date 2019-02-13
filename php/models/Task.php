@@ -25,6 +25,7 @@ use yii\db\Expression;
  * @property int $deleted_at
  * @property int $company_id
  * @property int $user_id
+ * @property int $goal
  *
  * @property Company $company
  * @property User $user
@@ -125,5 +126,14 @@ class Task extends \yii\db\ActiveRecord
         }
 
         return $ordered;
+    }
+
+    public function getGoalLabel()
+    {
+        if ($this->goal == self::GOAL_COMMON) {
+            return 'Наполнение склада';
+        }
+
+        return 'Конкретные авто';
     }
 }
