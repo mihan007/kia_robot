@@ -147,6 +147,7 @@ class TaskController extends Controller
     public function actionCreate()
     {
         $model = new Task();
+        $model->goal = Task::GOAL_SPECIFIC;
         $manufactureCodes = [];
         $colorsInside = [];
         $colorsOutside = [];
