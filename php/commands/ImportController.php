@@ -16,7 +16,7 @@ class ImportController extends Controller
 
     public function actionCodes()
     {
-        $filePath = \Yii::getAlias('@runtime/kia_codes') . "/2019_02_14_kia_codes.csv";
+        $filePath = \Yii::getAlias('@app/files/kia_codes') . "/2019_02_14_kia_codes.csv";
         $content = file_get_contents($filePath);
         $rows = explode("\r", $content);
         $processedModelValues = [];
