@@ -265,7 +265,9 @@ class TaskController extends Controller
     {
         $modelValue = $_POST['model_id'];
         $model = Model::findOne(['value' => $modelValue]);
-        $manufactures = ArrayHelper::map(ManufactureCode::findAll(['model_id' => $model->id]), 'value', 'name');
+        $manufactures = ArrayHelper::map(
+            ManufactureCode::find()->where(['model_id' => $model->id])->orderBy(['name' => SORT_ASC])->all(),
+            'value', 'name');
         $out = [];
         foreach ($manufactures as $key => $value) {
             $out[] = [
@@ -280,7 +282,9 @@ class TaskController extends Controller
     {
         $modelValue = $_POST['model_id'];
         $model = Model::findOne(['value' => $modelValue]);
-        $items = ArrayHelper::map(ColorInside::findAll(['model_id' => $model->id]), 'value', 'name');
+        $items = ArrayHelper::map(
+            ColorInside::find()->where(['model_id' => $model->id])->orderBy(['name' => SORT_ASC])->all(),
+            'value', 'name');
         $out = [];
         foreach ($items as $key => $value) {
             $out[] = [
@@ -295,7 +299,9 @@ class TaskController extends Controller
     {
         $modelValue = $_POST['model_id'];
         $model = Model::findOne(['value' => $modelValue]);
-        $items = ArrayHelper::map(ColorOutside::findAll(['model_id' => $model->id]), 'value', 'name');
+        $items = ArrayHelper::map(
+            ColorOutside::find()->where(['model_id' => $model->id])->orderBy(['name' => SORT_ASC])->all(),
+            'value', 'name');
         $out = [];
         foreach ($items as $key => $value) {
             $out[] = [
