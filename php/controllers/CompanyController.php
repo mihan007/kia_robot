@@ -102,6 +102,7 @@ class CompanyController extends Controller
         $model = $this->findModel($id);
 
         if ($model->load(Yii::$app->request->post()) && $model->save()) {
+            Yii::$app->session->setFlash('success', 'Информация о дилере успешно обновлена');
             return $this->redirect(['index']);
         }
 
