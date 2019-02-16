@@ -102,7 +102,7 @@ class CompanyController extends Controller
         $model = $this->findModel($id);
 
         if ($model->load(Yii::$app->request->post()) && $model->save()) {
-            return $this->redirect(['redirect']);
+            return $this->redirect(['index']);
         }
 
         return $this->render('update', [
