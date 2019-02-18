@@ -166,7 +166,10 @@ async function markCompanyAsBanned(connection, company_id) {
     return new Promise((resolve, reject) => {
         connection.update(
             'company',
-            {'banned_at': Math.floor(new Date() / 1000)},
+            {
+                'banned_at': Math.floor(new Date() / 1000),
+                'notified_about_ban': 0
+            },
             {id: company_id},
             (err, affectedRows) => {
                 if (err) {
