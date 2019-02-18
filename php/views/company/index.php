@@ -25,6 +25,7 @@ $this->params['breadcrumbs'][] = $this->title;
             'name',
             'statusLabel',
             'createdAt',
+            'bannedAt',
 
             ['class' => 'yii\grid\ActionColumn'],
         ],

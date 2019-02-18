@@ -100,9 +100,22 @@ class CompanyController extends Controller
     public function actionUpdate($id)
     {
         $model = $this->findModel($id);
+        $oldPassword = $model->kia_password;
 
         if ($model->load(Yii::$app->request->post()) && $model->save()) {
-            Yii::$app->session->setFlash('success', 'Информация о дилере успешно обновлена');
+            $successMessage = 'Информация о дилере успешно обновлена';
+            $newPassword = $model->kia_password;
+            if ($model->banned_at > 0) {
+                if ($newPassword != $oldPassword) {
+                    $model->banned_at = null;
+                    $model->notified_about_ban = 0;
+                    $model->save(false);
+                    $successMessage .= '. Так как вы изменили пароль доступа к сайту Киа, то признак закрытия доступа снят и все задачи вскоре начнут работать штатно.';
+                } else {
+                    Yii::$app->session->addFlash('warning', "Вам необходимо внести корректный пароль от сайта Киа для дилера {$model->name}, т.к. на текущий момент задачи не выполняются.");
+                }
+            }
+            Yii::$app->session->setFlash('success', $successMessage);
             return $this->redirect(['index']);
         }
 

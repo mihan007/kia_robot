@@ -33,6 +33,8 @@ const PAGING_SELECTOR = '#sel_paging';
 
 const MAX_CONCURRENCY = CREDS.maxConcurrency;
 
+let bannedCompaniesIds = [];
+
 run();
 
 function delay(ms) {
@@ -131,6 +133,46 @@ async function getTasksFromDb(connection) {
                         tasks.push(task);
                     }
                     resolve(tasks);
+                }
+            }
+        );
+    })
+}
+
+async function checkIfCompanyBanned(connection, company_id) {
+    return new Promise((resolve, reject) => {
+        connection.select(
+            'company', '*',
+            {'id': company_id},
+            (err, results) => {
+                if (err) {
+                    reject(err);
+                } else {
+                    for (const i in results) {
+                        if (results[i].banned_at > 0) {
+                            resolve(true);
+                        } else {
+                            resolve(false);
+                        }
+                    }
+                }
+            }
+        );
+    })
+}
+
+async function markCompanyAsBanned(connection, company_id) {
+    bannedCompaniesIds.push(company_id);
+    return new Promise((resolve, reject) => {
+        connection.update(
+            'company',
+            {'banned_at': Math.floor(new Date() / 1000)},
+            {id: company_id},
+            (err, affectedRows) => {
+                if (err) {
+                    reject(err);
+                } else {
+                    resolve(affectedRows);
                 }
             }
         );
@@ -255,10 +297,13 @@ async function loginAndSwitchToFreeSklad(page, login, password) {
     await page.click(PASSWORD_SELECTOR);
     await page.keyboard.type(password);
     await page.click(LOGIN_BUTTON_SELECTOR);
+    try {
+        await page.waitFor(SELL_TAB_SELECTOR, {timeout: 5000});
+    } catch (e) {
+        return false;
+    }
     log("Logged in");
-
     log("Switching to free sklad search page");
-    await page.waitFor(SELL_TAB_SELECTOR);
     await page.click(SELL_TAB_SELECTOR);
     await page.waitFor(FREE_SKLAD_LEFT_SIDEBAR_SELECTOR);
 
@@ -549,7 +594,10 @@ async function switchToFreeSkladAndSaveScreenshot(page, formFrame, screenshots, 
  * @returns {Promise<void>}
  */
 const processSimpleTask = async ({page, data: task}) => {
-    log('Running ', task.id);
+    log(`Running task ${task.id}`);
+    if (bannedCompaniesIds.includes(task.company_id)) {
+        log(`Stop executing ${task.id} because company ${task.company_id} marked as banned`);
+    }
 
     if (!task.searchDialogHandled) {
         page.on('dialog', async dialog => {
@@ -568,10 +616,15 @@ const processSimpleTask = async ({page, data: task}) => {
     await page.click(PASSWORD_SELECTOR);
     await page.keyboard.type(task.credentials.password);
     await page.click(LOGIN_BUTTON_SELECTOR);
+    try {
+        await page.waitFor(SELL_TAB_SELECTOR, {timeout: 5000});
+    } catch (e) {
+        log(`Could not log in, mark company ${task.company_id} as banned`);
+        await markCompanyAsBanned(task.connection, task.company_id);
+        return;
+    }
     log("Logged in");
-
     log("Switching to free sklad search page");
-    await page.waitFor(SELL_TAB_SELECTOR);
     await page.click(SELL_TAB_SELECTOR);
     await page.waitFor(FREE_SKLAD_LEFT_SIDEBAR_SELECTOR);
 
@@ -908,10 +961,19 @@ function cleanCodes(specificManufactureCodeQueue) {
  * @returns {Promise<void>}
  */
 const processComplexTask = async ({page, data: task}) => {
-    log('Running ' + task.id);
+    log(`Running task ${task.id}`);
+    if (bannedCompaniesIds.includes(task.company_id)) {
+        log(`Stop executing ${task.id} because company ${task.company_id} marked as banned`);
+    }
+
     let screenshots = [];
 
     let formFrame = await loginAndSwitchToFreeSklad(page, task.credentials.login, task.credentials.password);
+    if (formFrame === false) {
+        log(`Could not log in, mark company ${task.company_id} as banned`);
+        await markCompanyAsBanned(task.connection, task.company_id);
+        return;
+    }
     let description = logInfoAboutSearch(task, true);
 
     task.color_outside = '';
@@ -1190,7 +1252,27 @@ async function getOrderedCars(connection, task_id) {
 
 async function filterTasks(connection, allTasks) {
     let result = [];
+    let bannedCompanies = [];
+    let nonBannedCompanies = [];
     for (let i in allTasks) {
+        if (bannedCompanies.includes(allTasks[i].company_id)) {
+            log(`Skip task ${allTasks[i].id} because company ${allTasks[i].company_id} marked as banned`);
+            continue;
+        } else if (!nonBannedCompanies.includes(allTasks[i].company_id)) {
+            log(`For task ${allTasks[i].id} check if company ${allTasks[i].company_id} is banned`);
+            const isBanned = await checkIfCompanyBanned(connection, allTasks[i].company_id);
+            if (isBanned) {
+                log(`Skip task ${allTasks[i].id} because company ${allTasks[i].company_id} marked as banned`);
+                bannedCompanies.push(allTasks[i].company_id);
+                continue;
+            } else {
+                log(`Processing task ${allTasks[i].id} because company ${allTasks[i].company_id} marked as non banned`);
+                nonBannedCompanies.push(allTasks[i].company_id)
+            }
+        } else {
+            log(`Processing task ${allTasks[i].id} because company ${allTasks[i].company_id} marked as non banned`);
+        }
+
         let orderedCars = await getOrderedCars(connection, allTasks[i].id);
         if (allTasks[i].amount > orderedCars.amount) {
             let newTask = allTasks[i];

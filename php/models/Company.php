@@ -17,6 +17,8 @@ use yii\validators\EmailValidator;
  * @property int $status
  * @property int $created_at
  * @property int $updated_at
+ * @property int $banned_at
+ * @property int $notified_about_ban
  */
 class Company extends \yii\db\ActiveRecord
 {
@@ -66,6 +68,7 @@ class Company extends \yii\db\ActiveRecord
             'status' => 'Статус',
             'statusLabel' => 'Статус',
             'createdAt' => 'Добавлен',
+            'bannedAt' => 'Доступ запрещен',
             'kia_login' => 'Логин от сайта Киа',
             'kia_password' => 'Пароль от сайта Киа',
             'created_at' => 'Created At',
@@ -88,6 +91,15 @@ class Company extends \yii\db\ActiveRecord
     public function getCreatedAt()
     {
         return date('Y-m-d H:i', $this->created_at);
+    }
+
+    public function getBannedAt()
+    {
+        if ($this->banned_at > 0) {
+            return date('Y-m-d H:i', $this->banned_at);
+        }
+
+        return 'Нет';
     }
 
     public function setNotificationEmail($originalEmail)
