@@ -72,6 +72,24 @@ AppAsset::register($this);
         <?= Breadcrumbs::widget([
             'links' => isset($this->params['breadcrumbs']) ? $this->params['breadcrumbs'] : [],
         ]) ?>
+        <?php if ((!Yii::$app->user->isGuest) && (Yii::$app->user->isLeadManager) && (Yii::$app->user->company->banned_at > 0)): ?>
+            <?php echo \yii\bootstrap\Alert::widget([
+                'options' => [
+                    'class' => 'alert-danger',
+                ],
+                'body' => "Выполнение ваших задач приостановлено в связи с тем, что текущие логин/пароль к сайту Киа не подходят. 
+                           <a href='/index.php?r=settings%2Findex'>Отредактировать</a>",
+            ]); ?>
+        <?php endif ?>
+        <?php if ((!Yii::$app->user->isGuest) && (Yii::$app->user->isManager) && (Yii::$app->user->company->banned_at > 0)): ?>
+            <?php echo \yii\bootstrap\Alert::widget([
+                'options' => [
+                    'class' => 'alert-danger',
+                ],
+                'body' => "Выполнение ваших задач приостановлено в связи с тем, что текущие логин/пароль к сайту Киа не подходят. 
+                           Обратитесь к руководителю для смены логина/пароля к сайту Киа.</a>",
+            ]); ?>
+        <?php endif ?>
         <?= Alert::widget() ?>
         <?= $content ?>
     </div>

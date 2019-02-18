@@ -30,9 +30,12 @@ class SettingsController extends Controller
                 }
                 if (Yii::$app->request->isPost) {
                     $result = $company->setNotificationEmail(Yii::$app->request->post('email'));
+                    $company->kia_login = Yii::$app->request->post('kia_login');
+                    $company->kia_password = Yii::$app->request->post('kia_password');
+                    $company->banned_at = null;
                     if ($result === true) {
                         $company->save(false);
-                        Yii::$app->getSession()->setFlash('success', 'Email для уведомления успешно сохранены');
+                        Yii::$app->getSession()->setFlash('success', 'Настройки успешно сохранены');
                     } else {
                         Yii::$app->getSession()->setFlash('error', 'Ошибка сохранения email для уведомления. Следующие email некорректны: '.implode(', ', $result));
                     }
@@ -50,9 +53,12 @@ class SettingsController extends Controller
             }
             if (Yii::$app->request->isPost) {
                 $result = $company->setNotificationEmail(Yii::$app->request->post('email'));
+                $company->kia_login = Yii::$app->request->post('kia_login');
+                $company->kia_password = Yii::$app->request->post('kia_password');
+                $company->banned_at = null;
                 if ($result === true) {
                     $company->save(false);
-                    Yii::$app->getSession()->setFlash('success', 'Email для уведомления успешно сохранены');
+                    Yii::$app->getSession()->setFlash('success', 'Настройки успешно сохранены');
                 } else {
                     Yii::$app->getSession()->setFlash('error', 'Ошибка сохранения email для уведомления. Следующие email некорректны: ' . implode(', ', $result));
                 }
