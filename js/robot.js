@@ -598,7 +598,7 @@ async function switchToFreeSkladAndSaveScreenshot(page, formFrame, screenshots, 
  * @returns {Promise<void>}
  */
 const processSimpleTask = async ({page, data: task}) => {
-    log(`Running task ${task.id}`);
+    log(`Running simple task ${task.id}`);
     if (bannedCompaniesIds.includes(task.company_id)) {
         log(`Stop executing ${task.id} because company ${task.company_id} marked as banned`);
     }
@@ -965,7 +965,7 @@ function cleanCodes(specificManufactureCodeQueue) {
  * @returns {Promise<void>}
  */
 const processComplexTask = async ({page, data: task}) => {
-    log(`Running task ${task.id}`);
+    log(`Running complex task ${task.id}`);
     if (bannedCompaniesIds.includes(task.company_id)) {
         log(`Stop executing ${task.id} because company ${task.company_id} marked as banned`);
     }
