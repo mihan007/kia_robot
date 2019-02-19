@@ -983,6 +983,7 @@ const processComplexTask = async ({page, data: task}) => {
     task.color_outside = '';
     let additionalDescription = '';
     let orderedManufactureCodesByTaskRun = [];
+    let totalOrdered = 0;
     let searchResultExists = await sendSearchRequest(page, formFrame, task, additionalDescription);
     if (searchResultExists) {
         let currentPage = 1;
@@ -1139,7 +1140,6 @@ const processComplexTask = async ({page, data: task}) => {
         cleanCodes(specificManufactureCodeQueue);
         cleanCodes(commonManufactureCodeQueue);
 
-        let totalOrdered = 0;
         for (let colorCode in specificManufactureCodeQueue) {
             if (specificManufactureCodeQueue.hasOwnProperty(colorCode)) {
                 log("Order task with manufacture_code = " + task.manufacture_code + " and color = " + colorCode);
