@@ -32,6 +32,7 @@ const ORDER_FREE_SKLAD_BUTTON = '#subContents > div.buttons > a';
 const PAGING_SELECTOR = '#sel_paging';
 
 const MAX_CONCURRENCY = CREDS.maxConcurrency;
+const TIMEOUT_FOR_LOGIN = 30000;
 
 let bannedCompaniesIds = [];
 
@@ -301,7 +302,7 @@ async function loginAndSwitchToFreeSklad(page, login, password) {
     await page.keyboard.type(password);
     await page.click(LOGIN_BUTTON_SELECTOR);
     try {
-        await page.waitFor(SELL_TAB_SELECTOR, {timeout: 5000});
+        await page.waitFor(SELL_TAB_SELECTOR, {timeout: TIMEOUT_FOR_LOGIN});
     } catch (e) {
         return false;
     }
@@ -620,7 +621,7 @@ const processSimpleTask = async ({page, data: task}) => {
     await page.keyboard.type(task.credentials.password);
     await page.click(LOGIN_BUTTON_SELECTOR);
     try {
-        await page.waitFor(SELL_TAB_SELECTOR, {timeout: 5000});
+        await page.waitFor(SELL_TAB_SELECTOR, {timeout: TIMEOUT_FOR_LOGIN});
     } catch (e) {
         log(`Could not log in, mark company ${task.company_id} as banned`);
         await markCompanyAsBanned(task.connection, task.company_id);
