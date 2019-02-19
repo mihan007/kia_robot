@@ -982,27 +982,28 @@ const processComplexTask = async ({page, data: task}) => {
 
     task.color_outside = '';
     let additionalDescription = '';
+    let orderedManufactureCodesByTaskRun = [];
     let searchResultExists = await sendSearchRequest(page, formFrame, task, additionalDescription);
-    let currentPage = 1;
-    let pageCount = 0;
-    let paginationSelector = await formFrame.$(PAGING_SELECTOR);
-    let paginationSelectorOuterHtml = await paginationSelector.getProperty('outerHTML');
-    let paginationSelectorHtml = await paginationSelectorOuterHtml.jsonValue();
-    let $paginationSelector = cheerio.load(paginationSelectorHtml);
-    $paginationSelector('option').each(function (el) {
-        let currentPageOption = parseInt(this.attribs['value']);
-        if (currentPageOption > pageCount) {
-            pageCount = currentPageOption;
-        }
-    });
-
-    const name = `Результат поискового запроса, страница ${currentPage} из ${pageCount}`;
-    screenshots.push(await saveScreenshot(task.currentScreenshotPath, page, name));
-
-    let specificManufactureCodeQueue = [];
-    let commonManufactureCodeQueue = [];
-
     if (searchResultExists) {
+        let currentPage = 1;
+        let pageCount = 0;
+        let paginationSelector = await formFrame.$(PAGING_SELECTOR);
+        let paginationSelectorOuterHtml = await paginationSelector.getProperty('outerHTML');
+        let paginationSelectorHtml = await paginationSelectorOuterHtml.jsonValue();
+        let $paginationSelector = cheerio.load(paginationSelectorHtml);
+        $paginationSelector('option').each(function (el) {
+            let currentPageOption = parseInt(this.attribs['value']);
+            if (currentPageOption > pageCount) {
+                pageCount = currentPageOption;
+            }
+        });
+
+        const name = `Результат поискового запроса, страница ${currentPage} из ${pageCount}`;
+        screenshots.push(await saveScreenshot(task.currentScreenshotPath, page, name));
+
+        let specificManufactureCodeQueue = [];
+        let commonManufactureCodeQueue = [];
+
         log("Search result exists");
         let orders;
         let nextPageExists;
@@ -1134,80 +1135,79 @@ const processComplexTask = async ({page, data: task}) => {
                 nextPageExists = false;
             }
         } while (nextPageExists);
-    } else {
-        log("Search result does not exists");
-        if (additionalDescription.length > 0) {
-            description += currentDate() + " " + additionalDescription + "<br>";
-        }
-        description += currentDate() + " требуемые авто не найдены<br>";
-    }
 
-    cleanCodes(specificManufactureCodeQueue);
-    cleanCodes(commonManufactureCodeQueue);
+        cleanCodes(specificManufactureCodeQueue);
+        cleanCodes(commonManufactureCodeQueue);
 
-    let totalOrdered = 0;
-    for (let colorCode in specificManufactureCodeQueue) {
-        if (specificManufactureCodeQueue.hasOwnProperty(colorCode)) {
-            log("Order task with manufacture_code = " + task.manufacture_code + " and color = " + colorCode);
-            description += currentDate() + " Сперва заказываем согласно коду производителя из задачи: " + task.manufacture_code + " и приоритетный цвет: " + colorCode + "<br>";
-            task.color_outside = colorCode;
-            let remainBefore = task.remain;
-            description += logInfoAboutSearch(task, false);
-            task = await orderTask(page, formFrame, task, description, false, screenshots);
-            if (task.reachedMaximum) {
-                break;
-            }
-            let remainAfter = task.remain;
-            let ordered = remainBefore - remainAfter;
-            totalOrdered += ordered;
-            description += currentDate() + " на данном этапе заказано: " + ordered + " штук, всего заказано: " + totalOrdered + ", осталось: " + task.remain + "<br>";
-            if (task.remain <= 0) {
-                break;
-            }
-        }
-    }
-
-    let orderedManufactureCodesByTaskRun = [];
-
-    let orderedForCycle;
-    do {
-        orderedForCycle = 0;
-        for (let colorCode in commonManufactureCodeQueue) {
-            if (commonManufactureCodeQueue.hasOwnProperty(colorCode)) {
-                let manufactureCodes = task.alreadyOrderedManufactureCodes;
-                log("Order task with any manufacture_code and color " + colorCode);
-                description += currentDate() + " Теперь заказываем произвольный код производителя и приоритетный цвет: " + colorCode + "<br>";
-                task.manufacture_code = "";
+        let totalOrdered = 0;
+        for (let colorCode in specificManufactureCodeQueue) {
+            if (specificManufactureCodeQueue.hasOwnProperty(colorCode)) {
+                log("Order task with manufacture_code = " + task.manufacture_code + " and color = " + colorCode);
+                description += currentDate() + " Сперва заказываем согласно коду производителя из задачи: " + task.manufacture_code + " и приоритетный цвет: " + colorCode + "<br>";
                 task.color_outside = colorCode;
                 let remainBefore = task.remain;
                 description += logInfoAboutSearch(task, false);
-                task = await orderTask(page, formFrame, task, description, manufactureCodes, screenshots);
+                task = await orderTask(page, formFrame, task, description, false, screenshots);
                 if (task.reachedMaximum) {
                     break;
                 }
                 let remainAfter = task.remain;
                 let ordered = remainBefore - remainAfter;
                 totalOrdered += ordered;
-                orderedForCycle += ordered;
-                if (task.orderedManufactureCode !== false) {
-                    orderedManufactureCodesByTaskRun.push(task.orderedManufactureCode);
-                }
                 description += currentDate() + " на данном этапе заказано: " + ordered + " штук, всего заказано: " + totalOrdered + ", осталось: " + task.remain + "<br>";
                 if (task.remain <= 0) {
                     break;
                 }
             }
         }
-        if (task.reachedMaximum) {
-            break;
-        }
-    } while (orderedForCycle > 0);
 
-    if (totalOrdered > 0) {
-        log("So we have ordered: " + totalOrdered);
-        formFrame = await switchToFreeSkladAndSaveScreenshot(page, formFrame, screenshots, task);
+        let orderedForCycle;
+        do {
+            orderedForCycle = 0;
+            for (let colorCode in commonManufactureCodeQueue) {
+                if (commonManufactureCodeQueue.hasOwnProperty(colorCode)) {
+                    let manufactureCodes = task.alreadyOrderedManufactureCodes;
+                    log("Order task with any manufacture_code and color " + colorCode);
+                    description += currentDate() + " Теперь заказываем произвольный код производителя и приоритетный цвет: " + colorCode + "<br>";
+                    task.manufacture_code = "";
+                    task.color_outside = colorCode;
+                    let remainBefore = task.remain;
+                    description += logInfoAboutSearch(task, false);
+                    task = await orderTask(page, formFrame, task, description, manufactureCodes, screenshots);
+                    if (task.reachedMaximum) {
+                        break;
+                    }
+                    let remainAfter = task.remain;
+                    let ordered = remainBefore - remainAfter;
+                    totalOrdered += ordered;
+                    orderedForCycle += ordered;
+                    if (task.orderedManufactureCode !== false) {
+                        orderedManufactureCodesByTaskRun.push(task.orderedManufactureCode);
+                    }
+                    description += currentDate() + " на данном этапе заказано: " + ordered + " штук, всего заказано: " + totalOrdered + ", осталось: " + task.remain + "<br>";
+                    if (task.remain <= 0) {
+                        break;
+                    }
+                }
+            }
+            if (task.reachedMaximum) {
+                break;
+            }
+        } while (orderedForCycle > 0);
+
+        if (totalOrdered > 0) {
+            log("So we have ordered: " + totalOrdered);
+            formFrame = await switchToFreeSkladAndSaveScreenshot(page, formFrame, screenshots, task);
+        } else {
+            log("So we have ordered nothing");
+        }
     } else {
-        log("So we have ordered nothing");
+        screenshots.push(await saveScreenshot(task.currentScreenshotPath, page, 'Результат поиска нужного авто. ' + additionalDescription));
+        log("Search result does not exists");
+        if (additionalDescription.length > 0) {
+            description += currentDate() + " " + additionalDescription + "<br>";
+        }
+        description += currentDate() + " требуемые авто не найдены<br>";
     }
 
     task.task_id = task.id;
