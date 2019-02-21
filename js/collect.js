@@ -33,17 +33,19 @@ const PAGING_SELECTOR = '#sel_paging';
 
 const MAX_CONCURRENCY = 1;
 
-run();
+let firstFrame = null;
+let searchResultExists = false;
+let screenshots = [];
+let connection;
+
+/** Helpers **/
 
 function delay(ms) {
     return new Promise(resolve => setTimeout(resolve, ms));
 }
 
-async function run() {
-    await delay(5000);
-    const connection = await connectToDb();
-    await robot(connection);
-    disconnectFromDb(connection);
+function pad2(n) {
+    return n < 10 ? '0' + n : n
 }
 
 function formattedDate(date) {
@@ -54,10 +56,6 @@ function formattedDate(date) {
         (mm > 9 ? '' : '0') + mm,
         (dd > 9 ? '' : '0') + dd
     ].join('');
-}
-
-function pad2(n) {
-    return n < 10 ? '0' + n : n
 }
 
 function currentDate() {
@@ -79,6 +77,17 @@ function makeUniqueScreenshotName() {
     return +new Date() + '_' + Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15) + '.png';
 }
 
+async function saveScreenshot(currentScreenshotPath, page, name) {
+    let fullpath = currentScreenshotPath + "/" + makeUniqueScreenshotName();
+    await page.screenshot({path: fullpath, fullPage: true});
+    return {
+        name: name,
+        filepath: fullpath
+    };
+}
+
+/** Db **/
+
 async function connectToDb() {
     const connection = mysql.createConnection({
         host: CREDS.mysqlHost,
@@ -98,11 +107,15 @@ async function connectToDb() {
     return connection;
 }
 
-async function disconnectFromDb(connection) {
+async function disconnectFromDb() {
     connection.end();
 }
 
-let firstFrame;
+async function saveStorageItemsToDb(items) {
+
+}
+
+/** Robot **/
 
 async function loginAndSwitchToFreeSklad(page, login, password) {
     let formFrame;
@@ -140,9 +153,7 @@ async function loginAndSwitchToFreeSklad(page, login, password) {
     return formFrame;
 }
 
-let searchResultExists;
-
-async function sendSearchRequestForAllCars(page, formFrame) {
+async function saveCurrentStorageToDb(page, formFrame) {
     page.on('dialog', async dialog => {
         searchResultExists = false;
         await dialog.dismiss();
@@ -150,38 +161,106 @@ async function sendSearchRequestForAllCars(page, formFrame) {
 
     searchResultExists = true;
     log("Setup search params");
-    const checkbox = await formFrame.$(FORM_ONLY_AVAILABLE_SELECTOR);
-    const isChecked = await (await checkbox.getProperty('checked')).jsonValue();
-    if (!isChecked) {
-        await formFrame.click(FORM_ONLY_AVAILABLE_SELECTOR);
-        log("Setup only available checkbox to true");
-    }
-    log("Send search request");
+    let currentPage = 1;
+    let nextPageExists = false;
+    let condition;
+
+    log(`Send search request, page ${currentPage}`);
     await formFrame.click(FORM_REQUEST_BUTTON_SELECTOR);
-    await formFrame.waitFor(5000);
-    log("Sent search request");
+    await formFrame.waitFor(10000);
+    log(`Sent search request, page ${currentPage}`);
 
-    return searchResultExists;
+    do {
+        if (!searchResultExists) {
+            log(`No search result, page ${currentPage}`);
+            break;
+        }
+
+        let orderTable = await (await (await formFrame.$(ORDER_TABLE)).getProperty('outerHTML')).jsonValue();
+
+        log(`Analyze page ${currentPage} start`);
+        analyzeSearchResult(orderTable);
+        log(`Analyze page ${currentPage} end`);
+
+        if (currentPage === 1) {
+            condition = await formFrame.$(FIRST_PAGE_NEXT_SELECTOR) !== null;
+        } else {
+            condition = await formFrame.$(NON_FIRST_PAGE_NEXT_SELECTOR) !== null;
+        }
+        if (condition) {
+            nextPageExists = true;
+            if (currentPage === 1) {
+                await formFrame.click(FIRST_PAGE_NEXT_SELECTOR);
+            } else {
+                await formFrame.click(NON_FIRST_PAGE_NEXT_SELECTOR);
+            }
+            await formFrame.waitFor(5000);
+            currentPage++;
+            log(`Next page exists, switch to it, new page ${currentPage}`);
+        } else {
+            log("No next page exists, stop search");
+            nextPageExists = false;
+        }
+    } while (nextPageExists);
 }
 
-async function saveScreenshot(currentScreenshotPath, page, name) {
-    let fullpath = currentScreenshotPath + "/" + makeUniqueScreenshotName();
-    await page.screenshot({path: fullpath, fullPage: true});
-    return {
-        name: name,
-        filepath: fullpath
-    };
+function analyzeSearchResult(searchResult) {
+    let $ordersTable = cheerio.load(searchResult);
+    let storageItems = [];
+    $ordersTable('tr').each(function (i) {
+        let order = {};
+        $ordersTable(this).find('td').each(function (j) {
+            switch (j) {
+                case 0:
+                    break;
+                case 1:
+                    order.model = $ordersTable(this).text();
+                    break;
+                case 2:
+                    order.manufacture_code = $ordersTable(this).text();
+                    break;
+                case 3:
+                    order.description = $ordersTable(this).text();
+                    break;
+                case 4:
+                    order.color_outside = $ordersTable(this).text();
+                    break;
+                case 5:
+                    order.color_inside = $ordersTable(this).text();
+                    break;
+                case 6:
+                    order.year = $ordersTable(this).text();
+                    break;
+                case 7:
+                    order.storage_code = $ordersTable(this).text();
+                    break;
+                case 8:
+                    order.available = parseInt($ordersTable(this).text());
+                    break;
+                case 9:
+                    order.reserved = parseInt($ordersTable(this).text());
+                    break;
+            }
+        });
+        if (order.hasOwnProperty('available')) {
+            storageItems.push(order);
+        }
+    });
+    const foundSize = storageItems.length;
+    log(`Found ${foundSize} items`);
+    saveStorageItemsToDb(storageItems);
 }
+
+/** Main flow **/
 
 const runner = async ({page, data: task}) => {
-    let screenshots = [];
     let formFrame = await loginAndSwitchToFreeSklad(page, CREDS.username, CREDS.password);
-    //screenshots.push(await saveScreenshot(task.currentScreenshotPath, page, 'Вход в систему осуществлен'));
-    let searchResultExistis = sendSearchRequestForAllCars(page, formFrame);
-    //screenshots.push(await saveScreenshot(task.currentScreenshotPath, page, 'Послали поисковый запрос'));
+    screenshots.push(await saveScreenshot(task.currentScreenshotPath, page, 'Вход в систему осуществлен'));
+    await saveCurrentStorageToDb(page, formFrame);
+    screenshots.push(await saveScreenshot(task.currentScreenshotPath, page, 'Послали поисковый запрос'));
 };
 
-async function robot(connection) {
+async function robot() {
     let currentScreenshotPath = __dirname + "/" + SCREENSHOT_PATH;
     if (!fs.existsSync(currentScreenshotPath)) {
         fs.mkdirSync(currentScreenshotPath);
@@ -211,3 +290,10 @@ async function robot(connection) {
     await cluster.close();
 }
 
+async function run() {
+    connection = await connectToDb();
+    await robot();
+    await disconnectFromDb();
+}
+
+run();
