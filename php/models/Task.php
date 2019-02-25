@@ -18,6 +18,7 @@ use yii\db\Expression;
  * @property string $color_inside_value
  * @property string $color_outside_name
  * @property string $color_outside_value
+ * @property string $client_name
  * @property int $amount
  * @property boolean $more_auto
  * @property int $created_at
@@ -61,6 +62,7 @@ class Task extends \yii\db\ActiveRecord
         return [
             [['amount', 'more_auto'], 'integer'],
             [['amount'], 'required'],
+            [['client_name'], 'string', 'max' => 255],
             [['deleted'], 'safe'],
             [['model_name', 'model_value', 'manufacture_code_name', 'manufacture_code_value', 'color_inside_name', 'color_inside_value', 'color_outside_name', 'color_outside_value'], 'string', 'max' => 255],
         ];
@@ -87,6 +89,7 @@ class Task extends \yii\db\ActiveRecord
             'updated_at' => 'Updated',
             'deleted_at' => 'Deleted',
             'goal' => 'Цель задачи',
+            'client_name' => 'Имя клиента',
         ];
     }
 

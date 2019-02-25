@@ -61,6 +61,8 @@ use kartik\depdrop\DepDrop;
 
         <?= $form->field($model, 'more_auto')->checkbox() ?>
 
+        <?= $form->field($model, 'client_name')->textInput() ?>
+
         <div class="form-group">
             <?= Html::submitButton('Сохранить', ['class' => 'btn btn-success']) ?>
         </div>

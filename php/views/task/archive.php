@@ -38,6 +38,7 @@ $columns = [
             return $model->more_auto ? 'Да' : 'Нет';
         },
     ],
+    'client_name'
 ];
 if (Yii::$app->user->isAdmin) {
     $columns[] = [
