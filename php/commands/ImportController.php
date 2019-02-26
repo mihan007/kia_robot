@@ -32,6 +32,27 @@ class ImportController extends Controller
         $this->findNonMatched($processedModelValues);
     }
 
+    public function actionCodes2()
+    {
+        $filePath = \Yii::getAlias('@app/files/kia_codes') . "/2019_02_26_kia_codes.csv";
+        $content = file_get_contents($filePath);
+        $rows = explode("\r", $content);
+        $processedModelValues = [];
+        foreach ($rows as $row) {
+            $columns = explode(";", $row);
+            $modelValue = $columns[1];
+            $manufactureCode1 = $columns[2];
+            $manufactureCode2 = $columns[3];
+            $manufactureCode3 = $columns[4];
+
+            $manufactureCode = $manufactureCode1.$manufactureCode2.$manufactureCode3;
+
+            $this->addOrSkip($modelValue, $manufactureCode);
+            $processedModelValues[] = $modelValue;
+        }
+        $this->findNonMatched($processedModelValues);
+    }
+
     private function addOrSkip($modelValue, $manufactureCode)
     {
         $model = Model::findOne(['value' => $modelValue]);
