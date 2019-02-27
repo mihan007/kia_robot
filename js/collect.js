@@ -64,6 +64,12 @@ function currentDate() {
         + ' ' + pad2(date.getHours()) + ':' + pad2(date.getMinutes()) + ':' + pad2(date.getSeconds()) + ']';
 }
 
+function mysqlCurrentDate() {
+    let date = new Date();
+    return date.getFullYear().toString() + '-' + pad2(date.getMonth() + 1) + '-' + pad2(date.getDate())
+        + ' ' + pad2(date.getHours()) + ':' + pad2(date.getMinutes()) + ':' + pad2(date.getSeconds());
+}
+
 function log(...messages) {
     if (!CREDS.enableLogging) {
         return;
@@ -111,8 +117,74 @@ async function disconnectFromDb() {
     connection.end();
 }
 
-async function saveStorageItemsToDb(items) {
+async function saveStorageItemsToDb(items, storageSessionId, currentPage) {
+    for (const i in items) {
+        saveStorageItemToDb(items[i], storageSessionId, currentPage);
+    }
+}
 
+async function saveStorageItemToDb(item, storage_session_id, currentPage) {
+    return new Promise((resolve, reject) => {
+        connection.insert(
+            'storage', {
+                storage_session_id: storage_session_id,
+                page: currentPage,
+                model: item.model,
+                manufacture_code: item.manufacture_code,
+                description: item.description,
+                color_outside: item.color_outside,
+                color_inside: item.color_inside,
+                year: item.year,
+                storage_code: item.storage_code,
+                available: item.available,
+                reserved: item.reserved,
+                created_at: mysqlCurrentDate()
+            },
+            (err, recordId) => {
+                if (err) {
+                    reject(err);
+                } else {
+                    resolve(recordId);
+                }
+            }
+        );
+    });
+}
+
+async function saveStartOfSessionStorage() {
+    return new Promise((resolve, reject) => {
+        connection.insert(
+            'storage_session', {
+                'started_at' : mysqlCurrentDate()
+            },
+            (err, recordId) => {
+                if (err) {
+                    reject(err);
+                } else {
+                    resolve(recordId);
+                }
+            }
+        );
+    });
+}
+
+async function saveFinishOfSessionStorage(connection, storageSessionId) {
+    return new Promise((resolve, reject) => {
+        connection.update(
+            'storage_session',
+            {
+                'finished_at': mysqlCurrentDate()
+            },
+            {id: storageSessionId},
+            (err, affectedRows) => {
+                if (err) {
+                    reject(err);
+                } else {
+                    resolve(affectedRows);
+                }
+            }
+        );
+    })
 }
 
 /** Robot **/
@@ -153,7 +225,7 @@ async function loginAndSwitchToFreeSklad(page, login, password) {
     return formFrame;
 }
 
-async function saveCurrentStorageToDb(page, formFrame) {
+async function saveCurrentStorageToDb(page, formFrame, storageSessionId) {
     page.on('dialog', async dialog => {
         searchResultExists = false;
         await dialog.dismiss();
@@ -179,7 +251,7 @@ async function saveCurrentStorageToDb(page, formFrame) {
         let orderTable = await (await (await formFrame.$(ORDER_TABLE)).getProperty('outerHTML')).jsonValue();
 
         log(`Analyze page ${currentPage} start`);
-        analyzeSearchResult(orderTable);
+        analyzeSearchResult(orderTable, storageSessionId, currentPage);
         log(`Analyze page ${currentPage} end`);
 
         if (currentPage === 1) {
@@ -204,7 +276,7 @@ async function saveCurrentStorageToDb(page, formFrame) {
     } while (nextPageExists);
 }
 
-function analyzeSearchResult(searchResult) {
+function analyzeSearchResult(searchResult, storageSessionId, currentPage) {
     let $ordersTable = cheerio.load(searchResult);
     let storageItems = [];
     $ordersTable('tr').each(function (i) {
@@ -248,7 +320,7 @@ function analyzeSearchResult(searchResult) {
     });
     const foundSize = storageItems.length;
     log(`Found ${foundSize} items`);
-    saveStorageItemsToDb(storageItems);
+    saveStorageItemsToDb(storageItems, storageSessionId, currentPage);
 }
 
 /** Main flow **/
@@ -256,11 +328,11 @@ function analyzeSearchResult(searchResult) {
 const runner = async ({page, data: task}) => {
     let formFrame = await loginAndSwitchToFreeSklad(page, CREDS.username, CREDS.password);
     screenshots.push(await saveScreenshot(task.currentScreenshotPath, page, 'Вход в систему осуществлен'));
-    await saveCurrentStorageToDb(page, formFrame);
+    await saveCurrentStorageToDb(page, formFrame, task.storageSessionId);
     screenshots.push(await saveScreenshot(task.currentScreenshotPath, page, 'Послали поисковый запрос'));
 };
 
-async function robot() {
+async function robot(storageSessionId) {
     let currentScreenshotPath = __dirname + "/" + SCREENSHOT_PATH;
     if (!fs.existsSync(currentScreenshotPath)) {
         fs.mkdirSync(currentScreenshotPath);
@@ -284,15 +356,18 @@ async function robot() {
         console.log(`Error crawling `, data, `: ${err.message}`);
     });
 
-    await cluster.queue({currentScreenshotPath: currentScreenshotPath}, runner);
+    await cluster.queue({currentScreenshotPath: currentScreenshotPath, storageSessionId: storageSessionId}, runner);
 
     await cluster.idle();
     await cluster.close();
+
+    await saveFinishOfSessionStorage(connection, storageSessionId);
 }
 
 async function run() {
     connection = await connectToDb();
-    await robot();
+    const storageSessionId = await saveStartOfSessionStorage();
+    await robot(storageSessionId);
     await disconnectFromDb();
 }
 
