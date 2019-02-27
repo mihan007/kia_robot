@@ -362,7 +362,7 @@ async function sendSearchRequest(page, formFrame, task, additionalDescription) {
     let result = await formFrame.select(FORM_MODEL_SELECTOR, task.model);
     log("Task model: " + task.model);
     await formFrame.waitFor(2000);
-    if ((task.goal == 0) && (result.length === 0)) {
+    if (result.length === 0) {
         log("Could not setup task.model: " + task.model);
         additionalDescription = `В фильтре не найдена модель ${task.model}`;
         return false;
@@ -371,14 +371,15 @@ async function sendSearchRequest(page, formFrame, task, additionalDescription) {
     const manufactureCodeDescription = task.more_auto ? task.manufacture_code + ' and other' : task.manufacture_code;
     result = await formFrame.select(FORM_MANUFACTURE_CODE_SELECTOR, manufactureCode);
     log("Manufacture code: " + manufactureCodeDescription);
-    if ((task.goal == 0) && (result.length === 0)) {
+    let condition = (result.length > 0) || ((result.length === 0) && (task.more_auto == 1));
+    if  (condition) {
         log("Could not setup task.manufacture_code: " + task.manufacture_code);
         additionalDescription = `В фильтре не найден код модели ${task.manufacture_code}`;
         return false;
     }
     result = await formFrame.select(FORM_COLOR_INSIDE_SELECTOR, task.color_inside);
     log("Color inside: " + task.color_inside);
-    if ((task.goal == 0) && (result.length === 0)) {
+    if (result.length === 0) {
         log("Could not setup task.color_inside: " + task.color_inside);
         additionalDescription = `В фильтре не найден цвет салона ${task.color_inside}`;
         return false;
@@ -386,7 +387,7 @@ async function sendSearchRequest(page, formFrame, task, additionalDescription) {
     result = await formFrame.select(FORM_COLOR_OUTSIDE_SELECTOR, task.color_outside);
     const colorOutsideDescription = task.color_outside.length ? task.color_outside : 'all';
     log("Color outside: " + colorOutsideDescription);
-    if ((task.goal == 0) && (result.length === 0)) {
+    if (result.length === 0) {
         log("Could not setup task.color_outside: " + task.color_outside);
         additionalDescription = `В фильтре не найден цвет кузова ${task.color_outside}`;
         return false;
