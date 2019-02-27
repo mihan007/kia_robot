@@ -30,16 +30,9 @@ $columns = [
     'manufacture_code_name',
     'color_inside_name',
     'color_outside_name',
+    'moreAutoLabel',
     'amount',
     'ordered',
-    [
-        'label' => 'Альтернативы',
-        'class' => 'yii\grid\DataColumn',
-        'format' => 'raw',
-        'value' => function ($model) {
-            return $model->more_auto ? 'Да' : 'Нет';
-        },
-    ],
     'client_name'
 ];
 if (Yii::$app->user->isAdmin) {

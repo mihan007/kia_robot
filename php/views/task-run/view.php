@@ -54,10 +54,12 @@ foreach ($taskRun->taskRunScreenshots as $screenshot) {
                     return Yii::$app->formatter->format(strtotime($data->created_at)-3*3600, 'datetime');
                 },
             ],
+            'task.goalLabel',
             'model_name',
             'manufacture_code_name',
             'color_inside_name',
             'color_outside_name',
+            'task.moreAutoLabel',
             'amount',
             'amount_ordered'
         ],

@@ -90,6 +90,7 @@ class Task extends \yii\db\ActiveRecord
             'deleted_at' => 'Deleted',
             'goal' => 'Цель задачи',
             'goalLabel' => 'Цель задачи',
+            'moreAutoLabel' => 'Алтернативы',
             'client_name' => 'Имя клиента',
             'ordered' => 'Заказано'
         ];
@@ -140,6 +141,11 @@ class Task extends \yii\db\ActiveRecord
         }
 
         return 'Конкретные авто';
+    }
+
+    public function getMoreAutoLabel()
+    {
+        return $this->more_auto ? 'Да' : 'Нет';
     }
 
     public function getOrdered()
