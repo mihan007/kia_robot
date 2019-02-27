@@ -60,7 +60,7 @@ class Task extends \yii\db\ActiveRecord
     public function rules()
     {
         return [
-            [['amount', 'more_auto'], 'integer'],
+            [['amount', 'more_auto', 'goal'], 'integer'],
             [['amount'], 'required'],
             [['client_name'], 'string', 'max' => 255],
             [['deleted'], 'safe'],
@@ -89,6 +89,7 @@ class Task extends \yii\db\ActiveRecord
             'updated_at' => 'Updated',
             'deleted_at' => 'Deleted',
             'goal' => 'Цель задачи',
+            'goalLabel' => 'Цель задачи',
             'client_name' => 'Имя клиента',
         ];
     }

@@ -25,6 +25,7 @@ $columns = [
             return Yii::$app->formatter->format($data->deleted_at, 'datetime');
         },
     ],
+    'goalLabel',
     'model_name',
     'manufacture_code_name',
     'color_inside_name',

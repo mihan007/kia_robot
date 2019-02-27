@@ -17,6 +17,7 @@ $columns = [
             return Yii::$app->formatter->format($data->created_at, 'datetime');
         },
     ],
+    'goalLabel',
     'model_name',
     'manufacture_code_name',
     'color_inside_name',
