@@ -23,7 +23,7 @@ use kartik\depdrop\DepDrop;
         <?= $form->field($model, 'goal')->radioList([
             \app\models\Task::GOAL_SPECIFIC => 'Конкретные авто',
             \app\models\Task::GOAL_COMMON => 'Наполнение склада',
-        ]);
+        ], ['id' => 'js-goal-select']);
         ?>
 
         <?= $form->field($model, 'model_name')->hiddenInput(['id' => 'model_name'])->label(false) ?>
@@ -59,7 +59,14 @@ use kartik\depdrop\DepDrop;
 
         <?= $form->field($model, 'amount')->textInput() ?>
 
-        <?= $form->field($model, 'more_auto')->checkbox() ?>
+        <?php if ($model->goal == 0) {
+            $display = 'none';
+        } else {
+            $display = 'block';
+        } ?>
+        <div class="js-more-auto" style="display: <?= $display ?>">
+            <?= $form->field($model, 'more_auto')->checkbox() ?>
+        </div>
 
         <?= $form->field($model, 'client_name')->textInput() ?>
 
@@ -72,6 +79,13 @@ use kartik\depdrop\DepDrop;
     </div>
 
 <?php $this->registerJs("
+    $('#js-goal-select').find('input').on('input', function() {
+        if ($(this).val() == 0) {
+            $('.js-more-auto').hide();
+        } else {
+            $('.js-more-auto').show();
+        }
+    });   
     $('#model_id').on('change', function() {   
         $('#model_name').val($('#model_id option:selected').text());
         
