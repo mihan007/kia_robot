@@ -348,7 +348,7 @@ async function robot(storageSessionId) {
         puppeteerOptions: {
             headless: !CREDS.chromeVisible
         },
-        timeout: 20 * 60000 //20 minutes
+        timeout: 50 * 60000 //20 minutes
     });
 
     // Event handler to be called in case of problems
