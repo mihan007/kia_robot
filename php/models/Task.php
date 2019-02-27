@@ -91,6 +91,7 @@ class Task extends \yii\db\ActiveRecord
             'goal' => 'Цель задачи',
             'goalLabel' => 'Цель задачи',
             'client_name' => 'Имя клиента',
+            'ordered' => 'Заказано'
         ];
     }
 
@@ -139,5 +140,14 @@ class Task extends \yii\db\ActiveRecord
         }
 
         return 'Конкретные авто';
+    }
+
+    public function getOrdered()
+    {
+        $sql = "SELECT sum(amount_ordered) as ordered FROM task_run WHERE task_id=".$this->id;
+        $connection = Yii::$app->getDb();
+        $result = $connection->createCommand($sql)->queryOne();
+
+        return isset($result['ordered']) ? $result['ordered'] : 0;
     }
 }

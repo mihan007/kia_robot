@@ -31,6 +31,7 @@ $columns = [
     'color_inside_name',
     'color_outside_name',
     'amount',
+    'ordered',
     [
         'label' => 'Альтернативы',
         'class' => 'yii\grid\DataColumn',
@@ -73,5 +74,10 @@ $columns[] = [
     <?= GridView::widget([
         'dataProvider' => $dataProvider,
         'columns' => $columns,
+        'rowOptions' => function ($model) {
+            if ($model->ordered >= $model->amount) {
+                return ['class' => 'green'];
+            }
+        },
     ]); ?>
 </div>
