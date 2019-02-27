@@ -134,7 +134,7 @@ async function saveStorageItemToDb(item, storage_session_id, currentPage) {
                 description: item.description,
                 color_outside: item.color_outside,
                 color_inside: item.color_inside,
-                year: item.year,
+                year: item.year.length>0 ? item.year : 0,
                 storage_code: item.storage_code,
                 available: item.available,
                 reserved: item.reserved,
