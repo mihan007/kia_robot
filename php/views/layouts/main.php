@@ -45,7 +45,7 @@ AppAsset::register($this);
         $items[] = ['label' => 'Архив задач', 'url' => ['/task/archive']];
         $items[] = ['label' => 'Запуски задач', 'url' => ['/task-run/index']];
         $items[] = ['label' => 'Цвета', 'url' => ['/color-preferences/index']];
-        //$items[] = ['label' => 'Склад', 'url' => ['/storage/index']];
+        $items[] = ['label' => 'Склад', 'url' => ['/storage/index']];
         if (\Yii::$app->user->isLeadManager) {
             $items[] = ['label' => 'Сотрудники', 'url' => ['/user/index']];
         }
