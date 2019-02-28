@@ -2,9 +2,9 @@
 
 namespace app\controllers;
 
+use Yii;
 use app\models\SignupForm;
 use app\models\User;
-use Yii;
 use app\models\Company;
 use yii\data\ActiveDataProvider;
 use yii\web\Controller;

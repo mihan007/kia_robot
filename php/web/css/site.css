@@ -115,5 +115,5 @@ a.desc:after {
 }
 
 .green {
-    background-color: #d0ffbc;
+    background-color: #d0ffbc !important;
 }
