@@ -41,6 +41,12 @@ class StorageController extends Controller
             ->where(['>=', 'created_at', $periodStart])
             ->andWhere(['<=', 'created_at', $periodEnd])
             ->all();
+
+        if (sizeof($storageItems) == 0) {
+            Yii::$app->session->addFlash('warning', 'У нас нет информации о состоянии склада за указанный период' . " ({$periodStart} - {$periodEnd})");
+            return $this->redirect(['/storage/index']);
+        }
+
         $data = [];
         $usedKeys = [];
         $filterItems = [];
