@@ -275,7 +275,7 @@ class TaskController extends Controller
                 'name' => $value
             ];
         }
-        echo Json::encode(['output' => $out, 'selected' => '']);
+        return Json::encode(['output' => $out, 'selected' => '']);
     }
 
     public function actionColorsInside()
