@@ -34,6 +34,7 @@ const PAGING_SELECTOR = '#sel_paging';
 const MAX_CONCURRENCY = CREDS.maxConcurrency;
 const TIMEOUT_FOR_LOGIN = 30000;
 const DELAY_BETWEEN_LAUNCH = 5000;
+const DELAY_WAITING_FOR_LAUNCH = 300000;//5 * 60 * 1000 - 5 minutes
 
 let bannedCompaniesIds = [];
 
@@ -42,8 +43,11 @@ while (true) {
         log("Start executing")
         run();
         log("Finish executing")
+        delay(DELAY_BETWEEN_LAUNCH);
+    } else {
+        log("Waiting for launch for " + DELAY_WAITING_FOR_LAUNCH + " ms");
+        delay(DELAY_WAITING_FOR_LAUNCH);
     }
-    delay(DELAY_BETWEEN_LAUNCH);
 }
 
 function isValidTimeToLaunch () {
