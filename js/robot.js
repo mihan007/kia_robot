@@ -41,7 +41,7 @@ let bannedCompaniesIds = [];
 globalRunner = async function () {
     if (isValidTimeToLaunch()) {
         log("Start executing")
-        run();
+        await run();
         log("Finish executing")
         await delay(DELAY_BETWEEN_LAUNCH);
     } else {
