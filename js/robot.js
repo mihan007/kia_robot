@@ -50,9 +50,13 @@ globalRunner = async function () {
     }
 }
 
-while (true) {
-    globalRunner();
+localRunner = async function () {
+    while (true) {
+        await globalRunner();
+    }
 }
+
+localRunner();
 
 function isValidTimeToLaunch () {
     let date = new Date();
