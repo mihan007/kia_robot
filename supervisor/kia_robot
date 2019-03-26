@@ -1,0 +1,10 @@
+[program:kia_robot]
+user = www-data
+command = cd /var/www/html/turbo.prod/parser-b2b/js && node robot_autoru.js
+directory = /var/www/html/turbo.prod/parser-b2b/js
+numprocs = 1
+autorestart = true
+autostart = true
+stdout_logfile = /var/www/html/turbo.prod/parser-b2b/log/kia_robot.log
+stderr_logfile = /var/www/html/turbo.prod/parser-b2b/log/kia_robot_errors.log
+stopwaitsecs = 60
