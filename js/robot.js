@@ -38,16 +38,20 @@ const DELAY_WAITING_FOR_LAUNCH = 300000;//5 * 60 * 1000 - 5 minutes
 
 let bannedCompaniesIds = [];
 
-while (true) {
+globalRunner = async function () {
     if (isValidTimeToLaunch()) {
         log("Start executing")
         run();
         log("Finish executing")
-        delay(DELAY_BETWEEN_LAUNCH);
+        await delay(DELAY_BETWEEN_LAUNCH);
     } else {
         log("Waiting for launch for " + DELAY_WAITING_FOR_LAUNCH + " ms");
-        delay(DELAY_WAITING_FOR_LAUNCH);
+        await delay(DELAY_WAITING_FOR_LAUNCH);
     }
+}
+
+while (true) {
+    globalRunner();
 }
 
 function isValidTimeToLaunch () {
