@@ -33,10 +33,25 @@ const PAGING_SELECTOR = '#sel_paging';
 
 const MAX_CONCURRENCY = CREDS.maxConcurrency;
 const TIMEOUT_FOR_LOGIN = 30000;
+const DELAY_BETWEEN_LAUNCH = 5000;
 
 let bannedCompaniesIds = [];
 
-run();
+while (true) {
+    if (isValidTimeToLaunch()) {
+        log("Start executing")
+        run();
+        log("Finish executing")
+    }
+    delay(DELAY_BETWEEN_LAUNCH);
+}
+
+function isValidTimeToLaunch () {
+    let date = new Date();
+    let hours = date.getHours();
+
+    return (hours >= 12) && (hours < 21);
+}
 
 function delay(ms) {
     return new Promise(resolve => setTimeout(resolve, ms));
