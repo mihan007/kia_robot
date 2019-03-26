@@ -1,6 +1,6 @@
-const puppeteer = require('puppeteer');
 const cheerio = require('cheerio');
-const env = process.env.APP_ROLE || 'local';
+const args = process.argv.slice(2);
+const env = args[0] || 'local';
 const CREDS = (env === 'production') ? require('./creds_production') : require('./creds_local');
 const mysql = require('mysql');
 const fs = require('fs');
@@ -40,7 +40,7 @@ let bannedCompaniesIds = [];
 
 globalRunner = async function () {
     if (isValidTimeToLaunch()) {
-        log("Start executing")
+        log("Start executing with env " + env)
         await run();
         log("Finish executing")
         await delay(DELAY_BETWEEN_LAUNCH);
