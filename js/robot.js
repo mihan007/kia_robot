@@ -655,7 +655,7 @@ const processSimpleTask = async ({page, data: task}) => {
     await page.click(USERNAME_SELECTOR);
     await page.keyboard.type(task.credentials.login);
     await page.click(PASSWORD_SELECTOR);
-    await page.keyboard.type(task.credentials.password + '1');
+    await page.keyboard.type(task.credentials.password);
     await page.click(LOGIN_BUTTON_SELECTOR);
     try {
         await page.waitFor(SELL_TAB_SELECTOR, {timeout: TIMEOUT_FOR_LOGIN});
