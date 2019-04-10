@@ -64,6 +64,7 @@ $config = [
             ]
         ]
     ],
+    'catchAll' => ['site/offline'],
     'params' => $params,
 ];
 
