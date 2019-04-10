@@ -11,6 +11,7 @@ const USERNAME_SELECTOR = '#logonForm > center > table > tbody > tr > td > table
 const PASSWORD_SELECTOR = '#logonForm > center > table > tbody > tr > td > table:nth-child(1) > tbody > tr:nth-child(2) > td:nth-child(2) > table > tbody > tr:nth-child(3) > td:nth-child(3) > input[type="password"]';
 const LOGIN_BUTTON_SELECTOR = '#logonForm > center > table > tbody > tr > td > table:nth-child(1) > tbody > tr:nth-child(2) > td:nth-child(2) > table > tbody > tr:nth-child(1) > td:nth-child(5) > a';
 const SELL_TAB_SELECTOR = '#tabIndex1';
+const ERROR_LOGGING_SELECTOR = '.urMsgBarErr';
 const FREE_SKLAD_LEFT_SIDEBAR_SELECTOR = '#L2N1';
 const FIRST_PAGE_NEXT_SELECTOR = "#board1 > tbody > tr > td > table > tbody > tr > td.ar > a";
 const NON_FIRST_PAGE_NEXT_SELECTOR = '#board1 > tbody > tr > td > table > tbody > tr > td.ar > a:nth-child(2)';
@@ -331,6 +332,14 @@ async function loginAndSwitchToFreeSklad(page, login, password) {
     try {
         await page.waitFor(SELL_TAB_SELECTOR, {timeout: TIMEOUT_FOR_LOGIN});
     } catch (e) {
+        try {
+            if (await page.waitFor(ERROR_LOGGING_SELECTOR, { timeout: 1000 })) {
+                log(`Could not log in, mark company ${task.company_id} as banned`);
+                await markCompanyAsBanned(task.connection, task.company_id);
+            }
+        } catch (e) {
+            log(`Could not log in because kia-portal hang up`);
+        }
         return false;
     }
     log("Logged in");
@@ -651,8 +660,14 @@ const processSimpleTask = async ({page, data: task}) => {
     try {
         await page.waitFor(SELL_TAB_SELECTOR, {timeout: TIMEOUT_FOR_LOGIN});
     } catch (e) {
-        log(`Could not log in, mark company ${task.company_id} as banned`);
-        await markCompanyAsBanned(task.connection, task.company_id);
+        try {
+            if (await page.waitFor(ERROR_LOGGING_SELECTOR, {timeout: 1000})) {
+                log(`Could not log in, mark company ${task.company_id} as banned`);
+                await markCompanyAsBanned(task.connection, task.company_id);
+            }
+        } catch (e) {
+            log(`Could not log in because kia-portal hang up`);
+        }
         return;
     }
     log("Logged in");
@@ -1002,8 +1017,6 @@ const processComplexTask = async ({page, data: task}) => {
 
     let formFrame = await loginAndSwitchToFreeSklad(page, task.credentials.login, task.credentials.password);
     if (formFrame === false) {
-        log(`Could not log in, mark company ${task.company_id} as banned`);
-        await markCompanyAsBanned(task.connection, task.company_id);
         return;
     }
     let description = logInfoAboutSearch(task, true);
