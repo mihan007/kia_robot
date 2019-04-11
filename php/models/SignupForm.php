@@ -44,7 +44,9 @@ class SignupForm extends Model
             ['role', 'required', 'on' => 'editUser'],
 
             ['company_id', 'required', 'on' => 'dealerSignup'],
-            ['company_id', 'required', 'on' => 'editUser']
+            ['company_id', 'required', 'on' => 'editUser'],
+
+            ['password', 'safe', 'on' => 'editUser']
         ];
     }
 
