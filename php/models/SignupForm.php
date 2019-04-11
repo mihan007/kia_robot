@@ -15,6 +15,9 @@ class SignupForm extends Model
     public $company_id;
     public $role;
 
+    /**
+     * @var User $_user
+     */
     private $_user;
 
     /**

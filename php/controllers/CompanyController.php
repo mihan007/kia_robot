@@ -209,7 +209,9 @@ class CompanyController extends Controller
                 $authorRole = $auth->getRole($role);
                 $auth->assign($authorRole, $user->getId());
 
-                $this->redirect(['view', 'id' => $signupForm->company_id]);
+                Yii::$app->session->addFlash('success', 'Данные о пользователе успешно обновлены');
+
+                return $this->redirect(['view', 'id' => $signupForm->company_id]);
             }
         }
 
