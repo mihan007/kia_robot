@@ -7,7 +7,7 @@ use yii\helpers\Url;
 
 <?php foreach ($taskRuns as $taskRun): ?>
     <h2>Задача #<?php echo $taskRun->task->id ?> от <?= Yii::$app->formatter->format($taskRun->task->created_at, 'datetime') ?></h2>
-    <h3>Запуск от <?= Yii::$app->formatter->asDatetime(strtotime($taskRun->created_at)) ?></h2></h3>
+    <h3>Запуск от <?= Yii::$app->formatter->asDatetime($taskRun->created_at) ?></h2></h3>
     <ul>
         <li><b>Модель:</b>&nbsp;<?= $taskRun->model_name ?></li>
         <li><b>Код производителя:</b>&nbsp;<?= $taskRun->manufacture_code_name ?></li>

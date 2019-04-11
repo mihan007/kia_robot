@@ -51,7 +51,7 @@ foreach ($taskRun->taskRunScreenshots as $screenshot) {
                 'class' => 'yii\grid\DataColumn',
                 'format' => 'raw',
                 'value' => function ($data) {
-                    return Yii::$app->formatter->asDatetime(strtotime($data->created_at));
+                    return Yii::$app->formatter->asDatetime($data->created_at);
                 },
             ],
             'task.goalLabel',
