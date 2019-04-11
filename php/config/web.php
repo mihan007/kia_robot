@@ -9,6 +9,7 @@ $config = [
     'name' => 'Робот Киа',
     'basePath' => dirname(__DIR__),
     'bootstrap' => ['log'],
+    'timezone' => 'Europe/Moscow',
     'aliases' => [
         '@bower' => '@vendor/bower-asset',
         '@npm' => '@vendor/npm-asset',
