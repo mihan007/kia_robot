@@ -10,5 +10,5 @@ module.exports = {
     chromeVisible: false,
     enableLogging: true,
 
-    maxConcurrency: 5
+    maxConcurrency: 50
 }
