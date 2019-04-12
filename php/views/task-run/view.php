@@ -46,7 +46,7 @@ foreach ($taskRun->taskRunScreenshots as $screenshot) {
                 },
             ],
             [
-                'label' => 'Дата запуска',
+                'label' => 'Дата завершения',
                 'class' => 'yii\grid\DataColumn',
                 'format' => 'raw',
                 'value' => function ($data) {
