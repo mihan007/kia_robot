@@ -34,8 +34,8 @@ const PAGING_SELECTOR = '#sel_paging';
 
 const MAX_CONCURRENCY = CREDS.maxConcurrency;
 const TIMEOUT_FOR_LOGIN = 30000;
-const DELAY_BETWEEN_LAUNCH = 5000;
-const DELAY_WAITING_FOR_LAUNCH = 300000;//5 * 60 * 1000 - 5 minutes
+const DELAY_BETWEEN_LAUNCH = 500;
+const DELAY_WAITING_FOR_LAUNCH = 5000;//5 * 1000 - 5 seconds
 
 let bannedCompaniesIds = [];
 
@@ -62,8 +62,9 @@ localRunner();
 function isValidTimeToLaunch () {
     let date = new Date();
     let hours = date.getHours();
+    let minutes = date.getMinutes();
 
-    return (hours >= 12) && (hours < 21);
+    return ((hours == 11) && (minutes >= 59)) || (hours >= 12) && (hours < 21);
 }
 
 function delay(ms) {
@@ -71,7 +72,6 @@ function delay(ms) {
 }
 
 async function run() {
-    await delay(5000);
     const connection = await connectToDb();
     await robot(connection);
     disconnectFromDb(connection);
