@@ -10,7 +10,7 @@ module.exports = {
     chromeVisible: true,
     enableLogging: true,
 
-    maxConcurrency: 5,
+    maxConcurrency: 1,
 
-    screenshotPath: __dirname + '../php/web/screenshots'
+    screenshotPath: __dirname + '/../php/web/screenshots'
 }

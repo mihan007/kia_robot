@@ -1351,12 +1351,13 @@ async function robot(connection) {
         puppeteerOptions: {
             headless: !CREDS.chromeVisible
         },
-        timeout: 20 * 60000 //20 minutes
+        timeout: 20 * 60000, //20 minutes,
+        retryLimit: 3
     });
 
     // Event handler to be called in case of problems
     cluster.on('taskerror', (err, data) => {
-        console.log(`Error crawling `, data, `: ${err.message}`);
+        console.log(`Error crawling taks.id=${data.id} - ${err.message}`);
     });
 
     for (const i in tasks) {
