@@ -19,10 +19,9 @@ $this->params['breadcrumbs'][] = $this->title;
 \yii\web\YiiAsset::register($this);
 $items = [];
 foreach ($taskRun->taskRunScreenshots as $screenshot) {
-    $normalizedUrl = str_replace('/data/www/alarm-robot/js/', '', $screenshot->filepath);
-    $normalizedUrl = str_replace('/Users/mihan007/Sites/alarm-robot/js/', '', $normalizedUrl);
-    $normalizedUrl = str_replace('/Users/mihan007/Projects/alarm-robot/js/', '', $normalizedUrl);
-    $normalizedUrl = str_replace('../php/web', Yii::$app->params['domainMain'], $normalizedUrl);
+    $screenshotPos = strpos($screenshot->filepath, 'screenshots');
+    $relativePath = substr($screenshot->filepath, $screenshotPos);
+    $normalizedUrl = Yii::$app->params['domainMain']."/".$relativePath;
     $item = [
         'url' => $normalizedUrl,
         'src' => $normalizedUrl,
