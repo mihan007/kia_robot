@@ -1357,7 +1357,7 @@ async function robot(connection) {
 
     // Event handler to be called in case of problems
     cluster.on('taskerror', (err, data) => {
-        console.log(`Error crawling taks.id=${data.id} - ${err.message}`);
+        log(`Error crawling taks.id=${data.id} - ${err.message}`);
     });
 
     for (const i in tasks) {
