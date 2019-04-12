@@ -15,7 +15,7 @@ const ERROR_LOGGING_SELECTOR = '.urMsgBarErr';
 const FREE_SKLAD_LEFT_SIDEBAR_SELECTOR = '#L2N1';
 const FIRST_PAGE_NEXT_SELECTOR = "#board1 > tbody > tr > td > table > tbody > tr > td.ar > a";
 const NON_FIRST_PAGE_NEXT_SELECTOR = '#board1 > tbody > tr > td > table > tbody > tr > td.ar > a:nth-child(2)';
-const SCREENSHOT_PATH = '../php/web/screenshots';
+const SCREENSHOT_PATH = CREDS.screenshotPath;
 
 const FREE_SKLAD_IFRAME_SELECTOR = '#contentAreaFrame';
 const FREE_SKLAD_CONTENT_IFRAME = '#isolatedWorkArea';
@@ -1336,7 +1336,7 @@ async function robot(connection) {
     let allTasks = await getTasksFromDb(connection);
     let tasks = await filterTasks(connection, allTasks);
 
-    let currentScreenshotPath = __dirname + "/" + SCREENSHOT_PATH;
+    let currentScreenshotPath = SCREENSHOT_PATH;
     if (!fs.existsSync(currentScreenshotPath)) {
         fs.mkdirSync(currentScreenshotPath);
     }
