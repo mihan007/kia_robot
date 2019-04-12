@@ -27,6 +27,7 @@ use Yii;
  * @property TaskRunScreenshot[] $taskRunScreenshots
  * @property Company $company
  * @property User $user
+ * @property boolean $tooOld
  */
 class TaskRun extends \yii\db\ActiveRecord
 {
@@ -97,5 +98,13 @@ class TaskRun extends \yii\db\ActiveRecord
     public function getUser()
     {
         return $this->hasOne(User::className(), ['id' => 'user_id']);
+    }
+
+    public function getTooOld()
+    {
+        $createdAtTimestamp = strtotime($this->created_at);
+        $week = 7 * 3600 * 24;
+
+        return time() - $createdAtTimestamp > $week;
     }
 }

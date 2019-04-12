@@ -19,7 +19,7 @@ $this->params['breadcrumbs'][] = $this->title;
 \yii\web\YiiAsset::register($this);
 $items = [];
 foreach ($taskRun->taskRunScreenshots as $screenshot) {
-    $normalizedUrl = str_replace('/var/www/html/turbo.prod/alarm-robot/js/', '', $screenshot->filepath);
+    $normalizedUrl = str_replace('/data/www/alarm-robot/js/', '', $screenshot->filepath);
     $normalizedUrl = str_replace('/Users/mihan007/Sites/alarm-robot/js/', '', $normalizedUrl);
     $normalizedUrl = str_replace('/Users/mihan007/Projects/alarm-robot/js/', '', $normalizedUrl);
     $normalizedUrl = str_replace('../php/web', Yii::$app->params['domainMain'], $normalizedUrl);
@@ -65,7 +65,11 @@ foreach ($taskRun->taskRunScreenshots as $screenshot) {
         ],
     ]) ?>
 
-    <?= dosamigos\gallery\Carousel::widget(['items' => $items]); ?>
+    <?php if ($taskRun->tooOld): ?>
+        <b>Скриншоты доступны только в течении недели</b>
+    <?php else: ?>
+        <?= dosamigos\gallery\Carousel::widget(['items' => $items]); ?>
+    <?php endif ?>
 
     <h2>Лог</h2>
 
