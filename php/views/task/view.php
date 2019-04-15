@@ -71,11 +71,19 @@ if (Yii::$app->user->isAdmin || Yii::$app->user->isLeadManager) {
         'columns' => [
             'id',
             [
+                'label' => 'Дата старта',
+                'class' => 'yii\grid\DataColumn',
+                'format' => 'raw',
+                'value' => function ($data) {
+                    return Yii::$app->formatter->asDatetime($data->started_at);
+                },
+            ],
+            [
                 'label' => 'Дата завершения',
                 'class' => 'yii\grid\DataColumn',
                 'format' => 'raw',
                 'value' => function ($data) {
-                    return Yii::$app->formatter->asDatetime($data->created_at);
+                    return Yii::$app->formatter->asDatetime($data->finished_at);
                 },
             ],
             'model_name',
