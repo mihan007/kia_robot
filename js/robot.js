@@ -675,7 +675,7 @@ const processSimpleTask = async ({ page, data: task }) => {
 
   task.started_at = currentMySqlDate()
   task.task_run_id = await saveTaskRunStartedToDb(task.connection, task)
-  log(`Saved task_run with id=${task.task.task_run_id} and start date ${task.started_at}`)
+  log(`Saved task_run with id=${task.task_run_id} and start date ${task.started_at}`)
 
   if (!task.searchDialogHandled) {
     page.on('dialog', async dialog => {
@@ -1054,7 +1054,7 @@ const processComplexTask = async ({ page, data: task }) => {
 
   task.started_at = currentMySqlDate()
   task.task_run_id = await saveTaskRunStartedToDb(task.connection, task)
-  log(`Saved task_run with id=${task.task.task_run_id} and start date ${task.started_at}`)
+  log(`Saved task_run with id=${task.task_run_id} and start date ${task.started_at}`)
 
   let screenshots = []
   let formFrame = await loginAndSwitchToFreeSklad(page, task.credentials.login, task.credentials.password)
