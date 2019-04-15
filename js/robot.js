@@ -44,6 +44,9 @@ const DELAY_TO_LOAD_NEXT_PAGE = 1000
 const DELAY_FOR_SEARCH_RESULT = 3000
 const DELAY_AFTER_ORDER = 2000
 
+const TASK_RUN_STATUS_SUCCESS = 1
+const TASK_RUN_STATUS_ERROR = 2
+
 let bannedCompaniesIds = []
 
 globalRunner = async function () {
@@ -306,7 +309,8 @@ async function saveTaskRunFinishedToDb (connection, taskInfo) {
         description: taskInfo.description,
         amount_ordered: taskInfo.amount_ordered,
         ordered_manufacture_codes: taskInfo.ordered_manufacture_codes,
-        finished_at: taskInfo.finished_at
+        finished_at: taskInfo.finished_at,
+        status: taskInfo.status
       },
       { id: taskInfo.task_run_id },
       (err, affectedRows) => {
@@ -1026,8 +1030,9 @@ const processSimpleTask = async ({ page, data: task }) => {
   task.ordered_manufacture_codes = orderedManufactureCodes.join(',')
 
   task.finished_at = currentMySqlDate()
+  task.status = TASK_RUN_STATUS_SUCCESS
   await saveTaskRunFinishedToDb(task.connection, task)
-  log(`Saved task_run with id=${task.task_run_id} and finish date ${task.finished_at}`, task)
+  log(`Saved success task_run with id=${task.task_run_id} and finish date ${task.finished_at}`, task)
 
   for (let iScr in screenshots) {
     screenshots[iScr].task_run_id = task.task_run_id
@@ -1306,8 +1311,9 @@ const processComplexTask = async ({ page, data: task }) => {
   task.ordered_manufacture_codes = orderedManufactureCodesByTaskRun.join(',')
 
   task.finished_at = currentMySqlDate()
+  task.status = TASK_RUN_STATUS_SUCCESS
   await saveTaskRunFinishedToDb(task.connection, task)
-  log(`Saved task_run with id=${task.task_run_id} and finish date ${task.finished_at}`, task)
+  log(`Saved success task_run with id=${task.task_run_id} and finish date ${task.finished_at}`, task)
 
   for (let iScr in screenshots) {
     screenshots[iScr].task_run_id = task.task_run_id
@@ -1413,6 +1419,12 @@ async function robot (connection) {
   // Event handler to be called in case of problems
   cluster.on('taskerror', (err, data) => {
     log(`Error crawling taks.id=${data.id} - ${err.message}`, data)
+
+    data.finished_at = currentMySqlDate()
+    data.status = TASK_RUN_STATUS_ERROR
+    data.description = `Ошибка при работе робота: ${err.message}`;
+    saveTaskRunFinishedToDb(data.connection, task)
+    log(`Saved error task_run with id=${data.task_run_id} and finish date ${data.finished_at}`, task)
   })
 
   for (const i in tasks) {
