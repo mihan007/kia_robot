@@ -273,7 +273,7 @@ async function saveTaskRunStartedToDb (connection, taskInfo) {
   return new Promise((resolve, reject) => {
     connection.insert(
       'task_run', {
-        task_id: taskInfo.task_id,
+        task_id: taskInfo.id,
         model_name: taskInfo.model_name,
         model_value: taskInfo.model,
         manufacture_code_name: taskInfo.manufacture_code_name,
