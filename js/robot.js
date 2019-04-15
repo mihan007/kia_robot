@@ -110,12 +110,14 @@ function currentMySqlDate () {
     + ' ' + pad2(date.getHours()) + ':' + pad2(date.getMinutes()) + ':' + pad2(date.getSeconds())
 }
 
-function log (...messages) {
+function log(messages, taskInfo) {
   if (!CREDS.enableLogging) {
     return
   }
-  for (let i = 0; i < messages.length; i++) {
+  if (typeof taskInfo == 'undefined') {
     console.log(currentDate() + ' ' + messages[i])
+  } else {
+    console.log(currentDate() + ' [' + taskInfo.id + '] ' + messages[i])
   }
 }
 
@@ -427,37 +429,37 @@ async function sendSearchRequest (page, formFrame, task, additionalDescription) 
   }
 
   task.searchResultExists = true
-  log('Setup search params')
+  log('Setup search params', task)
   let result = await formFrame.select(FORM_MODEL_SELECTOR, task.model)
   log('Task model: ' + task.model)
   await formFrame.waitFor(DELAY_AFTER_SELECT_MODEL)
   if (result.length === 0) {
-    log('Could not setup task.model: ' + task.model)
+    log('Could not setup task.model: ' + task.model, task)
     additionalDescription = `В фильтре не найдена модель ${task.model}`
     return false
   }
   const manufactureCode = task.more_auto ? '' : task.manufacture_code
   const manufactureCodeDescription = task.more_auto ? task.manufacture_code + ' and other' : task.manufacture_code
   result = await formFrame.select(FORM_MANUFACTURE_CODE_SELECTOR, manufactureCode)
-  log('Manufacture code: ' + manufactureCodeDescription)
+  log('Manufacture code: ' + manufactureCodeDescription, task)
   let condition = (result.length > 0) || ((result.length === 0) && (task.more_auto == 1))
   if (condition) {
-    log('Could not setup task.manufacture_code: ' + task.manufacture_code)
+    log('Could not setup task.manufacture_code: ' + task.manufacture_code, task)
     additionalDescription = `В фильтре не найден код модели ${task.manufacture_code}`
     return false
   }
   result = await formFrame.select(FORM_COLOR_INSIDE_SELECTOR, task.color_inside)
-  log('Color inside: ' + task.color_inside)
+  log('Color inside: ' + task.color_inside, task)
   if (result.length === 0) {
-    log('Could not setup task.color_inside: ' + task.color_inside)
+    log('Could not setup task.color_inside: ' + task.color_inside, task)
     additionalDescription = `В фильтре не найден цвет салона ${task.color_inside}`
     return false
   }
   result = await formFrame.select(FORM_COLOR_OUTSIDE_SELECTOR, task.color_outside)
   const colorOutsideDescription = task.color_outside.length ? task.color_outside : 'all'
-  log('Color outside: ' + colorOutsideDescription)
+  log('Color outside: ' + colorOutsideDescription, task)
   if (result.length === 0) {
-    log('Could not setup task.color_outside: ' + task.color_outside)
+    log('Could not setup task.color_outside: ' + task.color_outside, task)
     additionalDescription = `В фильтре не найден цвет кузова ${task.color_outside}`
     return false
   }
@@ -465,12 +467,12 @@ async function sendSearchRequest (page, formFrame, task, additionalDescription) 
   const isChecked = await (await checkbox.getProperty('checked')).jsonValue()
   if (!isChecked) {
     await formFrame.click(FORM_ONLY_AVAILABLE_SELECTOR)
-    log('Setup only available checkbox to true')
+    log('Setup only available checkbox to true', task)
   }
-  log('Send search request')
+  log('Send search request', task)
   await formFrame.click(FORM_REQUEST_BUTTON_SELECTOR)
   await formFrame.waitFor(DELAY_FOR_SEARCH_RESULT)
-  log('Sent search request')
+  log('Sent search request', task)
 
   return task.searchResultExists
 }
@@ -497,11 +499,11 @@ async function orderTask (page, formFrame, task, description, manufactureCodes, 
     let searchResultExists = await sendSearchRequest(page, formFrame, task, additionalInfo)
     screenshots.push(await saveScreenshot(task.currentScreenshotPath, page, 'Результат поиска нужного авто. ' + additionalInfo))
     if (!searchResultExists) {
-      log('No search result')
+      log('No search result', task)
       break
     }
 
-    log('Search result exists')
+    log('Search result exists', task)
     description += currentDate() + ' Страница ' + currentPage + '<br>'
     let orderTable = await formFrame.$(ORDER_TABLE)
     let outerHtmlOrderTable = await orderTable.getProperty('outerHTML')
@@ -570,10 +572,10 @@ async function orderTask (page, formFrame, task, description, manufactureCodes, 
         }
       }
     }
-    log('Current chosen row: ' + chosen)
+    log('Current chosen row: ' + chosen, task)
 
     if (chosen !== false) {
-      log('Ordering using ' + chosen + ' row radio selector, manufacture_code: ' + orders[chosen].manufacture_code)
+      log('Ordering using ' + chosen + ' row radio selector, manufacture_code: ' + orders[chosen].manufacture_code, task)
       await formFrame.click(orders[chosen].radioSelector)
 
       screenshots.push(await saveScreenshot(task.currentScreenshotPath, page, 'Результат выбора нужного авто'))
@@ -582,11 +584,11 @@ async function orderTask (page, formFrame, task, description, manufactureCodes, 
       await formFrame.click(FORM_CHANGE_ORDER_BUTTON)
       if (task.searchResultExists === false) {
         description += currentDate() + ' Достигнут максимум заказа авто<br>'
-        log('Reached maximum cars')
+        log('Reached maximum cars', task)
         orderMore = false
         task.reachedMaximum = true
       } else {
-        log('Ordered using ' + chosen + ' row radio selector, manufacture_code: ' + orders[chosen].manufacture_code)
+        log('Ordered using ' + chosen + ' row radio selector, manufacture_code: ' + orders[chosen].manufacture_code, task)
 
         screenshots.push(await saveScreenshot(task.currentScreenshotPath, page, 'Окно заказа нужной комплектации авто'))
 
@@ -600,11 +602,11 @@ async function orderTask (page, formFrame, task, description, manufactureCodes, 
 
         task.remain -= 1
         task.orderedManufactureCode = orders[chosen].manufacture_code
-        log('remainingAmount: ' + task.remain)
+        log('remainingAmount: ' + task.remain, task)
       }
     } else {
       task.orderedManufactureCode = false
-      log('Could not find suitable auto at page ' + currentPage)
+      log('Could not find suitable auto at page ' + currentPage, task)
       description += currentDate() + ' Требуемые авто на странице ' + currentPage + ' не найдены<br>'
       let condition = false
       if (currentPage === 1) {
@@ -613,7 +615,7 @@ async function orderTask (page, formFrame, task, description, manufactureCodes, 
         condition = await formFrame.$(NON_FIRST_PAGE_NEXT_SELECTOR) !== null
       }
       if (condition) {
-        log('Next page exists, switch to it')
+        log('Next page exists, switch to it', task)
         description += currentDate() + ' Есть следующая страница, идем на нее<br>'
         orderMore = true
         if (currentPage === 1) {
@@ -624,14 +626,14 @@ async function orderTask (page, formFrame, task, description, manufactureCodes, 
         await formFrame.waitFor(DELAY_TO_LOAD_NEXT_PAGE)
         currentPage++
       } else {
-        log('No next page exists, stop search')
+        log('No next page exists, stop search', task)
         description += currentDate() + ' Следующей страницы нет, прекращаем поиски<br>'
         orderMore = false
       }
     }
 
     if (task.remain <= 0) {
-      log('We have ordered enough, stop')
+      log('We have ordered enough, stop', task)
       description += currentDate() + ' Заказали достаточно, останавливаемся<br>'
       orderMore = false
     }
@@ -668,14 +670,16 @@ async function switchToFreeSkladAndSaveScreenshot (page, formFrame, screenshots,
  * @returns {Promise<void>}
  */
 const processSimpleTask = async ({ page, data: task }) => {
-  log(`Running simple task ${task.id}`)
-  if (bannedCompaniesIds.includes(task.company_id)) {
-    log(`Stop executing ${task.id} because company ${task.company_id} marked as banned`)
-  }
+  log(`Running simple task ${task.id}`, task)
 
   task.started_at = currentMySqlDate()
   task.task_run_id = await saveTaskRunStartedToDb(task.connection, task)
-  log(`Saved task_run with id=${task.task_run_id} and start date ${task.started_at}`)
+  log(`Saved task_run with id=${task.task_run_id} and start date ${task.started_at}`, task)
+
+  if (bannedCompaniesIds.includes(task.company_id)) {
+    log(`Stop executing ${task.id} because company ${task.company_id} marked as banned`, task)
+    return;
+  }
 
   if (!task.searchDialogHandled) {
     page.on('dialog', async dialog => {
@@ -687,7 +691,7 @@ const processSimpleTask = async ({ page, data: task }) => {
 
   await page.setViewport({ width: 1280, height: 800 })
 
-  log('Start logging in')
+  log('Start logging in', task)
   await page.goto(loginUrl)
   await page.click(USERNAME_SELECTOR)
   await page.keyboard.type(task.credentials.login)
@@ -699,16 +703,16 @@ const processSimpleTask = async ({ page, data: task }) => {
   } catch (e) {
     try {
       if (await page.waitFor(ERROR_LOGGING_SELECTOR, { timeout: TIMEOUT_FOR_SEARCH_LOGIN_SELECTOR })) {
-        log(`Could not log in, mark company ${task.company_id} as banned`)
+        log(`Could not log in, mark company ${task.company_id} as banned`, task)
         await markCompanyAsBanned(task.connection, task.company_id)
       }
     } catch (e) {
-      log(`Could not log in because kia-portal hang up`)
+      log(`Could not log in because kia-portal hang up`, task)
     }
     return
   }
-  log('Logged in')
-  log('Switching to free sklad search page')
+  log('Logged in', task)
+  log('Switching to free sklad search page', task)
   await page.click(SELL_TAB_SELECTOR)
   await page.waitFor(FREE_SKLAD_LEFT_SIDEBAR_SELECTOR)
 
@@ -727,7 +731,7 @@ const processSimpleTask = async ({ page, data: task }) => {
       formFrame = secondFrame
     }
   }
-  log('Switched to free sklad search page')
+  log('Switched to free sklad search page', task)
 
   description = currentDate() + ' начали выполнять задачу:<br>'
   description += '<ul>'
@@ -757,34 +761,34 @@ const processSimpleTask = async ({ page, data: task }) => {
   while (flag) {
     let result = []
     task.searchResultExists = true
-    log('Setup search params')
+    log('Setup search params', task)
     result = await formFrame.select(FORM_MODEL_SELECTOR, task.model)
-    log('Task model: ' + task.model)
+    log('Task model: ' + task.model, task)
     if ((task.goal == 0) && (result.length === 0)) {
-      log('Could not setup task.model: ' + task.model)
+      log('Could not setup task.model: ' + task.model, task)
       additionalDescription = `В фильтре не найдена модель ${task.model}`
       break
     }
     await formFrame.waitFor(DELAY_AFTER_SELECT_MODEL)
     const manufactureCode = (stage < 1) ? task.manufacture_code : ''
     result = await formFrame.select(FORM_MANUFACTURE_CODE_SELECTOR, manufactureCode)
-    log('Manufacture code: ' + manufactureCode)
+    log('Manufacture code: ' + manufactureCode, task)
     if ((task.goal == 0) && (result.length === 0)) {
-      log('Could not setup task.manufacture_code: ' + manufactureCode)
+      log('Could not setup task.manufacture_code: ' + manufactureCode, task)
       additionalDescription = `В фильтре не найден код производителя ${manufactureCode}`
       break
     }
     result = await formFrame.select(FORM_COLOR_INSIDE_SELECTOR, task.color_inside)
-    log('Color inside: ' + task.color_inside)
+    log('Color inside: ' + task.color_inside, task)
     if ((task.goal == 0) && (result.length === 0)) {
-      log('Could not setup task.color_inside: ' + task.color_inside)
+      log('Could not setup task.color_inside: ' + task.color_inside, task)
       additionalDescription = `В фильтре не найден цвет салона ${task.color_inside}`
       break
     }
     result = await formFrame.select(FORM_COLOR_OUTSIDE_SELECTOR, task.color_outside)
-    log('Color outside: ' + task.color_outside)
+    log('Color outside: ' + task.color_outside, task)
     if ((task.goal == 0) && (result.length === 0)) {
-      log('Could not setup task.color_outside: ' + task.color_outside)
+      log('Could not setup task.color_outside: ' + task.color_outside, task)
       additionalDescription = `В фильтре не найден цвет кузова ${task.color_outside}`
       break
     }
@@ -792,12 +796,12 @@ const processSimpleTask = async ({ page, data: task }) => {
     const isChecked = await (await checkbox.getProperty('checked')).jsonValue()
     if (!isChecked) {
       await formFrame.click(FORM_ONLY_AVAILABLE_SELECTOR)
-      log('Setup only available checkbox to true')
+      log('Setup only available checkbox to true', task)
     }
-    log('Send search request')
+    log('Send search request', task)
     await formFrame.click(FORM_REQUEST_BUTTON_SELECTOR)
     await formFrame.waitFor(DELAY_FOR_SEARCH_RESULT)
-    log('Sent search request')
+    log('Sent search request', task)
 
     let filename = +new Date() + '_' + Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15) + '.png'
     let fullpath = task.currentScreenshotPath + '/' + filename
@@ -806,14 +810,14 @@ const processSimpleTask = async ({ page, data: task }) => {
     description += currentDate() + ' послали поисковый запрос<br>'
 
     if (task.searchResultExists) {
-      log('Search result exists')
+      log('Search result exists', task)
       let pageCount = 1
       let badManufactureCode = false
       let chosen
       let orders
       const currentOrderAmount = 1
       do {
-        log('Look through page ' + pageCount)
+        log('Look through page ' + pageCount, task)
         description += currentDate() + ' Страница ' + pageCount + '<br>'
         let orderTable = await formFrame.$(ORDER_TABLE)
         let outerHtmlOrderTable = await orderTable.getProperty('outerHTML')
@@ -867,7 +871,7 @@ const processSimpleTask = async ({ page, data: task }) => {
             orders.push(order)
           }
         })
-        log('Rows at searct result table: ' + orders.length)
+        log('Rows at searct result table: ' + orders.length, task)
 
         if (stage === 0) {
           chosen = 0
@@ -880,21 +884,21 @@ const processSimpleTask = async ({ page, data: task }) => {
             }
           }
         }
-        log('Current chosen row: ' + chosen)
+        log('Current chosen row: ' + chosen, task)
 
         if (chosen !== false) {
-          log('Ordering using ' + chosen + ' row radio selector, manufacture_code: ' + orders[chosen].manufacture_code)
+          log('Ordering using ' + chosen + ' row radio selector, manufacture_code: ' + orders[chosen].manufacture_code, task)
           await formFrame.click(orders[chosen].radioSelector)
           task.reachedMaximum = false
           await formFrame.click(FORM_CHANGE_ORDER_BUTTON)
           if (task.searchResultExists === false) {
             description += currentDate() + ' Достигнут максимум заказа авто<br>'
-            log('Reached maximum cars')
+            log('Reached maximum cars', task)
             badManufactureCode = false
             flag = false
             task.reachedMaximum = true
           } else {
-            log('Ordered using ' + chosen + ' row radio selector, manufacture_code: ' + orders[chosen].manufacture_code)
+            log('Ordered using ' + chosen + ' row radio selector, manufacture_code: ' + orders[chosen].manufacture_code, task)
 
             orderedManufactureCodes.push(orders[chosen].manufacture_code)
             badManufactureCode = false
@@ -902,11 +906,11 @@ const processSimpleTask = async ({ page, data: task }) => {
 
             remainingAmount -= currentOrderAmount
             totalOrdered += currentOrderAmount
-            log('remainingAmount: ' + remainingAmount)
-            log('totalOrdered: ' + totalOrdered)
+            log('remainingAmount: ' + remainingAmount, task)
+            log('totalOrdered: ' + totalOrdered, task)
           }
         } else {
-          log('Could not find suitable auto at page ' + pageCount)
+          log('Could not find suitable auto at page ' + pageCount, task)
           description += currentDate() + ' Требуемые авто на странице ' + pageCount + ' не найдены<br>'
           let condition = false
           if (pageCount === 1) {
@@ -915,7 +919,7 @@ const processSimpleTask = async ({ page, data: task }) => {
             condition = await formFrame.$(NON_FIRST_PAGE_NEXT_SELECTOR) !== null
           }
           if (condition) {
-            log('Next page exists, switch to it')
+            log('Next page exists, switch to it', task)
             description += currentDate() + ' Есть следующая страница, идем на нее<br>'
             badManufactureCode = true
             if (pageCount === 1) {
@@ -926,7 +930,7 @@ const processSimpleTask = async ({ page, data: task }) => {
             await formFrame.waitFor(DELAY_TO_LOAD_NEXT_PAGE)
             pageCount++
           } else {
-            log('No next page exists, stop search')
+            log('No next page exists, stop search', task)
             description += currentDate() + ' Следующей страницы нет, прекращаем поиски<br>'
             badManufactureCode = false
           }
@@ -975,21 +979,21 @@ const processSimpleTask = async ({ page, data: task }) => {
         }
       }
     } else {
-      log('Search result does not exists')
+      log('Search result does not exists', task)
       description += currentDate() + ' требуемые авто не найдены<br>'
       if (task.more_auto && stage < 1) {
-        log('More auto mode enabled, go to next stage')
+        log('More auto mode enabled, go to next stage', task)
         stage++
         flag = true
       } else {
-        log('Search done')
+        log('Search done', task)
         flag = false
       }
     }
   }
 
   if (totalOrdered > 0) {
-    log('So we have ordered: ' + totalOrdered)
+    log('So we have ordered: ' + totalOrdered, task)
     await page.click(ORDER_FREE_SKLAD)
     await page.waitFor(FREE_SKLAD_IFRAME_SELECTOR)
     firstFrame = await page.frames().find(f => f.name() === 'contentAreaFrame')
@@ -1010,7 +1014,7 @@ const processSimpleTask = async ({ page, data: task }) => {
     await page.screenshot({ path: fullpath, fullPage: true })
     screenshots.push({ name: 'Скриншот #' + (ind++) + '. Результат заказа авто', filepath: fullpath })
   } else {
-    log('So we have ordered nothing')
+    log('So we have ordered nothing', task)
   }
   if (additionalDescription.length > 0) {
     description += currentDate() + ' ' + additionalDescription + '<br>'
@@ -1047,14 +1051,16 @@ function cleanCodes (specificManufactureCodeQueue) {
  * @returns {Promise<void>}
  */
 const processComplexTask = async ({ page, data: task }) => {
-  log(`Running complex task ${task.id}`)
-  if (bannedCompaniesIds.includes(task.company_id)) {
-    log(`Stop executing ${task.id} because company ${task.company_id} marked as banned`)
-  }
+  log(`Running complex task ${task.id}`, task)
 
   task.started_at = currentMySqlDate()
   task.task_run_id = await saveTaskRunStartedToDb(task.connection, task)
-  log(`Saved task_run with id=${task.task_run_id} and start date ${task.started_at}`)
+  log(`Saved task_run with id=${task.task_run_id} and start date ${task.started_at}`, task)
+
+  if (bannedCompaniesIds.includes(task.company_id)) {
+    log(`Stop executing ${task.id} because company ${task.company_id} marked as banned`, task)
+    return
+  }
 
   let screenshots = []
   let formFrame = await loginAndSwitchToFreeSklad(page, task.credentials.login, task.credentials.password)
@@ -1088,7 +1094,7 @@ const processComplexTask = async ({ page, data: task }) => {
     let specificManufactureCodeQueue = []
     let commonManufactureCodeQueue = []
 
-    log('Search result exists')
+    log('Search result exists', task)
     let orders
     let nextPageExists
     for (let i in task.colorPreferences) {
@@ -1102,7 +1108,7 @@ const processComplexTask = async ({ page, data: task }) => {
         currentPageSpecificColors[task.colorPreferences[i]] = 0
         currentPageCommonColors[task.colorPreferences[i]] = 0
       }
-      log('Look through page ' + currentPage)
+      log('Look through page ' + currentPage, task)
       description += currentDate() + ' Страница ' + currentPage + '<br>'
       let orderTable = await formFrame.$(ORDER_TABLE)
       let outerHtmlOrderTable = await orderTable.getProperty('outerHTML')
@@ -1193,7 +1199,7 @@ const processComplexTask = async ({ page, data: task }) => {
             + currentPageCommonColors[colorCode] + ' штук<br>'
         }
       }
-      log('Rows at search result table: ' + orders.length)
+      log('Rows at search result table: ' + orders.length, task)
       let condition = false
       if (currentPage === 1) {
         condition = await formFrame.$(FIRST_PAGE_NEXT_SELECTOR) !== null
@@ -1201,7 +1207,7 @@ const processComplexTask = async ({ page, data: task }) => {
         condition = await formFrame.$(NON_FIRST_PAGE_NEXT_SELECTOR) !== null
       }
       if (condition) {
-        log('Next page exists, switch to it')
+        log('Next page exists, switch to it', task)
         description += currentDate() + ' Есть следующая страница, идем на нее<br>'
         nextPageExists = true
         if (currentPage === 1) {
@@ -1214,7 +1220,7 @@ const processComplexTask = async ({ page, data: task }) => {
         const name = `Результат поискового запроса, страница ${currentPage} из ${pageCount}`
         screenshots.push(await saveScreenshot(task.currentScreenshotPath, page, name))
       } else {
-        log('No next page exists, stop search')
+        log('No next page exists, stop search', task)
         description += currentDate() + ' Следующей страницы нет, прекращаем поиски<br>'
         nextPageExists = false
       }
@@ -1225,7 +1231,7 @@ const processComplexTask = async ({ page, data: task }) => {
 
     for (let colorCode in specificManufactureCodeQueue) {
       if (specificManufactureCodeQueue.hasOwnProperty(colorCode)) {
-        log('Order task with manufacture_code = ' + task.manufacture_code + ' and color = ' + colorCode)
+        log('Order task with manufacture_code = ' + task.manufacture_code + ' and color = ' + colorCode, task)
         description += currentDate() + ' Сперва заказываем согласно коду производителя из задачи: ' + task.manufacture_code + ' и приоритетный цвет: ' + colorCode + '<br>'
         task.color_outside = colorCode
         let remainBefore = task.remain
@@ -1250,7 +1256,7 @@ const processComplexTask = async ({ page, data: task }) => {
       for (let colorCode in commonManufactureCodeQueue) {
         if (commonManufactureCodeQueue.hasOwnProperty(colorCode)) {
           let manufactureCodes = task.alreadyOrderedManufactureCodes
-          log('Order task with any manufacture_code and color ' + colorCode)
+          log('Order task with any manufacture_code and color ' + colorCode, task)
           description += currentDate() + ' Теперь заказываем произвольный код производителя и приоритетный цвет: ' + colorCode + '<br>'
           task.manufacture_code = ''
           task.color_outside = colorCode
@@ -1279,14 +1285,14 @@ const processComplexTask = async ({ page, data: task }) => {
     } while (orderedForCycle > 0)
 
     if (totalOrdered > 0) {
-      log('So we have ordered: ' + totalOrdered)
+      log('So we have ordered: ' + totalOrdered, task)
       formFrame = await switchToFreeSkladAndSaveScreenshot(page, formFrame, screenshots, task)
     } else {
-      log('So we have ordered nothing')
+      log('So we have ordered nothing', task)
     }
   } else {
     screenshots.push(await saveScreenshot(task.currentScreenshotPath, page, 'Результат поиска нужного авто. ' + additionalDescription))
-    log('Search result does not exists')
+    log('Search result does not exists', task)
     if (additionalDescription.length > 0) {
       description += currentDate() + ' ' + additionalDescription + '<br>'
     }
@@ -1345,21 +1351,21 @@ async function filterTasks (connection, allTasks) {
   let nonBannedCompanies = []
   for (let i in allTasks) {
     if (bannedCompanies.includes(allTasks[i].company_id)) {
-      log(`Skip task ${allTasks[i].id} because company ${allTasks[i].company_id} marked as banned`)
+      log(`Skip task ${allTasks[i].id} because company ${allTasks[i].company_id} marked as banned`, allTasks[i])
       continue
     } else if (!nonBannedCompanies.includes(allTasks[i].company_id)) {
-      log(`For task ${allTasks[i].id} check if company ${allTasks[i].company_id} is banned`)
+      log(`For task ${allTasks[i].id} check if company ${allTasks[i].company_id} is banned`, allTasks[i])
       const isBanned = await checkIfCompanyBanned(connection, allTasks[i].company_id)
       if (isBanned) {
-        log(`Skip task ${allTasks[i].id} because company ${allTasks[i].company_id} marked as banned`)
+        log(`Skip task ${allTasks[i].id} because company ${allTasks[i].company_id} marked as banned`, allTasks[i])
         bannedCompanies.push(allTasks[i].company_id)
         continue
       } else {
-        log(`Processing task ${allTasks[i].id} because company ${allTasks[i].company_id} marked as non banned`)
+        log(`Processing task ${allTasks[i].id} because company ${allTasks[i].company_id} marked as non banned`, allTasks[i])
         nonBannedCompanies.push(allTasks[i].company_id)
       }
     } else {
-      log(`Processing task ${allTasks[i].id} because company ${allTasks[i].company_id} marked as non banned`)
+      log(`Processing task ${allTasks[i].id} because company ${allTasks[i].company_id} marked as non banned`, allTasks[i])
     }
 
     let orderedCars = await getOrderedCars(connection, allTasks[i].id)
@@ -1389,7 +1395,7 @@ async function robot (connection) {
     fs.mkdirSync(currentScreenshotPath)
   }
 
-  const timeoutToExecuteAllTasks = tasks.length * 60000;
+  const timeoutToExecuteAllTasks = tasks.length * 60000
   log(`Timeout to execute all tasks ${timeoutToExecuteAllTasks}`)
 
   const cluster = await Cluster.launch({
@@ -1404,7 +1410,7 @@ async function robot (connection) {
 
   // Event handler to be called in case of problems
   cluster.on('taskerror', (err, data) => {
-    log(`Error crawling taks.id=${data.id} - ${err.message}`)
+    log(`Error crawling taks.id=${data.id} - ${err.message}`, data)
   })
 
   for (const i in tasks) {
