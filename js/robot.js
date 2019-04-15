@@ -43,11 +43,14 @@ const DELAY_TO_LOAD_ORDERED_IFRAME = 3000
 const DELAY_TO_LOAD_NEXT_PAGE = 1000
 const DELAY_FOR_SEARCH_RESULT = 5000
 const DELAY_AFTER_ORDER = 2000
+const DELAY_BETWEEN_ADD_TO_QUEUE = 15000
 
 const TASK_RUN_STATUS_SUCCESS = 1
 const TASK_RUN_STATUS_ERROR = 2
 
 let bannedCompaniesIds = []
+
+let cluster = null
 
 globalRunner = async function () {
   if (isValidTimeToLaunch()) {
@@ -67,6 +70,7 @@ localRunner = async function () {
   }
 }
 
+require('events').EventEmitter.defaultMaxListeners = MAX_CONCURRENCY
 localRunner()
 
 function isValidTimeToLaunch () {
@@ -113,7 +117,7 @@ function currentMySqlDate () {
     + ' ' + pad2(date.getHours()) + ':' + pad2(date.getMinutes()) + ':' + pad2(date.getSeconds())
 }
 
-function log(message, taskInfo) {
+function log (message, taskInfo) {
   if (!CREDS.enableLogging) {
     return
   }
@@ -682,7 +686,7 @@ const processSimpleTask = async ({ page, data: task }) => {
 
   if (bannedCompaniesIds.includes(task.company_id)) {
     log(`Stop executing ${task.id} because company ${task.company_id} marked as banned`, task)
-    return;
+    return
   }
 
   if (!task.searchDialogHandled) {
@@ -1392,10 +1396,31 @@ async function filterTasks (connection, allTasks) {
   return result
 }
 
-async function robot (connection) {
+async function addValidTasksToQueue(connection, currentScreenshotPath) {
+  if (!isValidTimeToLaunch()) {
+    log('It is not valid time to add to queue, exit')
+    return false
+  }
+  log('It is valid time to add to queue, add')
   let allTasks = await getTasksFromDb(connection)
   let tasks = await filterTasks(connection, allTasks)
 
+  for (const i in tasks) {
+    let colorPreferences = await getColorPreferences(connection, tasks[i].company_id)
+    tasks[i].currentScreenshotPath = currentScreenshotPath
+    tasks[i].connection = connection
+    tasks[i].credentials = await getCredentials(connection, tasks[i].company_id)
+    if (isSimpleTask(tasks[i], colorPreferences)) {
+      await cluster.queue(tasks[i], processSimpleTask)
+    } else {
+      tasks[i].colorPreferences = colorPreferences[tasks[i].model]
+      await cluster.queue(tasks[i], processComplexTask)
+    }
+  }
+  return true
+}
+
+async function robot (connection) {
   let currentScreenshotPath = SCREENSHOT_PATH
   if (!fs.existsSync(currentScreenshotPath)) {
     fs.mkdirSync(currentScreenshotPath)
@@ -1408,7 +1433,7 @@ async function robot (connection) {
   const timeoutToExecuteAllTasks = tasks.length * 60000
   log(`Timeout to execute all tasks ${timeoutToExecuteAllTasks}`)
 
-  const cluster = await Cluster.launch({
+  cluster = await Cluster.launch({
     concurrency: Cluster.CONCURRENCY_BROWSER,
     maxConcurrency: MAX_CONCURRENCY,
     puppeteerOptions: {
@@ -1425,23 +1450,16 @@ async function robot (connection) {
 
     task.finished_at = currentMySqlDate()
     task.status = TASK_RUN_STATUS_ERROR
-    task.description = `Ошибка при работе робота: <b>${err.message}</b><br><pre>${err.stack}</pre>`;
+    task.description = `Ошибка при работе робота: <b>${err.message}</b><br><pre>${err.stack}</pre>`
     await saveTaskRunFinishedToDb(task.connection, task)
     log(`Saved error task_run with id=${task.task_run_id} and finish date ${task.finished_at}`, task)
   })
 
-  for (const i in tasks) {
-    let colorPreferences = await getColorPreferences(connection, tasks[i].company_id)
-    tasks[i].currentScreenshotPath = currentScreenshotPath
-    tasks[i].connection = connection
-    tasks[i].credentials = await getCredentials(connection, tasks[i].company_id)
-    if (isSimpleTask(tasks[i], colorPreferences)) {
-      await cluster.queue(tasks[i], processSimpleTask)
-    } else {
-      tasks[i].colorPreferences = colorPreferences[tasks[i].model]
-      await cluster.queue(tasks[i], processComplexTask)
-    }
-  }
+  let added = false
+  do {
+    added = await addValidTasksToQueue(connection, currentScreenshotPath)
+    await delay(DELAY_BETWEEN_ADD_TO_QUEUE)
+  } while (added)
 
   await cluster.idle()
   await cluster.close()
