@@ -1417,13 +1417,13 @@ async function robot (connection) {
   })
 
   // Event handler to be called in case of problems
-  cluster.on('taskerror', (err, data) => {
+  cluster.on('taskerror', async (err, data) => {
     log(`Error crawling taks.id=${data.id} - ${err.message}`, data)
 
     data.finished_at = currentMySqlDate()
     data.status = TASK_RUN_STATUS_ERROR
     data.description = `Ошибка при работе робота: ${err.message}`;
-    saveTaskRunFinishedToDb(data.connection, task)
+    await saveTaskRunFinishedToDb(data.connection, task)
     log(`Saved error task_run with id=${data.task_run_id} and finish date ${data.finished_at}`, task)
   })
 
