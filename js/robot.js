@@ -1307,6 +1307,7 @@ const processComplexTask = async ({ page, data: task }) => {
 
   task.finished_at = currentMySqlDate()
   await saveTaskRunFinishedToDb(task.connection, task)
+  log(`Saved task_run with id=${task.task_run_id} and finish date ${task.finished_at}`, task)
 
   for (let iScr in screenshots) {
     screenshots[iScr].task_run_id = task.task_run_id
