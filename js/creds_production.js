@@ -8,10 +8,10 @@ module.exports = {
     mysqlDatabase: 'alarmdb',
 
     chromeVisible: false,
-    enableLogging: false,
+    enableLogging: true,
 
     maxConcurrency: 50,
-    monitor: true,
+    monitor: false,
 
     screenshotPath: '/data/www/screenshots',
 }
