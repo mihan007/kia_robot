@@ -8,7 +8,7 @@ module.exports = {
     mysqlDatabase: 'alarmdb',
 
     chromeVisible: false,
-    enableLogging: true,
+    enableLogging: false,
 
     maxConcurrency: 25,
     monitor: true,
