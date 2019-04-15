@@ -10,6 +10,14 @@ $this->title = 'Запуск задач';
 $this->params['breadcrumbs'][] = $this->title;
 $columns = [
     [
+        'label' => 'Задача',
+        'class' => 'yii\grid\DataColumn',
+        'format' => 'raw',
+        'value' => function ($data) {
+            return Html::a('#'.$data->task_id, ['task/view', 'id' => $data->task_id]);
+        },
+    ],
+    [
         'label' => 'Дата старта',
         'class' => 'yii\grid\DataColumn',
         'format' => 'raw',
