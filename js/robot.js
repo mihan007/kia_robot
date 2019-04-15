@@ -1430,7 +1430,7 @@ async function robot (connection) {
     fs.mkdirSync(currentScreenshotPath)
   }
 
-  const timeoutToExecuteAllTasks = tasks.length * 60000
+  const timeoutToExecuteAllTasks = 9 * 3600 * 1000
   log(`Timeout to execute all tasks ${timeoutToExecuteAllTasks}`)
 
   cluster = await Cluster.launch({
