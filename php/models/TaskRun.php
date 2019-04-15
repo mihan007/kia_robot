@@ -31,6 +31,10 @@ use Yii;
  */
 class TaskRun extends \yii\db\ActiveRecord
 {
+    const STATUS_NEW = 0;
+    const STATUS_SUCCESS = 1;
+    const STATUS_ERROR = 2;
+
     /**
      * {@inheritdoc}
      */
