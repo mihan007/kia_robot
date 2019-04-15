@@ -1415,7 +1415,8 @@ async function robot (connection) {
       headless: !CREDS.chromeVisible
     },
     timeout: timeoutToExecuteAllTasks,
-    retryLimit: 3
+    retryLimit: 3,
+    monitor: CREDS.monitor
   })
 
   // Event handler to be called in case of problems

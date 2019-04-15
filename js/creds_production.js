@@ -11,6 +11,7 @@ module.exports = {
     enableLogging: true,
 
     maxConcurrency: 25,
+    monitor: true,
 
-    screenshotPath: '/data/www/screenshots'
+    screenshotPath: '/data/www/screenshots',
 }
