@@ -24,6 +24,12 @@ use yii\console\Controller;
  */
 class EmailController extends Controller
 {
+    /**
+     * Рассылает уведомления о заказанных авто
+     *
+     * @throws \Throwable
+     * @throws \yii\db\StaleObjectException
+     */
     public function actionNotification()
     {
         $companies = Company::find()
@@ -78,6 +84,11 @@ class EmailController extends Controller
         }
     }
 
+    /**
+     * Рассылает отчет о заказанных вчера(по умолчанию) авто
+     *
+     * @param bool $date
+     */
     public function actionSummary($date = false)
     {
         if ($date) {
@@ -123,7 +134,7 @@ class EmailController extends Controller
             'is@turbodealer.ru' => 'Сняткова Ирина',
             'dav.kirill.86@gmail.com' => 'Давыдовский Кирилл'
         ];
-        $subject = 'Робот Аларма: отчет о заказанных авто за ' . date('d.m.Y', $yesterday);
+        $subject = 'Робот Киа: отчет о заказанных авто за ' . date('d.m.Y', $yesterday);
         $viewData = [
             'data' => $tasks,
             'date' => date('d.m.Y', $yesterday),
@@ -138,35 +149,9 @@ class EmailController extends Controller
             ->send();
     }
 
-    public function saveSummaryReport($subject, $viewData)
-    {
-        $reportPath = \Yii::getAlias('@app/../../web/static/reports/');
-        $subfolderName = 'alarm';
-        if (!is_dir($reportPath . $subfolderName)) {
-            mkdir($reportPath . $subfolderName);
-        }
-
-        $fullReportPath = realpath($reportPath . $subfolderName . '/');
-        if (substr($fullReportPath, -1) !== '/') {
-            $fullReportPath .= '/';
-        }
-        $reportName = 'alarm_summary_last.html';
-        $string = \Yii::$app->mailer->render('/email/summary', $viewData, '@app/mail/layouts/html');
-
-        echo "Store report(" . sizeof($string) . ") to {$fullReportPath}{$reportName}\n";
-        file_put_contents($fullReportPath . $reportName, $string);
-
-        $archiveName = "alarm_summary_" . date('Y_m_d_H_i_s') . ".html";
-        $archiveReportPath = $fullReportPath . $archiveName;
-        file_put_contents($archiveReportPath, $string);
-
-        $report = new Report();
-        $report->section = "alarm";
-        $report->subject = $subject;
-        $report->url = \Yii::$app->params['turboDomainMain'] . "/static/reports/{$subfolderName}/" . $archiveName;
-        $report->save();
-    }
-
+    /**
+     * Отчет о комплектациях
+     */
     public function actionFields()
     {
         $from = [
@@ -178,7 +163,7 @@ class EmailController extends Controller
             'is@turbodealer.ru' => 'Сняткова Ирина',
             'dav.kirill.86@gmail.com' => 'Давыдовский Кирилл'
         ];
-        $subject = 'Робот Аларма: отчет о комплектациях за ' . date('d.m.Y');
+        $subject = 'Робот Киа: отчет о комплектациях за ' . date('d.m.Y');
         $models = Model::find()->all();
         $viewData = [
             'models' => $models,
@@ -193,35 +178,9 @@ class EmailController extends Controller
             ->send();
     }
 
-    public function saveFieldsReport($subject, $viewData)
-    {
-        $reportPath = \Yii::getAlias('@app/../../web/static/reports/');
-        $subfolderName = 'alarm';
-        if (!is_dir($reportPath . $subfolderName)) {
-            mkdir($reportPath . $subfolderName);
-        }
-
-        $fullReportPath = realpath($reportPath . $subfolderName . '/');
-        if (substr($fullReportPath, -1) !== '/') {
-            $fullReportPath .= '/';
-        }
-        $reportName = 'alarm_fields_last.html';
-        $string = \Yii::$app->mailer->render('/email/fields', $viewData, '@app/mail/layouts/html');
-
-        echo "Store report(" . sizeof($string) . ") to {$fullReportPath}{$reportName}\n";
-        file_put_contents($fullReportPath . $reportName, $string);
-
-        $archiveName = "alarm_fields_" . date('Y_m_d_H_i_s') . ".html";
-        $archiveReportPath = $fullReportPath . $archiveName;
-        file_put_contents($archiveReportPath, $string);
-
-        $report = new Report();
-        $report->section = "alarm";
-        $report->subject = $subject;
-        $report->url = \Yii::$app->params['turboDomainMain'] . "/static/reports/{$subfolderName}/" . $archiveName;
-        $report->save();
-    }
-
+    /**
+     * Отчет о схожих задачах за вчера
+     */
     public function actionAboutSimilarTask()
     {
         $yesterday = time() - 24*3600;
@@ -293,6 +252,9 @@ class EmailController extends Controller
         }
     }
 
+    /**
+     * Отчет о забаненных компаниях
+     */
     public function actionBanned()
     {
         $companies = Company::find()
