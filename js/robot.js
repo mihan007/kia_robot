@@ -41,7 +41,7 @@ const DELAY_AFTER_SELECT_MODEL = 1000
 const DELAY_TO_LOAD_STORAGE_IFRAME = 2000
 const DELAY_TO_LOAD_ORDERED_IFRAME = 3000
 const DELAY_TO_LOAD_NEXT_PAGE = 1000
-const DELAY_FOR_SEARCH_RESULT = 3000
+const DELAY_FOR_SEARCH_RESULT = 5000
 const DELAY_AFTER_ORDER = 2000
 
 const TASK_RUN_STATUS_SUCCESS = 1
@@ -475,7 +475,7 @@ async function sendSearchRequest (page, formFrame, task, additionalDescription) 
   }
   log('Send search request', task)
   await formFrame.click(FORM_REQUEST_BUTTON_SELECTOR)
-  await formFrame.waitFor(PAGING_SELECTOR)
+  await formFrame.waitFor(PAGING_SELECTOR, { timeout: DELAY_FOR_SEARCH_RESULT })
   log('Sent search request', task)
 
   return task.searchResultExists
