@@ -307,7 +307,7 @@ function analyzeSearchResult(searchResult, storageSessionId, currentPage) {
                     order.storage_code = $ordersTable(this).text();
                     break;
                 case 8:
-                    order.available = parseInt($ordersTable(this).text());
+                    order.available = $ordersTable(this).text();
                     break;
                 case 9:
                     order.reserved = parseInt($ordersTable(this).text());
