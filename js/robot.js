@@ -475,7 +475,7 @@ async function sendSearchRequest (page, formFrame, task, additionalDescription) 
   }
   log('Send search request', task)
   await formFrame.click(FORM_REQUEST_BUTTON_SELECTOR)
-  await formFrame.waitFor(PAGING_SELECTOR, { timeout: DELAY_FOR_SEARCH_RESULT })
+  await formFrame.waitFor(DELAY_FOR_SEARCH_RESULT)
   log('Sent search request', task)
 
   return task.searchResultExists
