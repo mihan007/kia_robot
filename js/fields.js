@@ -18,6 +18,9 @@ const MANUFACTURE_CODE_SELECTOR = '#fsc';
 const COLOR_INSIDE_SELECTOR = '#intcolor';
 const COLOR_OUTSIDE_SELECTOR = '#extcolor';
 
+console.log("It does not supported now because we manually enter codes");
+return;
+
 run();
 
 async function run() {
