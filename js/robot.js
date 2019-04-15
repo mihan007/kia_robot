@@ -34,8 +34,15 @@ const PAGING_SELECTOR = '#sel_paging'
 
 const MAX_CONCURRENCY = CREDS.maxConcurrency
 const TIMEOUT_FOR_LOGIN = 30000
+const TIMEOUT_FOR_SEARCH_LOGIN_SELECTOR = 1000
 const DELAY_BETWEEN_LAUNCH = 500
-const DELAY_WAITING_FOR_LAUNCH = 1000//5 * 1000 - 5 seconds
+const DELAY_WAITING_FOR_LAUNCH = 1000 //1000 - 1 seconds
+const DELAY_AFTER_SELECT_MODEL = 2000
+const DELAY_TO_LOAD_STORAGE_IFRAME = 2000
+const DELAY_TO_LOAD_ORDERED_IFRAME = 5000
+const DELAY_TO_LOAD_NEXT_PAGE = 2000
+const DELAY_FOR_SEARCH_RESULT = 5000
+const DELAY_AFTER_ORDER = 5000
 
 let bannedCompaniesIds = []
 
@@ -359,7 +366,7 @@ async function loginAndSwitchToFreeSklad (page, login, password) {
     await page.waitFor(SELL_TAB_SELECTOR, { timeout: TIMEOUT_FOR_LOGIN })
   } catch (e) {
     try {
-      if (await page.waitFor(ERROR_LOGGING_SELECTOR, { timeout: 1000 })) {
+      if (await page.waitFor(ERROR_LOGGING_SELECTOR, { timeout: TIMEOUT_FOR_SEARCH_LOGIN_SELECTOR })) {
         log(`Could not log in, mark company ${task.company_id} as banned`)
         await markCompanyAsBanned(task.connection, task.company_id)
       }
@@ -377,7 +384,7 @@ async function loginAndSwitchToFreeSklad (page, login, password) {
   await page.waitFor(FREE_SKLAD_IFRAME_SELECTOR)
   let firstFrame = await page.frames().find(f => f.name() === 'contentAreaFrame')
   await firstFrame.waitFor(FREE_SKLAD_CONTENT_IFRAME)
-  await firstFrame.waitFor(2000)
+  await firstFrame.waitFor(DELAY_TO_LOAD_STORAGE_IFRAME)
 
   for (const secondFrame of firstFrame.childFrames()) {
     const modelField = await secondFrame.$(FORM_MODEL_SELECTOR)
@@ -423,7 +430,7 @@ async function sendSearchRequest (page, formFrame, task, additionalDescription) 
   log('Setup search params')
   let result = await formFrame.select(FORM_MODEL_SELECTOR, task.model)
   log('Task model: ' + task.model)
-  await formFrame.waitFor(2000)
+  await formFrame.waitFor(DELAY_AFTER_SELECT_MODEL)
   if (result.length === 0) {
     log('Could not setup task.model: ' + task.model)
     additionalDescription = `В фильтре не найдена модель ${task.model}`
@@ -462,7 +469,7 @@ async function sendSearchRequest (page, formFrame, task, additionalDescription) 
   }
   log('Send search request')
   await formFrame.click(FORM_REQUEST_BUTTON_SELECTOR)
-  await formFrame.waitFor(5000)
+  await formFrame.waitFor(DELAY_FOR_SEARCH_RESULT)
   log('Sent search request')
 
   return task.searchResultExists
@@ -584,7 +591,7 @@ async function orderTask (page, formFrame, task, description, manufactureCodes, 
         screenshots.push(await saveScreenshot(task.currentScreenshotPath, page, 'Окно заказа нужной комплектации авто'))
 
         await formFrame.click(ORDER_BUTTON)
-        await formFrame.waitFor(5000)
+        await formFrame.waitFor(DELAY_AFTER_ORDER)
 
         if (manufactureCodes !== false) {
           manufactureCodes.push(orders[chosen].manufacture_code)
@@ -614,7 +621,7 @@ async function orderTask (page, formFrame, task, description, manufactureCodes, 
         } else {
           await formFrame.click(NON_FIRST_PAGE_NEXT_SELECTOR)
         }
-        await formFrame.waitFor(2000)
+        await formFrame.waitFor(DELAY_TO_LOAD_NEXT_PAGE)
         currentPage++
       } else {
         log('No next page exists, stop search')
@@ -638,7 +645,7 @@ async function switchToFreeSkladAndSaveScreenshot (page, formFrame, screenshots,
   await page.waitFor(FREE_SKLAD_IFRAME_SELECTOR)
   let firstFrame = await page.frames().find(f => f.name() === 'contentAreaFrame')
   await firstFrame.waitFor(FREE_SKLAD_CONTENT_IFRAME)
-  await firstFrame.waitFor(2000)
+  await firstFrame.waitFor(DELAY_TO_LOAD_STORAGE_IFRAME)
 
   for (const secondFrame of firstFrame.childFrames()) {
     const modelField = await secondFrame.$(FORM_MODEL_SELECTOR)
@@ -648,7 +655,7 @@ async function switchToFreeSkladAndSaveScreenshot (page, formFrame, screenshots,
   }
 
   await formFrame.click(ORDER_FREE_SKLAD_BUTTON)
-  await formFrame.waitFor(5000)
+  await formFrame.waitFor(DELAY_TO_LOAD_ORDERED_IFRAME)
   const name = 'Результат заказа авто'
   screenshots.push(await saveScreenshot(task.currentScreenshotPath, page, name))
   return formFrame
@@ -691,7 +698,7 @@ const processSimpleTask = async ({ page, data: task }) => {
     await page.waitFor(SELL_TAB_SELECTOR, { timeout: TIMEOUT_FOR_LOGIN })
   } catch (e) {
     try {
-      if (await page.waitFor(ERROR_LOGGING_SELECTOR, { timeout: 1000 })) {
+      if (await page.waitFor(ERROR_LOGGING_SELECTOR, { timeout: TIMEOUT_FOR_SEARCH_LOGIN_SELECTOR })) {
         log(`Could not log in, mark company ${task.company_id} as banned`)
         await markCompanyAsBanned(task.connection, task.company_id)
       }
@@ -712,7 +719,7 @@ const processSimpleTask = async ({ page, data: task }) => {
   await page.waitFor(FREE_SKLAD_IFRAME_SELECTOR)
   let firstFrame = await page.frames().find(f => f.name() === 'contentAreaFrame')
   await firstFrame.waitFor(FREE_SKLAD_CONTENT_IFRAME)
-  await firstFrame.waitFor(2000)
+  await firstFrame.waitFor(DELAY_TO_LOAD_STORAGE_IFRAME)
 
   for (const secondFrame of firstFrame.childFrames()) {
     const modelField = await secondFrame.$(FORM_MODEL_SELECTOR)
@@ -758,7 +765,7 @@ const processSimpleTask = async ({ page, data: task }) => {
       additionalDescription = `В фильтре не найдена модель ${task.model}`
       break
     }
-    await formFrame.waitFor(2000)
+    await formFrame.waitFor(DELAY_AFTER_SELECT_MODEL)
     const manufactureCode = (stage < 1) ? task.manufacture_code : ''
     result = await formFrame.select(FORM_MANUFACTURE_CODE_SELECTOR, manufactureCode)
     log('Manufacture code: ' + manufactureCode)
@@ -789,7 +796,7 @@ const processSimpleTask = async ({ page, data: task }) => {
     }
     log('Send search request')
     await formFrame.click(FORM_REQUEST_BUTTON_SELECTOR)
-    await formFrame.waitFor(5000)
+    await formFrame.waitFor(DELAY_FOR_SEARCH_RESULT)
     log('Sent search request')
 
     let filename = +new Date() + '_' + Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15) + '.png'
@@ -916,7 +923,7 @@ const processSimpleTask = async ({ page, data: task }) => {
             } else {
               await formFrame.click(NON_FIRST_PAGE_NEXT_SELECTOR)
             }
-            await formFrame.waitFor(2000)
+            await formFrame.waitFor(DELAY_TO_LOAD_NEXT_PAGE)
             pageCount++
           } else {
             log('No next page exists, stop search')
@@ -949,7 +956,7 @@ const processSimpleTask = async ({ page, data: task }) => {
         })
 
         await formFrame.click(ORDER_BUTTON)
-        await formFrame.waitFor(5000)
+        await formFrame.waitFor(DELAY_AFTER_ORDER)
 
         description += currentDate() + ' всего авто с нужными параметрами заказано ' + totalOrdered + ' штук<br>'
         description += currentDate() + ' осталось заказать ' + remainingAmount + ' штук<br>'
@@ -987,7 +994,7 @@ const processSimpleTask = async ({ page, data: task }) => {
     await page.waitFor(FREE_SKLAD_IFRAME_SELECTOR)
     firstFrame = await page.frames().find(f => f.name() === 'contentAreaFrame')
     await firstFrame.waitFor(FREE_SKLAD_CONTENT_IFRAME)
-    await firstFrame.waitFor(2000)
+    await firstFrame.waitFor(DELAY_TO_LOAD_STORAGE_IFRAME)
 
     for (const secondFrame of firstFrame.childFrames()) {
       const modelField = await secondFrame.$(FORM_MODEL_SELECTOR)
@@ -997,7 +1004,7 @@ const processSimpleTask = async ({ page, data: task }) => {
     }
 
     await formFrame.click(ORDER_FREE_SKLAD_BUTTON)
-    await formFrame.waitFor(5000)
+    await formFrame.waitFor(DELAY_TO_LOAD_ORDERED_IFRAME)
     let filename = +new Date() + '_' + Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15) + '.png'
     let fullpath = task.currentScreenshotPath + '/' + filename
     await page.screenshot({ path: fullpath, fullPage: true })
@@ -1202,7 +1209,7 @@ const processComplexTask = async ({ page, data: task }) => {
         } else {
           await formFrame.click(NON_FIRST_PAGE_NEXT_SELECTOR)
         }
-        await formFrame.waitFor(2000)
+        await formFrame.waitFor(DELAY_TO_LOAD_NEXT_PAGE)
         currentPage++
         const name = `Результат поискового запроса, страница ${currentPage} из ${pageCount}`
         screenshots.push(await saveScreenshot(task.currentScreenshotPath, page, name))
@@ -1382,13 +1389,16 @@ async function robot (connection) {
     fs.mkdirSync(currentScreenshotPath)
   }
 
+  const timeoutToExecuteAllTasks = tasks.length * 60000;
+  log(`Timeout to execute all tasks ${timeoutToExecuteAllTasks}`)
+
   const cluster = await Cluster.launch({
     concurrency: Cluster.CONCURRENCY_CONTEXT,
     maxConcurrency: MAX_CONCURRENCY,
     puppeteerOptions: {
       headless: !CREDS.chromeVisible
     },
-    timeout: 20 * 60000, //20 minutes,
+    timeout: timeoutToExecuteAllTasks,
     retryLimit: 3
   })
 
