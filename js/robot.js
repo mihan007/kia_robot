@@ -1422,7 +1422,7 @@ async function robot (connection) {
 
     task.finished_at = currentMySqlDate()
     task.status = TASK_RUN_STATUS_ERROR
-    task.description = `Ошибка при работе робота: ${err.message}`;
+    task.description = `Ошибка при работе робота: <b>${err.message}</b><br>${err.stack}`;
     await saveTaskRunFinishedToDb(task.connection, task)
     log(`Saved error task_run with id=${task.task_run_id} and finish date ${task.finished_at}`, task)
   })
