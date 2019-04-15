@@ -309,7 +309,7 @@ async function saveTaskRunFinishedToDb (connection, taskInfo) {
         finished_at: taskInfo.finished_at
       },
       { id: taskInfo.task_run_id },
-      (err, recordId) => {
+      (err, affectedRows) => {
         if (err) {
           reject(err)
         } else {
