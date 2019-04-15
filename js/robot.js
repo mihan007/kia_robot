@@ -875,9 +875,11 @@ const processSimpleTask = async ({ page, data: task }) => {
             orders.push(order)
           }
         })
-        log('Rows at searct result table: ' + orders.length, task)
+        log('Rows at search result table: ' + orders.length, task)
 
-        if (stage === 0) {
+        if (orders.length === 0) {
+          chosen = false
+        } else if (stage === 0) {
           chosen = 0
         } else {
           chosen = false
