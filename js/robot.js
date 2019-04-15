@@ -110,14 +110,14 @@ function currentMySqlDate () {
     + ' ' + pad2(date.getHours()) + ':' + pad2(date.getMinutes()) + ':' + pad2(date.getSeconds())
 }
 
-function log(messages, taskInfo) {
+function log(message, taskInfo) {
   if (!CREDS.enableLogging) {
     return
   }
   if (typeof taskInfo == 'undefined') {
-    console.log(currentDate() + ' ' + messages[i])
+    console.log(currentDate() + ' ' + message)
   } else {
-    console.log(currentDate() + ' [' + taskInfo.id + '] ' + messages[i])
+    console.log(currentDate() + ' [' + taskInfo.id + '] ' + message)
   }
 }
 
