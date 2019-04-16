@@ -52,7 +52,7 @@ $config = [
         ],
         'urlManager' => [
             'class' => 'yii\web\UrlManager',
-            'scriptUrl' => getenv('APP_ROLE') == 'production' ? 'http://kia-robot.turbodealer.ru' : 'http://alarm-robot.lcl'
+            'scriptUrl' => getenv('APP_ROLE') == 'production' ? 'http://lk.robotkia.ru' : 'http://alarm-robot.lcl'
         ],
         'authManager' => [
             'class' => 'yii\rbac\DbManager',
