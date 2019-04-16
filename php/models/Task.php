@@ -31,6 +31,7 @@ use yii\db\Expression;
  * @property Company $company
  * @property User $user
  * @property TaskRun[] $taskRuns
+ * @property string $status
  */
 class Task extends \yii\db\ActiveRecord
 {
@@ -92,7 +93,8 @@ class Task extends \yii\db\ActiveRecord
             'goalLabel' => 'Цель задачи',
             'moreAutoLabel' => 'Алтернативы',
             'client_name' => 'Имя клиента',
-            'ordered' => 'Заказано'
+            'ordered' => 'Заказано',
+            'status' => 'Статус задачи'
         ];
     }
 
@@ -155,5 +157,14 @@ class Task extends \yii\db\ActiveRecord
         $result = $connection->createCommand($sql)->queryOne();
 
         return isset($result['ordered']) ? $result['ordered'] : 0;
+    }
+
+    public function getStatus()
+    {
+        if ($this->deleted_at) {
+            return 'Архивная (удалена '.Yii::$app->formatter->format($this->deleted_at, 'datetime').')';
+        }
+
+        return 'Активная';
     }
 }
