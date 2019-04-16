@@ -165,6 +165,7 @@ class Task extends \yii\db\ActiveRecord
             return 'Архивная (удалена '.Yii::$app->formatter->format($this->deleted_at, 'datetime').')';
         }
 
-        return 'Активная';
+        $suffix = ($this->getOrdered() >= $this->amount) ? '(завершена, так как задача выполнена)' : '(выполняется)';
+        return 'Активная '.$suffix;
     }
 }

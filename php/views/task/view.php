@@ -29,6 +29,7 @@ $rows = [
     'color_inside_name',
     'color_outside_name',
     'amount',
+    'ordered'
 ];
 if (Yii::$app->user->isAdmin) {
     $rows[] = [
