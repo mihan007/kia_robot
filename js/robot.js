@@ -678,6 +678,10 @@ async function switchToFreeSkladAndSaveScreenshot (page, formFrame, screenshots,
  * @returns {Promise<void>}
  */
 const processSimpleTask = async ({ page, data: task }) => {
+  if (!isValidTimeToLaunch()) {
+    log(`Do not run simple task ${task.id} because we out of time`, task)
+    return;
+  }
   log(`Running simple task ${task.id}`, task)
 
   task.started_at = currentMySqlDate()
@@ -1063,6 +1067,10 @@ function cleanCodes (specificManufactureCodeQueue) {
  * @returns {Promise<void>}
  */
 const processComplexTask = async ({ page, data: task }) => {
+  if (!isValidTimeToLaunch()) {
+    log(`Do not run complex task ${task.id} because we out of time`, task)
+    return;
+  }
   log(`Running complex task ${task.id}`, task)
 
   task.started_at = currentMySqlDate()
