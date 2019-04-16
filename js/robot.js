@@ -77,8 +77,9 @@ function isValidTimeToLaunch () {
   let date = new Date()
   let hours = date.getHours()
   let minutes = date.getMinutes()
+  let seconds = date.getSeconds()
 
-  return ((hours == 11) && (minutes >= 59)) || (hours >= 12) && (hours < 21)
+  return ((hours == 11) && (minutes >= 59) && (seconds >= 50)) || (hours >= 12) && (hours < 21)
 }
 
 function delay (ms) {
