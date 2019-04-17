@@ -6,11 +6,11 @@ const CREDS = {
   mysqlPassword: process.env.MYSQL_PASSWORD,
   mysqlDatabase: process.env.MYSQL_DATABASE,
 
-  chromeVisible: process.env.CHROME_VISIBLE === "true",
-  enableLogging: process.env.ENABLE_LOGGING === "true",
+  chromeVisible: process.env.CHROME_VISIBLE === 'true',
+  enableLogging: process.env.ENABLE_LOGGING === 'true',
 
   maxConcurrency: parseInt(process.env.MAX_CONCURRENCY),
-  monitor: process.env.JOB_MONITORING === "true",
+  monitor: process.env.JOB_MONITORING === 'true',
 
   screenshotPath: process.env.SCREENSHOT_PATH,
   currentWorkerName: process.env.CURRENT_WORKER_NAME
@@ -169,7 +169,10 @@ async function getTasksFromDb (connection) {
   return new Promise((resolve, reject) => {
     connection.select(
       'task', '*',
-      { deleted_at: 0 },
+      {
+        deleted_at: 0,
+        worker: CREDS.currentWorkerName
+      },
       {},
       (err, results) => {
         if (err) {
@@ -1419,13 +1422,10 @@ async function filterTasks (connection, allTasks) {
 }
 
 async function addValidTasksToQueue (connection, currentScreenshotPath) {
-  if (!isValidTimeToLaunch()) {
-    log('It is not valid time to add to queue, exit')
-    return false
-  }
-  log('It is valid time to add to queue, add')
   let allTasks = await getTasksFromDb(connection)
   let tasks = await filterTasks(connection, allTasks)
+
+  log(`For worker ${CREDS.currentWorkerName} got ${allTasks.length} tasks, after filter: ${tasks.length}`)
 
   for (const i in tasks) {
     let colorPreferences = await getColorPreferences(connection, tasks[i].company_id)
@@ -1478,12 +1478,6 @@ async function robot (connection) {
     await saveTaskRunFinishedToDb(task.connection, task)
     log(`Saved error task_run with id=${task.task_run_id} and finish date ${task.finished_at}`, task)
   })
-
-  let added = false
-  do {
-    added = await addValidTasksToQueue(connection, currentScreenshotPath)
-    await delay(DELAY_BETWEEN_ADD_TO_QUEUE)
-  } while (added)
 
   await cluster.idle()
   await cluster.close()
