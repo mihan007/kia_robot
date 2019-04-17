@@ -745,7 +745,9 @@ const processSimpleTask = async ({ page, data: task }) => {
     page.on('dialog', async dialog => {
       task.searchResultExists = false
       await dialog.dismiss()
+      log(`For ${task.id} modal pops up so searchResultExists = false`, task)
     })
+    log(`For ${task.id} modal pops up so searchDialogHandled = true`, task)
     task.searchDialogHandled = true
   }
 
