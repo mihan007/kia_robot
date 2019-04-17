@@ -1483,7 +1483,7 @@ async function robot (connection) {
   log(`Timeout to execute all tasks ${timeoutToExecuteAllTasks}`)
 
   cluster = await Cluster.launch({
-    concurrency: Cluster.CONCURRENCY_CONTEXT,
+    concurrency: Cluster.CONCURRENCY_BROWSER,
     maxConcurrency: MAX_CONCURRENCY,
     puppeteerOptions: {
       headless: !CREDS.chromeVisible
