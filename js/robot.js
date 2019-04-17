@@ -13,7 +13,9 @@ const CREDS = {
   monitor: process.env.JOB_MONITORING === 'true',
 
   screenshotPath: process.env.SCREENSHOT_PATH,
-  currentWorkerName: process.env.CURRENT_WORKER_NAME
+  currentWorkerName: process.env.CURRENT_WORKER_NAME,
+
+  delayForSearch: process.env.DELAY
 }
 const mysql = require('mysql')
 const fs = require('fs')
@@ -93,6 +95,15 @@ function isValidTimeToLaunch () {
   let seconds = date.getSeconds()
 
   return ((hours == 11) && (minutes >= 59) && (seconds >= 50)) || (hours >= 12) && (hours < 21)
+}
+
+function isValidTimeToPushSearchButton () {
+  let date = new Date()
+  let hours = date.getHours()
+  let minutes = date.getMinutes()
+  let seconds = date.getSeconds()
+
+  return (hours === 12) && (minutes === 0) && (seconds >= CREDS.delayForSearch)
 }
 
 function delay (ms) {
@@ -495,6 +506,13 @@ async function sendSearchRequest (page, formFrame, task, additionalDescription) 
     log('Setup only available checkbox to true', task)
   }
   log('Send search request', task)
+
+  while (!isValidTimeToPushSearchButton()) {
+    let delayBetweenCheck = 100
+    log(`Waiting for ${delayBetweenCheck}ms before push search button`)
+    await delay(delayBetweenCheck);
+  }
+
   await formFrame.click(FORM_REQUEST_BUTTON_SELECTOR)
   await formFrame.waitFor(DELAY_FOR_SEARCH_RESULT)
   log('Sent search request', task)
@@ -827,6 +845,13 @@ const processSimpleTask = async ({ page, data: task }) => {
       await formFrame.click(FORM_ONLY_AVAILABLE_SELECTOR)
       log('Setup only available checkbox to true', task)
     }
+
+    while (!isValidTimeToPushSearchButton()) {
+      let delayBetweenCheck = 100
+      log(`Waiting for ${delayBetweenCheck}ms before push search button`)
+      await delay(delayBetweenCheck);
+    }
+
     log('Send search request', task)
     await formFrame.click(FORM_REQUEST_BUTTON_SELECTOR)
     await formFrame.waitFor(DELAY_FOR_SEARCH_RESULT)
