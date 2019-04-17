@@ -154,8 +154,8 @@ function log (message, taskInfo) {
     messageToLog = currentDate() + ' [' + taskInfo.id + '] ' + message
   }
 
-  fs.appendFile(process.env.LOG_PATH, messageToLog + "\n", function (err) {
-  });
+  fs.appendFile(process.env.LOG_PATH, messageToLog + '\n', function (err) {
+  })
 
   if (!CREDS.enableLogging) {
     return
@@ -537,6 +537,8 @@ function makeUniqueScreenshotName () {
 async function saveScreenshot (currentScreenshotPath, page, name) {
   let fullpath = currentScreenshotPath + '/' + makeUniqueScreenshotName()
   await page.screenshot({ path: fullpath, fullPage: true })
+  log(`Saved screenshot ${fullpath}`)
+
   return {
     name: name,
     filepath: fullpath
@@ -872,6 +874,7 @@ const processSimpleTask = async ({ page, data: task }) => {
     await page.screenshot({ path: fullpath, fullPage: true })
     screenshots.push({ name: 'Скриншот #' + (ind++) + '. Результат поискового запроса', filepath: fullpath })
     description += currentDate() + ' послали поисковый запрос<br>'
+    log(`Saved screenshot at ${fullpath}`)
 
     if (task.searchResultExists) {
       log('Search result exists', task)
@@ -1024,6 +1027,7 @@ const processSimpleTask = async ({ page, data: task }) => {
           name: 'Скриншот #' + (ind++) + '. Результат выбора нужного набора авто',
           filepath: fullpath
         })
+        log(`Saved screenshot ${fullpath}`)
 
         await formFrame.click(ORDER_BUTTON)
         await formFrame.waitFor(DELAY_AFTER_ORDER)
@@ -1079,6 +1083,7 @@ const processSimpleTask = async ({ page, data: task }) => {
     let fullpath = task.currentScreenshotPath + '/' + filename
     await page.screenshot({ path: fullpath, fullPage: true })
     screenshots.push({ name: 'Скриншот #' + (ind++) + '. Результат заказа авто', filepath: fullpath })
+    log(`Saved screenshot ${fullpath}`)
   } else {
     log('So we have ordered nothing', task)
   }
