@@ -681,7 +681,7 @@ async function switchToFreeSkladAndSaveScreenshot (page, formFrame, screenshots,
 const processSimpleTask = async ({ page, data: task }) => {
   if (!isValidTimeToLaunch()) {
     log(`Do not run simple task ${task.id} because we out of time`, task)
-    return;
+    return
   }
   log(`Running simple task ${task.id}`, task)
 
@@ -1070,7 +1070,7 @@ function cleanCodes (specificManufactureCodeQueue) {
 const processComplexTask = async ({ page, data: task }) => {
   if (!isValidTimeToLaunch()) {
     log(`Do not run complex task ${task.id} because we out of time`, task)
-    return;
+    return
   }
   log(`Running complex task ${task.id}`, task)
 
@@ -1405,7 +1405,7 @@ async function filterTasks (connection, allTasks) {
   return result
 }
 
-async function addValidTasksToQueue(connection, currentScreenshotPath) {
+async function addValidTasksToQueue (connection, currentScreenshotPath) {
   if (!isValidTimeToLaunch()) {
     log('It is not valid time to add to queue, exit')
     return false
@@ -1430,6 +1430,8 @@ async function addValidTasksToQueue(connection, currentScreenshotPath) {
 }
 
 async function robot (connection) {
+  process.setMaxListeners(MAX_CONCURRENCY * 4)
+
   let currentScreenshotPath = SCREENSHOT_PATH
   if (!fs.existsSync(currentScreenshotPath)) {
     fs.mkdirSync(currentScreenshotPath)
