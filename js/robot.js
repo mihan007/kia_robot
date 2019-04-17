@@ -1468,7 +1468,7 @@ async function addValidTasksToQueue (connection, currentScreenshotPath) {
   let allTasks = await getTasksFromDb(connection)
   let tasks = await filterTasks(connection, allTasks)
 
-  log(`For worker ${CREDS.currentWorkerName} got ${allTasks.length} tasks, after filter: ${tasks.length}`)
+  log(`[sum] For worker ${CREDS.currentWorkerName} got ${allTasks.length} tasks, after filter: ${tasks.length}`)
 
   for (const i in tasks) {
     let colorPreferences = await getColorPreferences(connection, tasks[i].company_id)
@@ -1476,8 +1476,10 @@ async function addValidTasksToQueue (connection, currentScreenshotPath) {
     tasks[i].connection = connection
     tasks[i].credentials = await getCredentials(connection, tasks[i].company_id)
     if (isSimpleTask(tasks[i], colorPreferences)) {
+      log("Added task for processSimpleTask", tasks[i])
       await cluster.queue(tasks[i], processSimpleTask)
     } else {
+      log("Added task for processComplexTask", tasks[i])
       tasks[i].colorPreferences = colorPreferences[tasks[i].model]
       await cluster.queue(tasks[i], processComplexTask)
     }
