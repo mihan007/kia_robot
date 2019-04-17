@@ -1430,7 +1430,7 @@ async function addValidTasksToQueue (connection, currentScreenshotPath) {
 }
 
 async function robot (connection) {
-  process.setMaxListeners(MAX_CONCURRENCY * 4)
+  process.setMaxListeners(MAX_CONCURRENCY * 4 )
 
   let currentScreenshotPath = SCREENSHOT_PATH
   if (!fs.existsSync(currentScreenshotPath)) {
