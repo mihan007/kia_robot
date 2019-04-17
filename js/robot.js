@@ -429,16 +429,33 @@ async function loginAndSwitchToFreeSklad (page, task) {
   log('Switching to free sklad search page', task)
   await page.click(SELL_TAB_SELECTOR)
   try {
+    log('waitFor FREE_SKLAD_LEFT_SIDEBAR_SELECTOR', task)
     await page.waitFor(FREE_SKLAD_LEFT_SIDEBAR_SELECTOR, { timeout: GENERAL_TIMEOUT })
+    log('got FREE_SKLAD_LEFT_SIDEBAR_SELECTOR', task)
   } catch (e) {
     log(`Could not switch to free sklad search page because kia-portal hang up`, task)
     return false
   }
 
   await page.click(FREE_SKLAD_LEFT_SIDEBAR_SELECTOR)
-  await page.waitFor(FREE_SKLAD_IFRAME_SELECTOR)
+  try {
+    log('waitFor FREE_SKLAD_IFRAME_SELECTOR', task)
+    await page.waitFor(FREE_SKLAD_IFRAME_SELECTOR, { timeout: GENERAL_TIMEOUT })
+    log('got FREE_SKLAD_IFRAME_SELECTOR', task)
+  } catch (e) {
+    log(`Could not waitFor FREE_SKLAD_IFRAME_SELECTOR`, task)
+    return false
+  }
+
   let firstFrame = await page.frames().find(f => f.name() === 'contentAreaFrame')
-  await firstFrame.waitFor(FREE_SKLAD_CONTENT_IFRAME)
+  try {
+    log('waitFor FREE_SKLAD_CONTENT_IFRAME', task)
+    await firstFrame.waitFor(FREE_SKLAD_CONTENT_IFRAME, { timeout: GENERAL_TIMEOUT })
+    log('got FREE_SKLAD_CONTENT_IFRAME', task)
+  } catch (e) {
+    log(`Could not waitFor FREE_SKLAD_CONTENT_IFRAME`, task)
+    return false
+  }
   await firstFrame.waitFor(DELAY_TO_LOAD_STORAGE_IFRAME)
 
   for (const secondFrame of firstFrame.childFrames()) {
