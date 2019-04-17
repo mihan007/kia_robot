@@ -1,7 +1,20 @@
 const cheerio = require('cheerio')
-const args = process.argv.slice(2)
-const env = args[0] || 'local'
-const CREDS = (env === 'production') ? require('./creds_production') : require('./creds_local')
+require('dotenv').config()
+const CREDS = {
+  mysqlHost: process.env.MYSQL_HOST,
+  mysqlUsername: process.env.MYSQL_USER,
+  mysqlPassword: process.env.MYSQL_PASSWORD,
+  mysqlDatabase: process.env.MYSQL_DATABASE,
+
+  chromeVisible: process.env.CHROME_VISIBLE === "true",
+  enableLogging: process.env.ENABLE_LOGGING === "true",
+
+  maxConcurrency: parseInt(process.env.MAX_CONCURRENCY),
+  monitor: process.env.JOB_MONITORING === "true",
+
+  screenshotPath: process.env.SCREENSHOT_PATH,
+  currentWorkerName: process.env.CURRENT_WORKER_NAME
+}
 const mysql = require('mysql')
 const fs = require('fs')
 const mysqlUtilities = require('mysql-utilities')
@@ -54,7 +67,7 @@ let cluster = null
 
 globalRunner = async function () {
   if (isValidTimeToLaunch()) {
-    log('Start executing with env ' + env)
+    log('Start executing with at ' + CREDS.currentWorkerName)
     await run()
     log('Finish executing')
     await delay(DELAY_BETWEEN_LAUNCH)
@@ -1430,7 +1443,7 @@ async function addValidTasksToQueue (connection, currentScreenshotPath) {
 }
 
 async function robot (connection) {
-  process.setMaxListeners(MAX_CONCURRENCY * 4 )
+  process.setMaxListeners(MAX_CONCURRENCY * 4)
 
   let currentScreenshotPath = SCREENSHOT_PATH
   if (!fs.existsSync(currentScreenshotPath)) {
