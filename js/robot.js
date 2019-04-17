@@ -793,7 +793,9 @@ const processSimpleTask = async ({ page, data: task }) => {
   log('Switching to free sklad search page', task)
   await page.click(SELL_TAB_SELECTOR)
   try {
+    log('We wait for FREE_SKLAD_LEFT_SIDEBAR_SELECTOR')
     await page.waitFor(FREE_SKLAD_LEFT_SIDEBAR_SELECTOR, { timeout: GENERAL_TIMEOUT })
+    log('We got FREE_SKLAD_LEFT_SIDEBAR_SELECTOR')
   } catch (e) {
     task.description = currentDate() + ' Ошибка при входе на сайт киа: не смогли залогиниться и переключиться на вкладку "Свободный склад"'
     await saveTaskRunFinishedToDb(task.connection, task)
@@ -806,7 +808,9 @@ const processSimpleTask = async ({ page, data: task }) => {
 
   await page.click(FREE_SKLAD_LEFT_SIDEBAR_SELECTOR)
   try {
+    log('We wait for FREE_SKLAD_IFRAME_SELECTOR')
     await page.waitFor(FREE_SKLAD_IFRAME_SELECTOR, { timeout: GENERAL_TIMEOUT })
+    log('We got FREE_SKLAD_IFRAME_SELECTOR')
   } catch (e) {
     task.description = currentDate() + ' Ошибка при входе на сайт киа: не смогли найти вкладку "Свободный склад"'
     await saveTaskRunFinishedToDb(task.connection, task)
@@ -815,9 +819,18 @@ const processSimpleTask = async ({ page, data: task }) => {
   }
 
   let firstFrame = await page.frames().find(f => f.name() === 'contentAreaFrame')
-  await firstFrame.waitFor(FREE_SKLAD_CONTENT_IFRAME)
-  await firstFrame.waitFor(DELAY_TO_LOAD_STORAGE_IFRAME)
+  log('We wait for FREE_SKLAD_IFRAME_SELECTOR')
+  try {
+    await firstFrame.waitFor(FREE_SKLAD_CONTENT_IFRAME, { timeout: GENERAL_TIMEOUT })
+    log('We got FREE_SKLAD_CONTENT_IFRAME')
+  } catch (e) {
+    task.description = currentDate() + ' Ошибка при входе на сайт киа: не смогли найти iframe "Свободный склад"'
+    await saveTaskRunFinishedToDb(task.connection, task)
+    log(`Saved failed task_run with id=${task.task_run_id} and finish date ${task.finished_at}`, task)
+    return
+  }
 
+  await firstFrame.waitFor(DELAY_TO_LOAD_STORAGE_IFRAME)
   for (const secondFrame of firstFrame.childFrames()) {
     const modelField = await secondFrame.$(FORM_MODEL_SELECTOR)
     if (modelField) {
@@ -825,6 +838,7 @@ const processSimpleTask = async ({ page, data: task }) => {
     }
   }
   log('Switched to free sklad search page', task)
+
 
   description = currentDate() + ' начали выполнять задачу:<br>'
   description += '<ul>'
