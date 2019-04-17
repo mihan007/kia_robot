@@ -95,7 +95,7 @@ function isValidTimeToLaunch () {
   let minutes = date.getMinutes()
   let seconds = date.getSeconds()
 
-  return ((hours === 11) && (minutes >= 59) && (seconds >= 50)) || (hours >= 12) && (hours < 22)
+  return ((hours === 11) && (minutes >= 59) && (seconds >= 50)) || (hours >= 12) && (hours < 21)
 }
 
 function isValidTimeToPushSearchButton () {
