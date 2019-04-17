@@ -85,7 +85,8 @@ localRunner = async function () {
   }
 }
 
-require('events').EventEmitter.defaultMaxListeners = MAX_CONCURRENCY
+require('events').EventEmitter.defaultMaxListeners = MAX_CONCURRENCY * 4
+
 localRunner()
 
 function isValidTimeToLaunch () {
@@ -510,7 +511,7 @@ async function sendSearchRequest (page, formFrame, task, additionalDescription) 
   while (!isValidTimeToPushSearchButton()) {
     let delayBetweenCheck = 100
     log(`Waiting for ${delayBetweenCheck}ms before push search button`)
-    await delay(delayBetweenCheck);
+    await delay(delayBetweenCheck)
   }
 
   await formFrame.click(FORM_REQUEST_BUTTON_SELECTOR)
@@ -849,7 +850,7 @@ const processSimpleTask = async ({ page, data: task }) => {
     while (!isValidTimeToPushSearchButton()) {
       let delayBetweenCheck = 100
       log(`Waiting for ${delayBetweenCheck}ms before push search button`)
-      await delay(delayBetweenCheck);
+      await delay(delayBetweenCheck)
     }
 
     log('Send search request', task)
@@ -1479,7 +1480,7 @@ async function robot (connection) {
     fs.mkdirSync(currentScreenshotPath)
   }
 
-  const timeoutToExecuteAllTasks = 5*60*1000
+  const timeoutToExecuteAllTasks = 2 * 60 * 1000
   log(`Timeout to execute all tasks ${timeoutToExecuteAllTasks}`)
 
   cluster = await Cluster.launch({
