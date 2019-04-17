@@ -144,14 +144,20 @@ function currentMySqlDate () {
 }
 
 function log (message, taskInfo) {
+  let messageToLog
+  if (typeof taskInfo == 'undefined') {
+    messageToLog = currentDate() + ' ' + message
+  } else {
+    messageToLog = currentDate() + ' [' + taskInfo.id + '] ' + message
+  }
+
+  fs.appendFile(process.env.LOG_PATH, messageToLog + "\n", function (err) {
+  });
+
   if (!CREDS.enableLogging) {
     return
   }
-  if (typeof taskInfo == 'undefined') {
-    console.log(currentDate() + ' ' + message)
-  } else {
-    console.log(currentDate() + ' [' + taskInfo.id + '] ' + message)
-  }
+  console.log(messageToLog)
 }
 
 async function connectToDb () {
