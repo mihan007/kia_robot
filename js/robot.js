@@ -490,14 +490,6 @@ function logInfoAboutSearch (task, isFirstStage) {
 }
 
 async function sendSearchRequest (page, formFrame, task, additionalDescription) {
-  if (!task.searchDialogHandled) {
-    page.on('dialog', async dialog => {
-      task.searchResultExists = false
-      await dialog.dismiss()
-    })
-    task.searchDialogHandled = true
-  }
-
   task.searchResultExists = true
   log('Setup search params', task)
   let result = await formFrame.select(FORM_MODEL_SELECTOR, task.model)
@@ -856,7 +848,6 @@ const processSimpleTask = async ({ page, data: task }) => {
   }
   log('Switched to free sklad search page', task)
 
-
   description = currentDate() + ' начали выполнять задачу:<br>'
   description += '<ul>'
   description += '<li><b>Модель</b>: ' + task.model_name + '</li>'
@@ -1204,6 +1195,15 @@ const processComplexTask = async ({ page, data: task }) => {
     return
   }
   log(`Running complex task ${task.id}`, task)
+
+  if (!task.searchDialogHandled) {
+    page.on('dialog', async dialog => {
+      log('Got dialog with message:"' + dialog.message() + '"', task)
+      task.searchResultExists = false
+      await dialog.dismiss()
+    })
+    task.searchDialogHandled = true
+  }
 
   task.started_at = currentMySqlDate()
   task.task_run_id = await saveTaskRunStartedToDb(task.connection, task)
