@@ -145,6 +145,7 @@ function currentMySqlDate () {
 
 function log (message, taskInfo) {
   let messageToLog
+
   if (typeof taskInfo == 'undefined') {
     messageToLog = currentDate() + ' ' + message
   } else {
