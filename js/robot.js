@@ -534,10 +534,11 @@ function makeUniqueScreenshotName () {
   return +new Date() + '_' + Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15) + '.png'
 }
 
-async function saveScreenshot (currentScreenshotPath, page, name) {
+async function saveScreenshot (task, page, name) {
+  let currentScreenshotPath = task.currentScreenshotPath
   let fullpath = currentScreenshotPath + '/' + makeUniqueScreenshotName()
   await page.screenshot({ path: fullpath, fullPage: true })
-  log(`Saved screenshot ${fullpath}`)
+  log(`Saved screenshot ${fullpath}`, task)
 
   return {
     name: name,
@@ -552,7 +553,7 @@ async function orderTask (page, formFrame, task, description, manufactureCodes, 
   do {
     let additionalInfo = ''
     let searchResultExists = await sendSearchRequest(page, formFrame, task, additionalInfo)
-    screenshots.push(await saveScreenshot(task.currentScreenshotPath, page, 'Результат поиска нужного авто. ' + additionalInfo))
+    screenshots.push(await saveScreenshot(task, page, 'Результат поиска нужного авто. ' + additionalInfo))
     if (!searchResultExists) {
       log('No search result', task)
       break
@@ -633,7 +634,7 @@ async function orderTask (page, formFrame, task, description, manufactureCodes, 
       log('Ordering using ' + chosen + ' row radio selector, manufacture_code: ' + orders[chosen].manufacture_code, task)
       await formFrame.click(orders[chosen].radioSelector)
 
-      screenshots.push(await saveScreenshot(task.currentScreenshotPath, page, 'Результат выбора нужного авто'))
+      screenshots.push(await saveScreenshot(task, page, 'Результат выбора нужного авто'))
 
       task.reachedMaximum = false
       await formFrame.click(FORM_CHANGE_ORDER_BUTTON)
@@ -645,7 +646,7 @@ async function orderTask (page, formFrame, task, description, manufactureCodes, 
       } else {
         log('Ordered using ' + chosen + ' row radio selector, manufacture_code: ' + orders[chosen].manufacture_code, task)
 
-        screenshots.push(await saveScreenshot(task.currentScreenshotPath, page, 'Окно заказа нужной комплектации авто'))
+        screenshots.push(await saveScreenshot(task, page, 'Окно заказа нужной комплектации авто'))
 
         await formFrame.click(ORDER_BUTTON)
         await formFrame.waitFor(DELAY_AFTER_ORDER)
@@ -714,7 +715,7 @@ async function switchToFreeSkladAndSaveScreenshot (page, formFrame, screenshots,
   await formFrame.click(ORDER_FREE_SKLAD_BUTTON)
   await formFrame.waitFor(DELAY_TO_LOAD_ORDERED_IFRAME)
   const name = 'Результат заказа авто'
-  screenshots.push(await saveScreenshot(task.currentScreenshotPath, page, name))
+  screenshots.push(await saveScreenshot(task, page, name))
   return formFrame
 }
 
@@ -874,7 +875,7 @@ const processSimpleTask = async ({ page, data: task }) => {
     await page.screenshot({ path: fullpath, fullPage: true })
     screenshots.push({ name: 'Скриншот #' + (ind++) + '. Результат поискового запроса', filepath: fullpath })
     description += currentDate() + ' послали поисковый запрос<br>'
-    log(`Saved screenshot at ${fullpath}`)
+    log(`Saved screenshot at ${fullpath}`, task)
 
     if (task.searchResultExists) {
       log('Search result exists', task)
@@ -1027,7 +1028,7 @@ const processSimpleTask = async ({ page, data: task }) => {
           name: 'Скриншот #' + (ind++) + '. Результат выбора нужного набора авто',
           filepath: fullpath
         })
-        log(`Saved screenshot ${fullpath}`)
+        log(`Saved screenshot ${fullpath}`, task)
 
         await formFrame.click(ORDER_BUTTON)
         await formFrame.waitFor(DELAY_AFTER_ORDER)
@@ -1083,7 +1084,7 @@ const processSimpleTask = async ({ page, data: task }) => {
     let fullpath = task.currentScreenshotPath + '/' + filename
     await page.screenshot({ path: fullpath, fullPage: true })
     screenshots.push({ name: 'Скриншот #' + (ind++) + '. Результат заказа авто', filepath: fullpath })
-    log(`Saved screenshot ${fullpath}`)
+    log(`Saved screenshot ${fullpath}`, task)
   } else {
     log('So we have ordered nothing', task)
   }
@@ -1166,7 +1167,7 @@ const processComplexTask = async ({ page, data: task }) => {
     })
 
     const name = `Результат поискового запроса, страница ${currentPage} из ${pageCount}`
-    screenshots.push(await saveScreenshot(task.currentScreenshotPath, page, name))
+    screenshots.push(await saveScreenshot(task, page, name))
 
     let specificManufactureCodeQueue = []
     let commonManufactureCodeQueue = []
@@ -1295,7 +1296,7 @@ const processComplexTask = async ({ page, data: task }) => {
         await formFrame.waitFor(DELAY_TO_LOAD_NEXT_PAGE)
         currentPage++
         const name = `Результат поискового запроса, страница ${currentPage} из ${pageCount}`
-        screenshots.push(await saveScreenshot(task.currentScreenshotPath, page, name))
+        screenshots.push(await saveScreenshot(task, page, name))
       } else {
         log('No next page exists, stop search', task)
         description += currentDate() + ' Следующей страницы нет, прекращаем поиски<br>'
@@ -1368,7 +1369,7 @@ const processComplexTask = async ({ page, data: task }) => {
       log('So we have ordered nothing', task)
     }
   } else {
-    screenshots.push(await saveScreenshot(task.currentScreenshotPath, page, 'Результат поиска нужного авто. ' + additionalDescription))
+    screenshots.push(await saveScreenshot(task, page, 'Результат поиска нужного авто. ' + additionalDescription))
     log('Search result does not exists', task)
     if (additionalDescription.length > 0) {
       description += currentDate() + ' ' + additionalDescription + '<br>'
