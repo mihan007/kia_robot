@@ -48,7 +48,7 @@ const ORDER_FREE_SKLAD_BUTTON = '#subContents > div.buttons > a'
 const PAGING_SELECTOR = '#sel_paging'
 
 const MAX_CONCURRENCY = CREDS.maxConcurrency
-const TIMEOUT_FOR_LOGIN = 10000
+const GENERAL_TIMEOUT = 10000
 const TIMEOUT_FOR_SEARCH_LOGIN_SELECTOR = 1000
 const DELAY_BETWEEN_LAUNCH = 100
 const DELAY_WAITING_FOR_LAUNCH = 500
@@ -413,7 +413,7 @@ async function loginAndSwitchToFreeSklad (page, task) {
   await page.keyboard.type(password)
   await page.click(LOGIN_BUTTON_SELECTOR)
   try {
-    await page.waitFor(SELL_TAB_SELECTOR, { timeout: TIMEOUT_FOR_LOGIN })
+    await page.waitFor(SELL_TAB_SELECTOR, { timeout: GENERAL_TIMEOUT })
   } catch (e) {
     try {
       if (await page.waitFor(ERROR_LOGGING_SELECTOR, { timeout: TIMEOUT_FOR_SEARCH_LOGIN_SELECTOR })) {
@@ -428,7 +428,12 @@ async function loginAndSwitchToFreeSklad (page, task) {
   log('Logged in', task)
   log('Switching to free sklad search page', task)
   await page.click(SELL_TAB_SELECTOR)
-  await page.waitFor(FREE_SKLAD_LEFT_SIDEBAR_SELECTOR)
+  try {
+    await page.waitFor(FREE_SKLAD_LEFT_SIDEBAR_SELECTOR, { timeout: GENERAL_TIMEOUT })
+  } catch (e) {
+    log(`Could not switch to free sklad search page because kia-portal hang up`, task)
+    return false
+  }
 
   await page.click(FREE_SKLAD_LEFT_SIDEBAR_SELECTOR)
   await page.waitFor(FREE_SKLAD_IFRAME_SELECTOR)
@@ -702,7 +707,11 @@ async function orderTask (page, formFrame, task, description, manufactureCodes, 
 
 async function switchToFreeSkladAndSaveScreenshot (page, formFrame, screenshots, task) {
   await page.click(ORDER_FREE_SKLAD)
-  await page.waitFor(FREE_SKLAD_IFRAME_SELECTOR)
+  try {
+    await page.waitFor(FREE_SKLAD_IFRAME_SELECTOR, { timeout: GENERAL_TIMEOUT })
+  } catch (e) {
+    return false
+  }
   let firstFrame = await page.frames().find(f => f.name() === 'contentAreaFrame')
   await firstFrame.waitFor(FREE_SKLAD_CONTENT_IFRAME)
   await firstFrame.waitFor(DELAY_TO_LOAD_STORAGE_IFRAME)
@@ -739,6 +748,8 @@ const processSimpleTask = async ({ page, data: task }) => {
   log(`Saved task_run with id=${task.task_run_id} and start date ${task.started_at}`, task)
 
   if (bannedCompaniesIds.includes(task.company_id)) {
+    task.description = currentDate() + ' Закончили выполнение, т.к. компания находится в списке забаненных (возможно сменился логин/пароль доступа к сайту)'
+    await saveTaskRunFinishedToDb(task.connection, task)
     log(`Stop executing ${task.id} because company ${task.company_id} marked as banned`, task)
     return
   }
@@ -763,7 +774,7 @@ const processSimpleTask = async ({ page, data: task }) => {
   await page.keyboard.type(task.credentials.password)
   await page.click(LOGIN_BUTTON_SELECTOR)
   try {
-    await page.waitFor(SELL_TAB_SELECTOR, { timeout: TIMEOUT_FOR_LOGIN })
+    await page.waitFor(SELL_TAB_SELECTOR, { timeout: GENERAL_TIMEOUT })
   } catch (e) {
     try {
       if (await page.waitFor(ERROR_LOGGING_SELECTOR, { timeout: TIMEOUT_FOR_SEARCH_LOGIN_SELECTOR })) {
@@ -772,19 +783,37 @@ const processSimpleTask = async ({ page, data: task }) => {
       }
     } catch (e) {
       log(`Could not log in because kia-portal hang up`, task)
+      task.description = currentDate() + ' Закончили выполнение, т.к. не смогли авторизоваться на сайте Киа (возможно сменился логин/пароль доступа к сайту)'
+      await saveTaskRunFinishedToDb(task.connection, task)
+      log(`Saved failed task_run with id=${task.task_run_id} and finish date ${task.finished_at}`, task)
     }
     return
   }
   log('Logged in', task)
   log('Switching to free sklad search page', task)
   await page.click(SELL_TAB_SELECTOR)
-  await page.waitFor(FREE_SKLAD_LEFT_SIDEBAR_SELECTOR)
+  try {
+    await page.waitFor(FREE_SKLAD_LEFT_SIDEBAR_SELECTOR, { timeout: GENERAL_TIMEOUT })
+  } catch (e) {
+    task.description = currentDate() + ' Ошибка при входе на сайт киа: не смогли залогиниться и переключиться на вкладку "Свободный склад"'
+    await saveTaskRunFinishedToDb(task.connection, task)
+    log(`Saved failed task_run with id=${task.task_run_id} and finish date ${task.finished_at}`, task)
+    return
+  }
 
   let formFrame, description
   let screenshots = []
 
   await page.click(FREE_SKLAD_LEFT_SIDEBAR_SELECTOR)
-  await page.waitFor(FREE_SKLAD_IFRAME_SELECTOR)
+  try {
+    await page.waitFor(FREE_SKLAD_IFRAME_SELECTOR, { timeout: GENERAL_TIMEOUT })
+  } catch (e) {
+    task.description = currentDate() + ' Ошибка при входе на сайт киа: не смогли найти вкладку "Свободный склад"'
+    await saveTaskRunFinishedToDb(task.connection, task)
+    log(`Saved failed task_run with id=${task.task_run_id} and finish date ${task.finished_at}`, task)
+    return
+  }
+
   let firstFrame = await page.frames().find(f => f.name() === 'contentAreaFrame')
   await firstFrame.waitFor(FREE_SKLAD_CONTENT_IFRAME)
   await firstFrame.waitFor(DELAY_TO_LOAD_STORAGE_IFRAME)
@@ -1070,9 +1099,19 @@ const processSimpleTask = async ({ page, data: task }) => {
   if (totalOrdered > 0) {
     log('So we have ordered: ' + totalOrdered, task)
     await page.click(ORDER_FREE_SKLAD)
-    await page.waitFor(FREE_SKLAD_IFRAME_SELECTOR)
+    try {
+      await page.waitFor(FREE_SKLAD_IFRAME_SELECTOR, { timeout: GENERAL_TIMEOUT })
+    } catch (e) {
+      log('Error switching to FREE_SKLAD_IFRAME_SELECTOR', task)
+    }
+
     firstFrame = await page.frames().find(f => f.name() === 'contentAreaFrame')
-    await firstFrame.waitFor(FREE_SKLAD_CONTENT_IFRAME)
+    try {
+      await firstFrame.waitFor(FREE_SKLAD_CONTENT_IFRAME, { timeout: GENERAL_TIMEOUT })
+    } catch (e) {
+      log('Error switching to FREE_SKLAD_CONTENT_IFRAME', task)
+    }
+
     await firstFrame.waitFor(DELAY_TO_LOAD_STORAGE_IFRAME)
 
     for (const secondFrame of firstFrame.childFrames()) {
@@ -1140,6 +1179,8 @@ const processComplexTask = async ({ page, data: task }) => {
   log(`Saved task_run with id=${task.task_run_id} and start date ${task.started_at}`, task)
 
   if (bannedCompaniesIds.includes(task.company_id)) {
+    task.description = currentDate() + ' Закончили выполнение, т.к. компания находится в списке забаненных (возможно сменился логин/пароль доступа к сайту)'
+    await saveTaskRunFinishedToDb(task.connection, task)
     log(`Stop executing ${task.id} because company ${task.company_id} marked as banned`, task)
     return
   }
@@ -1147,6 +1188,9 @@ const processComplexTask = async ({ page, data: task }) => {
   let screenshots = []
   let formFrame = await loginAndSwitchToFreeSklad(page, task)
   if (formFrame === false) {
+    task.description = currentDate() + ' Ошибка при входе на сайт киа: не смогли залогиниться и переключиться на вкладку "Свободный склад"'
+    await saveTaskRunFinishedToDb(task.connection, task)
+    log(`Saved failed task_run with id=${task.task_run_id} and finish date ${task.finished_at}`, task)
     return
   }
   let description = logInfoAboutSearch(task, true)
@@ -1369,6 +1413,12 @@ const processComplexTask = async ({ page, data: task }) => {
     if (totalOrdered > 0) {
       log('So we have ordered: ' + totalOrdered, task)
       formFrame = await switchToFreeSkladAndSaveScreenshot(page, formFrame, screenshots, task)
+      if (formFrame === false) {
+        task.description = currentDate() + ' Ошибка при входе на сайт киа: не смогли найти вкладку "Свободный склад"'
+        await saveTaskRunFinishedToDb(task.connection, task)
+        log(`Saved failed task_run with id=${task.task_run_id} and finish date ${task.finished_at}`, task)
+        return
+      }
     } else {
       log('So we have ordered nothing', task)
     }
