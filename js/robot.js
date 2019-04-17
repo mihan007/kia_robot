@@ -1199,7 +1199,13 @@ const processComplexTask = async ({ page, data: task }) => {
   if (!task.searchDialogHandled) {
     page.on('dialog', async dialog => {
       log('Got dialog with message:"' + dialog.message() + '"', task)
-      task.searchResultExists = false
+      let message = dialog.message()
+      if (message !== 'ВЫ НАХОДИТЕСЬ В СТОП-ЛИСТЕ!') {
+        log('It is message that no search result, so task.searchResultExists = false', task)
+        task.searchResultExists = false
+      } else {
+        log('It is message about stop list so dismiss it', task)
+      }
       await dialog.dismiss()
     })
     task.searchDialogHandled = true
