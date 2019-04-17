@@ -10,7 +10,7 @@ module.exports = {
     chromeVisible: false,
     enableLogging: true,
 
-    maxConcurrency: 50,
+    maxConcurrency: 40,
     monitor: false,
 
     screenshotPath: '/data/www/screenshots',
