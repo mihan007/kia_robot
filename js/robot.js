@@ -103,8 +103,10 @@ function isValidTimeToPushSearchButton () {
   let hours = date.getHours()
   let minutes = date.getMinutes()
   let seconds = date.getSeconds()
+  let firstDate = '01/01/2011 ' + pad2(hours) + ':' + pad2(minutes) + ':' + pad2(seconds)
+  let secondDate = '01/01/2011 ' + CREDS.delayForSearch
 
-  return (hours >= 19) && (minutes >= 49) && (seconds >= CREDS.delayForSearch)
+  return Date.parse(firstDate) >= Date.parse(secondDate)
 }
 
 function delay (ms) {
