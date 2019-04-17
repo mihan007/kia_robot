@@ -398,12 +398,14 @@ function isSimpleTask (task, colorPreferences) {
   return true
 }
 
-async function loginAndSwitchToFreeSklad (page, login, password) {
+async function loginAndSwitchToFreeSklad (page, task) {
   let formFrame
+  let login = task.credentials.login
+  let password = task.credentials.password
 
   await page.setViewport({ width: 1280, height: 800 })
 
-  log('Start logging in')
+  log(`Start logging in using ${login} and ${password}`, task)
   await page.goto(loginUrl)
   await page.click(USERNAME_SELECTOR)
   await page.keyboard.type(login)
@@ -415,16 +417,16 @@ async function loginAndSwitchToFreeSklad (page, login, password) {
   } catch (e) {
     try {
       if (await page.waitFor(ERROR_LOGGING_SELECTOR, { timeout: TIMEOUT_FOR_SEARCH_LOGIN_SELECTOR })) {
-        log(`Could not log in, mark company ${task.company_id} as banned`)
+        log(`Could not log in, mark company ${task.company_id} as banned`, task)
         await markCompanyAsBanned(task.connection, task.company_id)
       }
     } catch (e) {
-      log(`Could not log in because kia-portal hang up`)
+      log(`Could not log in because kia-portal hang up`, task)
     }
     return false
   }
-  log('Logged in')
-  log('Switching to free sklad search page')
+  log('Logged in', task)
+  log('Switching to free sklad search page', task)
   await page.click(SELL_TAB_SELECTOR)
   await page.waitFor(FREE_SKLAD_LEFT_SIDEBAR_SELECTOR)
 
@@ -440,7 +442,7 @@ async function loginAndSwitchToFreeSklad (page, login, password) {
       formFrame = secondFrame
     }
   }
-  log('Switched to free sklad search page')
+  log('Switched to free sklad search page', task)
   return formFrame
 }
 
@@ -1143,7 +1145,7 @@ const processComplexTask = async ({ page, data: task }) => {
   }
 
   let screenshots = []
-  let formFrame = await loginAndSwitchToFreeSklad(page, task.credentials.login, task.credentials.password)
+  let formFrame = await loginAndSwitchToFreeSklad(page, task)
   if (formFrame === false) {
     return
   }
@@ -1476,10 +1478,10 @@ async function addValidTasksToQueue (connection, currentScreenshotPath) {
     tasks[i].connection = connection
     tasks[i].credentials = await getCredentials(connection, tasks[i].company_id)
     if (isSimpleTask(tasks[i], colorPreferences)) {
-      log("Added task for processSimpleTask", tasks[i])
+      log('Added task for processSimpleTask', tasks[i])
       await cluster.queue(tasks[i], processSimpleTask)
     } else {
-      log("Added task for processComplexTask", tasks[i])
+      log('Added task for processComplexTask', tasks[i])
       tasks[i].colorPreferences = colorPreferences[tasks[i].model]
       await cluster.queue(tasks[i], processComplexTask)
     }
