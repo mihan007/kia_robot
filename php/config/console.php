@@ -9,6 +9,7 @@ $config = [
     'basePath' => dirname(__DIR__),
     'bootstrap' => ['log'],
     'controllerNamespace' => 'app\commands',
+    'timezone' => 'Europe/Moscow',
     'aliases' => [
         '@bower' => '@vendor/bower-asset',
         '@npm'   => '@vendor/npm-asset',
@@ -16,8 +17,10 @@ $config = [
     ],
     'components' => [
         'formatter' => [
-            'timeZone' => 'Europe/Minsk',
-            'dateFormat' => 'd.m.Y',
+            'timeZone' => 'Europe/Moscow',
+            'defaultTimeZone' => 'Europe/Moscow',
+            'dateFormat' => 'php:d mm',
+            'datetimeFormat' => 'php:d mm H:i:s'
         ],
         'cache' => [
             'class' => 'yii\caching\FileCache',
