@@ -1505,7 +1505,7 @@ async function robot (connection) {
       headless: !CREDS.chromeVisible
     },
     timeout: timeoutToExecuteAllTasks,
-    retryLimit: 3,
+    retryLimit: 1,
     monitor: CREDS.monitor
   })
 
