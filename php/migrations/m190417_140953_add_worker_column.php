@@ -15,7 +15,7 @@ class m190417_140953_add_worker_column extends Migration
     {
         $this->addColumn('task', 'worker', $this->string(12));
         $this->createIndex('task_worker_idx', 'task', 'worker');
-        $tasks = Task::find()->all();
+        $tasks = Task::find()->where(['deleted_at' => 0])->all();
         foreach ($tasks as $task) {
             $task->save();
         }
