@@ -69,7 +69,7 @@ let cluster = null
 
 globalRunner = async function () {
   if (isValidTimeToLaunch()) {
-    log('Start executing with at ' + CREDS.currentWorkerName)
+    log('Start executing at ' + CREDS.currentWorkerName)
     await run()
     log('Finish executing')
     await delay(DELAY_BETWEEN_LAUNCH)
@@ -1492,6 +1492,8 @@ async function robot (connection) {
     retryLimit: 3,
     monitor: CREDS.monitor
   })
+
+  await addValidTasksToQueue(connection, currentScreenshotPath)
 
   // Event handler to be called in case of problems
   cluster.on('taskerror', async (err, task) => {
