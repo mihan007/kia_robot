@@ -525,7 +525,7 @@ async function sendSearchRequest (page, formFrame, task, additionalDescription) 
 
   await formFrame.click(FORM_REQUEST_BUTTON_SELECTOR)
   await formFrame.waitFor(DELAY_FOR_SEARCH_RESULT)
-  log('Sent search request', task)
+  log('[complex] Sent search request', task)
 
   return task.searchResultExists
 }
@@ -865,7 +865,7 @@ const processSimpleTask = async ({ page, data: task }) => {
     log('Send search request', task)
     await formFrame.click(FORM_REQUEST_BUTTON_SELECTOR)
     await formFrame.waitFor(DELAY_FOR_SEARCH_RESULT)
-    log('Sent search request', task)
+    log('[simple] Sent search request', task)
 
     let filename = +new Date() + '_' + Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15) + '.png'
     let fullpath = task.currentScreenshotPath + '/' + filename
