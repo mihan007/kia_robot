@@ -49,6 +49,7 @@ const PAGING_SELECTOR = '#sel_paging'
 
 const MAX_CONCURRENCY = CREDS.maxConcurrency
 const GENERAL_TIMEOUT = 10000
+const LOGIN_TIMEOUT = 20000
 const TIMEOUT_FOR_SEARCH_LOGIN_SELECTOR = 1000
 const DELAY_BETWEEN_LAUNCH = 100
 const DELAY_WAITING_FOR_LAUNCH = 500
@@ -95,7 +96,7 @@ function isValidTimeToLaunch () {
   let minutes = date.getMinutes()
   let seconds = date.getSeconds()
 
-  return ((hours === 11) && (minutes >= 59) && (seconds >= 50)) || (hours >= 12) && (hours < 21)
+  return ((hours === 11) && (minutes >= 59) && (seconds >= 40)) || (hours >= 12) && (hours < 21)
 }
 
 function isValidTimeToPushSearchButton () {
@@ -413,7 +414,7 @@ async function loginAndSwitchToFreeSklad (page, task) {
   await page.keyboard.type(password)
   await page.click(LOGIN_BUTTON_SELECTOR)
   try {
-    await page.waitFor(SELL_TAB_SELECTOR, { timeout: GENERAL_TIMEOUT })
+    await page.waitFor(SELL_TAB_SELECTOR, { timeout: LOGIN_TIMEOUT })
   } catch (e) {
     try {
       if (await page.waitFor(ERROR_LOGGING_SELECTOR, { timeout: TIMEOUT_FOR_SEARCH_LOGIN_SELECTOR })) {
@@ -783,7 +784,7 @@ const processSimpleTask = async ({ page, data: task }) => {
   await page.keyboard.type(task.credentials.password)
   await page.click(LOGIN_BUTTON_SELECTOR)
   try {
-    await page.waitFor(SELL_TAB_SELECTOR, { timeout: GENERAL_TIMEOUT })
+    await page.waitFor(SELL_TAB_SELECTOR, { timeout: LOGIN_TIMEOUT })
   } catch (e) {
     try {
       if (await page.waitFor(ERROR_LOGGING_SELECTOR, { timeout: TIMEOUT_FOR_SEARCH_LOGIN_SELECTOR })) {
