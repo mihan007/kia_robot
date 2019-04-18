@@ -49,7 +49,7 @@ const PAGING_SELECTOR = '#sel_paging'
 
 const MAX_CONCURRENCY = CREDS.maxConcurrency
 const GENERAL_TIMEOUT = 10000
-const LOGIN_TIMEOUT = 20000
+const LOGIN_TIMEOUT = 60000
 const TIMEOUT_FOR_SEARCH_LOGIN_SELECTOR = 1000
 const DELAY_BETWEEN_LAUNCH = 100
 const DELAY_WAITING_FOR_LAUNCH = 500
@@ -96,7 +96,7 @@ function isValidTimeToLaunch () {
   let minutes = date.getMinutes()
   let seconds = date.getSeconds()
 
-  return ((hours === 11) && (minutes >= 59) && (seconds >= 40)) || (hours >= 12) && (hours < 21)
+  return ((hours === 11) && (minutes >= 55) && (seconds >= 0)) || (hours >= 12) && (hours < 21)
 }
 
 function isValidTimeToPushSearchButton () {
