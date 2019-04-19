@@ -98,7 +98,7 @@ function isValidTimeToLaunch () {
   return ((hours === 11) && (minutes >= 55) && (seconds >= 0)) || (hours >= 12) && (hours < 21)
 }
 
-function isValidTimeToPushSearchButton () {
+function isValidTimeToSwitchToSearch () {
   let date = new Date()
   let hours = date.getHours()
   let minutes = date.getMinutes()
@@ -426,6 +426,13 @@ async function loginAndSwitchToFreeSklad (page, task) {
     return false
   }
   log('Logged in', task)
+
+  while (!isValidTimeToSwitchToSearch()) {
+    let delayBetweenCheck = 100
+    log(`Waiting for ${delayBetweenCheck}ms before push search button`)
+    await delay(delayBetweenCheck)
+  }
+
   log('Switching to free sklad search page', task)
   await page.click(SELL_TAB_SELECTOR)
   try {
@@ -532,12 +539,6 @@ async function sendSearchRequest (page, formFrame, task, additionalDescription) 
     log('Setup only available checkbox to true', task)
   }
   log('Send search request', task)
-
-  while (!isValidTimeToPushSearchButton()) {
-    let delayBetweenCheck = 100
-    log(`Waiting for ${delayBetweenCheck}ms before push search button`)
-    await delay(delayBetweenCheck)
-  }
 
   await formFrame.click(FORM_REQUEST_BUTTON_SELECTOR)
   await formFrame.waitFor(DELAY_FOR_SEARCH_RESULT)
@@ -799,6 +800,13 @@ const processSimpleTask = async ({ page, data: task }) => {
     return
   }
   log('Logged in', task)
+
+  while (!isValidTimeToSwitchToSearch()) {
+    let delayBetweenCheck = 100
+    log(`Waiting for ${delayBetweenCheck}ms before push search button`)
+    await delay(delayBetweenCheck)
+  }
+
   log('Switching to free sklad search page', task)
   await page.click(SELL_TAB_SELECTOR)
   try {
@@ -912,12 +920,6 @@ const processSimpleTask = async ({ page, data: task }) => {
     if (!isChecked) {
       await formFrame.click(FORM_ONLY_AVAILABLE_SELECTOR)
       log('Setup only available checkbox to true', task)
-    }
-
-    while (!isValidTimeToPushSearchButton()) {
-      let delayBetweenCheck = 100
-      log(`Waiting for ${delayBetweenCheck}ms before push search button`)
-      await delay(delayBetweenCheck)
     }
 
     log('Send search request', task)
