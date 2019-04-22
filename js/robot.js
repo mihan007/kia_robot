@@ -98,6 +98,14 @@ function isValidTimeToLaunch () {
   return ((hours === 11) && (minutes >= 55) && (seconds >= 0)) || (hours >= 12) && (hours < 21)
 }
 
+function isTimeToWait() {
+  let date = new Date()
+  let hours = date.getHours()
+  let minutes = date.getMinutes()
+
+  return ((hours === 11) && (minutes >= 55) && (minutes <= 57))
+}
+
 function isValidTimeToSwitchToSearch () {
   let date = new Date()
   let hours = date.getHours()
@@ -755,6 +763,9 @@ const processSimpleTask = async ({ page, data: task }) => {
     log(`Do not run simple task ${task.id} because we out of time`, task)
     return
   }
+
+  await waitForLaunch(task)
+
   log(`Running simple task ${task.id}`, task)
 
   task.started_at = currentMySqlDate()
@@ -1201,6 +1212,14 @@ function cleanCodes (specificManufactureCodeQueue) {
   }
 }
 
+async function waitForLaunch (task) {
+  if (isTimeToWait()) {
+    let delayMs = 50 + Math.ceil(Math.random() * 50000)
+    log(`Wait task ${task.id} to launch to not overkill kia server`, task)
+    await delay(delayMs)
+  }
+}
+
 /**
  * Задача - поиск автомобилей с разными цветами кузова, отобранными по приоритетам
  * @param page
@@ -1212,6 +1231,9 @@ const processComplexTask = async ({ page, data: task }) => {
     log(`Do not run complex task ${task.id} because we out of time`, task)
     return
   }
+
+  await waitForLaunch(task)
+
   log(`Running complex task ${task.id}`, task)
 
   if (!task.searchDialogHandled) {
