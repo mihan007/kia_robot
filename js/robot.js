@@ -795,6 +795,7 @@ const processSimpleTask = async ({ page, data: task }) => {
       log(`Could not log in because kia-portal hang up`, task)
       task.description = currentDate() + ' Закончили выполнение, т.к. не смогли авторизоваться на сайте Киа (возможно сменился логин/пароль доступа к сайту)'
       await saveTaskRunFinishedToDb(task.connection, task)
+      task.finished_at = currentMySqlDate()
       log(`Saved failed task_run with id=${task.task_run_id} and finish date ${task.finished_at}`, task)
     }
     return
@@ -816,6 +817,7 @@ const processSimpleTask = async ({ page, data: task }) => {
   } catch (e) {
     task.description = currentDate() + ' Ошибка при входе на сайт киа: не смогли залогиниться и переключиться на вкладку "Свободный склад"'
     await saveTaskRunFinishedToDb(task.connection, task)
+    task.finished_at = currentMySqlDate()
     log(`Saved failed task_run with id=${task.task_run_id} and finish date ${task.finished_at}`, task)
     return
   }
@@ -831,6 +833,7 @@ const processSimpleTask = async ({ page, data: task }) => {
   } catch (e) {
     task.description = currentDate() + ' Ошибка при входе на сайт киа: не смогли найти вкладку "Свободный склад"'
     await saveTaskRunFinishedToDb(task.connection, task)
+    task.finished_at = currentMySqlDate()
     log(`Saved failed task_run with id=${task.task_run_id} and finish date ${task.finished_at}`, task)
     return
   }
@@ -843,6 +846,7 @@ const processSimpleTask = async ({ page, data: task }) => {
   } catch (e) {
     task.description = currentDate() + ' Ошибка при входе на сайт киа: не смогли найти iframe "Свободный склад"'
     await saveTaskRunFinishedToDb(task.connection, task)
+    task.finished_at = currentMySqlDate()
     log(`Saved failed task_run with id=${task.task_run_id} and finish date ${task.finished_at}`, task)
     return
   }
@@ -1229,6 +1233,7 @@ const processComplexTask = async ({ page, data: task }) => {
   if (formFrame === false) {
     task.description = currentDate() + ' Ошибка при входе на сайт киа: не смогли залогиниться и переключиться на вкладку "Свободный склад"'
     await saveTaskRunFinishedToDb(task.connection, task)
+    task.finished_at = currentMySqlDate()
     log(`Saved failed task_run with id=${task.task_run_id} and finish date ${task.finished_at}`, task)
     return
   }
@@ -1455,6 +1460,7 @@ const processComplexTask = async ({ page, data: task }) => {
       if (formFrame === false) {
         task.description = currentDate() + ' Ошибка при входе на сайт киа: не смогли найти вкладку "Свободный склад"'
         await saveTaskRunFinishedToDb(task.connection, task)
+        task.finished_at = currentMySqlDate()
         log(`Saved failed task_run with id=${task.task_run_id} and finish date ${task.finished_at}`, task)
         return
       }
