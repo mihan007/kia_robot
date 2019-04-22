@@ -1672,4 +1672,3 @@ async function robot (connection) {
   await cluster.idle()
   await cluster.close()
 }
-
