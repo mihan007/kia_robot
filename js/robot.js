@@ -54,7 +54,7 @@ const TIMEOUT_FOR_SEARCH_LOGIN_SELECTOR = 1000
 const DELAY_BETWEEN_LAUNCH = 100
 const DELAY_WAITING_FOR_LAUNCH = 500
 const DELAY_AFTER_SELECT_MODEL = 1000
-const DELAY_TO_LOAD_STORAGE_IFRAME = 2000
+const DELAY_TO_LOAD_STORAGE_IFRAME = 1000
 const DELAY_TO_LOAD_ORDERED_IFRAME = 3000
 const DELAY_TO_LOAD_NEXT_PAGE = 1000
 const DELAY_FOR_SEARCH_RESULT = 5000
@@ -436,12 +436,6 @@ async function loginAndSwitchToFreeSklad (page, task) {
   }
   log('Logged in', task)
 
-  while (!isValidTimeToSwitchToSearch()) {
-    let delayBetweenCheck = 100
-    log(`Waiting for ${delayBetweenCheck}ms before push search button`)
-    await delay(delayBetweenCheck)
-  }
-
   log('Switching to free sklad search page', task)
   await page.click(SELL_TAB_SELECTOR)
   try {
@@ -452,6 +446,12 @@ async function loginAndSwitchToFreeSklad (page, task) {
     log(`Could not switch to free sklad search page because kia-portal hang up`, task)
     task.description = task.description + currentDate() + '<pre>' + e.toString() + '</pre>'
     return false
+  }
+
+  while (!isValidTimeToSwitchToSearch()) {
+    let delayBetweenCheck = 100
+    log(`Waiting for ${delayBetweenCheck}ms before push search button`)
+    await delay(delayBetweenCheck)
   }
 
   await page.click(FREE_SKLAD_LEFT_SIDEBAR_SELECTOR)
@@ -819,12 +819,6 @@ const processSimpleTask = async ({ page, data: task }) => {
   }
   log('Logged in', task)
 
-  while (!isValidTimeToSwitchToSearch()) {
-    let delayBetweenCheck = 100
-    log(`Waiting for ${delayBetweenCheck}ms before push search button`)
-    await delay(delayBetweenCheck)
-  }
-
   log('Switching to free sklad search page', task)
   await page.click(SELL_TAB_SELECTOR)
   try {
@@ -839,6 +833,12 @@ const processSimpleTask = async ({ page, data: task }) => {
     await saveTaskRunFinishedToDb(task.connection, task)
     log(`Saved failed task_run with id=${task.task_run_id} and finish date ${task.finished_at}`, task)
     return
+  }
+
+  while (!isValidTimeToSwitchToSearch()) {
+    let delayBetweenCheck = 100
+    log(`Waiting for ${delayBetweenCheck}ms before push search button`)
+    await delay(delayBetweenCheck)
   }
 
   let formFrame, description
@@ -1223,7 +1223,7 @@ function cleanCodes (specificManufactureCodeQueue) {
 
 async function waitForLaunch (task) {
   if (isTimeToWait()) {
-    let delayMs = 50 + Math.ceil(Math.random() * 50000)
+    let delayMs = 50 + Math.ceil(Math.random() * 100 * 1000)
     log(`Wait task ${task.id} to launch to not overkill kia server`, task)
     await delay(delayMs)
   }
