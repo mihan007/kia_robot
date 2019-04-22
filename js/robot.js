@@ -874,12 +874,21 @@ const processSimpleTask = async ({ page, data: task }) => {
     return
   }
 
+  formFrame = false
   await firstFrame.waitFor(DELAY_TO_LOAD_STORAGE_IFRAME)
   for (const secondFrame of firstFrame.childFrames()) {
     const modelField = await secondFrame.$(FORM_MODEL_SELECTOR)
     if (modelField) {
       formFrame = secondFrame
     }
+  }
+  if (formFrame === false) {
+    task.description = currentDate() + ' Ошибка при входе на сайт киа: не дождались загрузки iframe "Свободный склад"'
+    task.finished_at = currentMySqlDate()
+    task.status = TASK_RUN_STATUS_ERROR
+    await saveTaskRunFinishedToDb(task.connection, task)
+    log(`Saved failed task_run with id=${task.task_run_id} and finish date ${task.finished_at}`, task)
+    return
   }
   log('Switched to free sklad search page', task)
 
