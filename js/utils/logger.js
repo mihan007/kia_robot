@@ -1,4 +1,8 @@
 module.exports = {
+  pad2: function (n) {
+    return n < 10 ? '0' + n : n
+  },
+
   currentDate: function () {
     let date = new Date()
     return '[' + date.getFullYear().toString() + '-' + pad2(date.getMonth() + 1) + '-' + pad2(date.getDate())
@@ -6,6 +10,6 @@ module.exports = {
   },
 
   logToTask: function (task, logLine) {
-    task.description += this.currentDate() + ' ' + logLine + '<br>'
+    task.description += currentDate() + ' ' + logLine + '<br>'
   }
 }
