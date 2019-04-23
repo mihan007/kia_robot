@@ -512,37 +512,52 @@ async function sendSearchRequest (page, formFrame, task, additionalDescription) 
   task.searchResultExists = true
   log('Setup search params', task)
   let result = await formFrame.select(FORM_MODEL_SELECTOR, task.model)
-  log('Task model: ' + task.model)
+  log('Task model: ' + task.model, task)
   await formFrame.waitFor(DELAY_AFTER_SELECT_MODEL)
   if (result.length === 0) {
     log('Could not setup task.model: ' + task.model, task)
-    additionalDescription = `В фильтре не найдена модель ${task.model}`
+    task.description = task.description + "<br>" + currentDate() + `В фильтре не найдена модель ${task.model}`
     return false
   }
   const manufactureCode = task.more_auto ? '' : task.manufacture_code
-  const manufactureCodeDescription = task.more_auto ? task.manufacture_code + ' and other' : task.manufacture_code
-  result = await formFrame.select(FORM_MANUFACTURE_CODE_SELECTOR, manufactureCode)
-  log('Manufacture code: ' + manufactureCodeDescription, task)
-  let condition = (result.length > 0) || ((result.length === 0) && (task.more_auto == 1))
-  if (condition) {
-    log('Could not setup task.manufacture_code: ' + task.manufacture_code, task)
-    additionalDescription = `В фильтре не найден код модели ${task.manufacture_code}`
-    return false
+  if (manufactureCode.length > 0) {
+    const manufactureCodeDescription = task.more_auto ? task.manufacture_code + ' and other' : task.manufacture_code
+    result = await formFrame.select(FORM_MANUFACTURE_CODE_SELECTOR, manufactureCode)
+    log('Manufacture code: ' + manufactureCodeDescription, task)
+    let condition = (result.length > 0) || ((result.length === 0) && (task.more_auto == 1))
+    if (condition) {
+      log('Could not setup task.manufacture_code: ' + task.manufacture_code, task)
+      task.description = task.description + "<br>" + currentDate() + `В фильтре не найден код модели ${task.manufacture_code}`
+      return false
+    }
+  } else {
+    log('Reset FORM_MANUFACTURE_CODE_SELECTOR', task)
+    await formFrame.select(FORM_MANUFACTURE_CODE_SELECTOR, '')
   }
-  result = await formFrame.select(FORM_COLOR_INSIDE_SELECTOR, task.color_inside)
-  log('Color inside: ' + task.color_inside, task)
-  if (result.length === 0) {
-    log('Could not setup task.color_inside: ' + task.color_inside, task)
-    additionalDescription = `В фильтре не найден цвет салона ${task.color_inside}`
-    return false
+  if (task.color_inside.length > 0) {
+    result = await formFrame.select(FORM_COLOR_INSIDE_SELECTOR, task.color_inside)
+    log('Color inside: ' + task.color_inside, task)
+    if (result.length === 0) {
+      log('Could not setup task.color_inside: ' + task.color_inside, task)
+      task.description = task.description + "<br>" + currentDate() + `В фильтре не найден цвет салона ${task.color_inside}`
+      return false
+    }
+  } else {
+    log('Reset FORM_COLOR_INSIDE_SELECTOR', task)
+    await formFrame.select(FORM_COLOR_INSIDE_SELECTOR, '')
   }
-  result = await formFrame.select(FORM_COLOR_OUTSIDE_SELECTOR, task.color_outside)
-  const colorOutsideDescription = task.color_outside.length ? task.color_outside : 'all'
-  log('Color outside: ' + colorOutsideDescription, task)
-  if (result.length === 0) {
-    log('Could not setup task.color_outside: ' + task.color_outside, task)
-    additionalDescription = `В фильтре не найден цвет кузова ${task.color_outside}`
-    return false
+  if (task.color_outside.length > 0) {
+    result = await formFrame.select(FORM_COLOR_OUTSIDE_SELECTOR, task.color_outside)
+    const colorOutsideDescription = task.color_outside.length ? task.color_outside : 'all'
+    log('Color outside: ' + colorOutsideDescription, task)
+    if (result.length === 0) {
+      log('Could not setup task.color_outside: ' + task.color_outside, task)
+      task.description = task.description + "<br>" + currentDate() + `В фильтре не найден цвет кузова ${task.color_outside}`
+      return false
+    }
+  } else {
+    log('Reset FORM_COLOR_OUTSIDE_SELECTOR', task)
+    await formFrame.select(FORM_COLOR_OUTSIDE_SELECTOR, '')
   }
   const checkbox = await formFrame.$(FORM_ONLY_AVAILABLE_SELECTOR)
   const isChecked = await (await checkbox.getProperty('checked')).jsonValue()
@@ -930,26 +945,41 @@ const processSimpleTask = async ({ page, data: task }) => {
     }
     await formFrame.waitFor(DELAY_AFTER_SELECT_MODEL)
     const manufactureCode = (stage < 1) ? task.manufacture_code : ''
-    result = await formFrame.select(FORM_MANUFACTURE_CODE_SELECTOR, manufactureCode)
-    log('Manufacture code: ' + manufactureCode, task)
-    if ((task.goal == 0) && (result.length === 0)) {
-      log('Could not setup task.manufacture_code: ' + manufactureCode, task)
-      additionalDescription = `В фильтре не найден код производителя ${manufactureCode}`
-      break
+    if (manufactureCode.length > 0) {
+      result = await formFrame.select(FORM_MANUFACTURE_CODE_SELECTOR, manufactureCode)
+      log('Manufacture code: ' + manufactureCode, task)
+      if ((task.goal == 0) && (result.length === 0)) {
+        log('Could not setup task.manufacture_code: ' + manufactureCode, task)
+        additionalDescription = `В фильтре не найден код производителя ${manufactureCode}`
+        break
+      }
+    } else {
+      log('Reset FORM_MANUFACTURE_CODE_SELECTOR', task)
+      await formFrame.select(FORM_MANUFACTURE_CODE_SELECTOR, '')
     }
-    result = await formFrame.select(FORM_COLOR_INSIDE_SELECTOR, task.color_inside)
-    log('Color inside: ' + task.color_inside, task)
-    if ((task.goal == 0) && (result.length === 0)) {
-      log('Could not setup task.color_inside: ' + task.color_inside, task)
-      additionalDescription = `В фильтре не найден цвет салона ${task.color_inside}`
-      break
+    if (task.color_inside.length > 0) {
+      result = await formFrame.select(FORM_COLOR_INSIDE_SELECTOR, task.color_inside)
+      log('Color inside: ' + task.color_inside, task)
+      if ((task.goal == 0) && (result.length === 0)) {
+        log('Could not setup task.color_inside: ' + task.color_inside, task)
+        additionalDescription = `В фильтре не найден цвет салона ${task.color_inside}`
+        break
+      }
+    } else {
+      log('Reset FORM_COLOR_INSIDE_SELECTOR', task)
+      await formFrame.select(FORM_COLOR_INSIDE_SELECTOR, '')
     }
-    result = await formFrame.select(FORM_COLOR_OUTSIDE_SELECTOR, task.color_outside)
-    log('Color outside: ' + task.color_outside, task)
-    if ((task.goal == 0) && (result.length === 0)) {
-      log('Could not setup task.color_outside: ' + task.color_outside, task)
-      additionalDescription = `В фильтре не найден цвет кузова ${task.color_outside}`
-      break
+    if (task.color_outside.length > 0) {
+      result = await formFrame.select(FORM_COLOR_OUTSIDE_SELECTOR, task.color_outside)
+      log('Color outside: ' + task.color_outside, task)
+      if ((task.goal == 0) && (result.length === 0)) {
+        log('Could not setup task.color_outside: ' + task.color_outside, task)
+        additionalDescription = `В фильтре не найден цвет кузова ${task.color_outside}`
+        break
+      }
+    } else {
+      log('Reset FORM_COLOR_OUTSIDE_SELECTOR', task)
+      await formFrame.select(FORM_COLOR_OUTSIDE_SELECTOR, '')
     }
     const checkbox = await formFrame.$(FORM_ONLY_AVAILABLE_SELECTOR)
     const isChecked = await (await checkbox.getProperty('checked')).jsonValue()
