@@ -429,7 +429,7 @@ async function loginAndSwitchToFreeSklad (page, task) {
         await markCompanyAsBanned(task.connection, task.company_id)
       }
     } catch (e) {
-      task.description = task.description + currentDate() + '<pre>' + e.toString() + '</pre>'
+      task.description += currentDate() + '<pre>' + e.toString() + '</pre>'
       log(`Could not log in because kia-portal hang up`, task)
     }
     return false
@@ -444,7 +444,7 @@ async function loginAndSwitchToFreeSklad (page, task) {
     log('got FREE_SKLAD_LEFT_SIDEBAR_SELECTOR', task)
   } catch (e) {
     log(`Could not switch to free sklad search page because kia-portal hang up`, task)
-    task.description = task.description + currentDate() + '<pre>' + e.toString() + '</pre>'
+    task.description += currentDate() + '<pre>' + e.toString() + '</pre>'
     return false
   }
 
@@ -461,7 +461,7 @@ async function loginAndSwitchToFreeSklad (page, task) {
     log('got FREE_SKLAD_IFRAME_SELECTOR', task)
   } catch (e) {
     log(`Could not waitFor FREE_SKLAD_IFRAME_SELECTOR`, task)
-    task.description = task.description + currentDate() + '<pre>' + e.toString() + '</pre>'
+    task.description += currentDate() + '<pre>' + e.toString() + '</pre>'
     return false
   }
 
@@ -472,7 +472,7 @@ async function loginAndSwitchToFreeSklad (page, task) {
     log('got FREE_SKLAD_CONTENT_IFRAME', task)
   } catch (e) {
     log(`Could not waitFor FREE_SKLAD_CONTENT_IFRAME`, task)
-    task.description = task.description + currentDate() + '<pre>' + e.toString() + '</pre>'
+    task.description += currentDate() + '<pre>' + e.toString() + '</pre>'
     return false
   }
   await firstFrame.waitFor(DELAY_TO_LOAD_STORAGE_IFRAME)
@@ -488,27 +488,25 @@ async function loginAndSwitchToFreeSklad (page, task) {
 }
 
 function logInfoAboutSearch (task, isFirstStage) {
-  let description
   if (isFirstStage) {
-    description = currentDate() + ' начали выполнять сложную задачу(этап 1, идет анализ наличия цветов):<br>'
+    task.description += currentDate() + ' начали выполнять сложную задачу(этап 1, идет анализ наличия цветов):<br>'
   } else {
-    description = currentDate() + ' выполняем сложную задачу(этап 2, заказываем авто):<br>'
+    task.description += currentDate() + ' выполняем сложную задачу(этап 2, заказываем авто):<br>'
   }
-  description += '<ul>'
-  description += '<li><b>Модель</b>: ' + task.model_name + '</li>'
-  description += '<li><b>Код производителя</b>: ' + task.manufacture_code_name + '</li>'
-  description += '<li><b>Цвет салона</b>: ' + task.color_inside_name + '</li>'
-  description += '<li><b>Цвет кузова</b>: ' + task.color_outside + '</li>'
-  description += '<li><b>Требуемое количество</b>: ' + task.amount + '</li>'
-  description += '</ul>'
+  task.description += '<ul>'
+  task.description += '<li><b>Модель</b>: ' + task.model_name + '</li>'
+  task.description += '<li><b>Код производителя</b>: ' + task.manufacture_code_name + '</li>'
+  task.description += '<li><b>Цвет салона</b>: ' + task.color_inside_name + '</li>'
+  task.description += '<li><b>Цвет кузова</b>: ' + task.color_outside + '</li>'
+  task.description += '<li><b>Требуемое количество</b>: ' + task.amount + '</li>'
+  task.description += '</ul>'
   if (isFirstStage) {
-    description += 'Собираем информацию о доступных цветах кузова<br>'
+    task.description += 'Собираем информацию о доступных цветах кузова<br>'
   }
-  description += currentDate() + ' послали поисковый запрос<br>'
-  return description
+  task.description += currentDate() + ' послали поисковый запрос<br>'
 }
 
-async function sendSearchRequest (page, formFrame, task, additionalDescription) {
+async function sendSearchRequest (page, formFrame, task) {
   task.searchResultExists = true
   log('Setup search params', task)
   let result = await formFrame.select(FORM_MODEL_SELECTOR, task.model)
@@ -516,7 +514,7 @@ async function sendSearchRequest (page, formFrame, task, additionalDescription) 
   await formFrame.waitFor(DELAY_AFTER_SELECT_MODEL)
   if (result.length === 0) {
     log('Could not setup task.model: ' + task.model, task)
-    task.description = task.description + '<br>' + currentDate() + `В фильтре не найдена модель ${task.model}`
+    task.description += '<br>' + currentDate() + `В фильтре не найдена модель ${task.model}`
     return false
   }
   const manufactureCode = task.more_auto ? '' : task.manufacture_code
@@ -524,11 +522,11 @@ async function sendSearchRequest (page, formFrame, task, additionalDescription) 
     const manufactureCodeDescription = task.more_auto ? task.manufacture_code + ' and other' : task.manufacture_code
     result = await formFrame.select(FORM_MANUFACTURE_CODE_SELECTOR, manufactureCode)
     log('Manufacture code: ' + manufactureCodeDescription, task)
-    let canWeOrderAlternative = (parseInt(task.more_auto) === 1);
-    let couldNotSelectRequired = (result.length === 0);
+    let canWeOrderAlternative = (parseInt(task.more_auto) === 1)
+    let couldNotSelectRequired = (result.length === 0)
     if (couldNotSelectRequired && !canWeOrderAlternative) {
       log('Could not setup task.manufacture_code: ' + task.manufacture_code, task)
-      task.description = task.description + '<br>' + currentDate() + `В фильтре не найден код модели ${task.manufacture_code}`
+      task.description += '<br>' + currentDate() + `В фильтре не найден код модели ${task.manufacture_code}`
       return false
     }
   } else {
@@ -540,7 +538,7 @@ async function sendSearchRequest (page, formFrame, task, additionalDescription) 
     log('Color inside: ' + task.color_inside, task)
     if (result.length === 0) {
       log('Could not setup task.color_inside: ' + task.color_inside, task)
-      task.description = task.description + '<br>' + currentDate() + `В фильтре не найден цвет салона ${task.color_inside}`
+      task.description += '<br>' + currentDate() + `В фильтре не найден цвет салона ${task.color_inside}`
       return false
     }
   } else {
@@ -553,7 +551,7 @@ async function sendSearchRequest (page, formFrame, task, additionalDescription) 
     log('Color outside: ' + colorOutsideDescription, task)
     if (result.length === 0) {
       log('Could not setup task.color_outside: ' + task.color_outside, task)
-      task.description = task.description + '<br>' + currentDate() + `В фильтре не найден цвет кузова ${task.color_outside}`
+      task.description += '<br>' + currentDate() + `В фильтре не найден цвет кузова ${task.color_outside}`
       return false
     }
   } else {
@@ -573,7 +571,7 @@ async function sendSearchRequest (page, formFrame, task, additionalDescription) 
     await formFrame.waitFor(PAGING_SELECTOR, { timeout: GENERAL_TIMEOUT })
     log('[complex] Sent search request', task)
   } catch (e) {
-    task.description = task.description + '<br>' + currentDate() + `Не дождались завершения поиска. Ждал ${GENERAL_TIMEOUT}мс`
+    task.description += '<br>' + currentDate() + `Не дождались завершения поиска. Ждал ${GENERAL_TIMEOUT}мс`
     log('[complex] Search failed', task)
     return false
   }
@@ -597,7 +595,7 @@ async function saveScreenshot (task, page, name) {
   }
 }
 
-async function orderTask (page, formFrame, task, description, manufactureCodes, screenshots) {
+async function orderTask (page, formFrame, task, manufactureCodes, screenshots) {
   let orderMore = true
   let currentPage = 1
 
@@ -611,7 +609,7 @@ async function orderTask (page, formFrame, task, description, manufactureCodes, 
     }
 
     log('Search result exists', task)
-    description += currentDate() + ' Страница ' + currentPage + '<br>'
+    task.description += currentDate() + ' Страница ' + currentPage + '<br>'
     let orderTable = await formFrame.$(ORDER_TABLE)
     let outerHtmlOrderTable = await orderTable.getProperty('outerHTML')
     let ordersTableHtml = await outerHtmlOrderTable.jsonValue()
@@ -690,7 +688,7 @@ async function orderTask (page, formFrame, task, description, manufactureCodes, 
       task.reachedMaximum = false
       await formFrame.click(FORM_CHANGE_ORDER_BUTTON)
       if (task.searchResultExists === false) {
-        description += currentDate() + ' Достигнут максимум заказа авто<br>'
+        task.description += currentDate() + ' Достигнут максимум заказа авто<br>'
         log('Reached maximum cars', task)
         orderMore = false
         task.reachedMaximum = true
@@ -705,7 +703,7 @@ async function orderTask (page, formFrame, task, description, manufactureCodes, 
         if (manufactureCodes !== false) {
           manufactureCodes.push(orders[chosen].manufacture_code)
         }
-        description += currentDate() + ' Требуемые авто с кодом производителя ' + orders[chosen].manufacture_code + ' найдены и заказаны<br>'
+        task.description += currentDate() + ' Требуемые авто с кодом производителя ' + orders[chosen].manufacture_code + ' найдены и заказаны<br>'
 
         task.remain -= 1
         task.orderedManufactureCode = orders[chosen].manufacture_code
@@ -714,7 +712,7 @@ async function orderTask (page, formFrame, task, description, manufactureCodes, 
     } else {
       task.orderedManufactureCode = false
       log('Could not find suitable auto at page ' + currentPage, task)
-      description += currentDate() + ' Требуемые авто на странице ' + currentPage + ' не найдены<br>'
+      task.description += currentDate() + ' Требуемые авто на странице ' + currentPage + ' не найдены<br>'
       let condition = false
       if (currentPage === 1) {
         condition = await formFrame.$(FIRST_PAGE_NEXT_SELECTOR) !== null
@@ -723,7 +721,7 @@ async function orderTask (page, formFrame, task, description, manufactureCodes, 
       }
       if (condition) {
         log('Next page exists, switch to it', task)
-        description += currentDate() + ' Есть следующая страница, идем на нее<br>'
+        task.description += currentDate() + ' Есть следующая страница, идем на нее<br>'
         orderMore = true
         if (currentPage === 1) {
           await formFrame.click(FIRST_PAGE_NEXT_SELECTOR)
@@ -734,14 +732,14 @@ async function orderTask (page, formFrame, task, description, manufactureCodes, 
         currentPage++
       } else {
         log('No next page exists, stop search', task)
-        description += currentDate() + ' Следующей страницы нет, прекращаем поиски<br>'
+        task.description += currentDate() + ' Следующей страницы нет, прекращаем поиски<br>'
         orderMore = false
       }
     }
 
     if (task.remain <= 0) {
       log('We have ordered enough, stop', task)
-      description += currentDate() + ' Заказали достаточно, останавливаемся<br>'
+      task.description += currentDate() + ' Заказали достаточно, останавливаемся<br>'
       orderMore = false
     }
   } while (orderMore)
@@ -795,7 +793,7 @@ const processSimpleTask = async ({ page, data: task }) => {
   log(`Saved task_run with id=${task.task_run_id} and start date ${task.started_at}`, task)
 
   if (bannedCompaniesIds.includes(task.company_id)) {
-    task.description = currentDate() + ' Закончили выполнение, т.к. компания находится в списке забаненных (возможно сменился логин/пароль доступа к сайту)'
+    task.description += currentDate() + ' Закончили выполнение, т.к. компания находится в списке забаненных (возможно сменился логин/пароль доступа к сайту)'
     await saveTaskRunFinishedToDb(task.connection, task)
     log(`Stop executing ${task.id} because company ${task.company_id} marked as banned`, task)
     return
@@ -830,8 +828,8 @@ const processSimpleTask = async ({ page, data: task }) => {
       }
     } catch (e) {
       log(`Could not log in because kia-portal hang up`, task)
-      task.description = currentDate() + ' Закончили выполнение, т.к. не смогли авторизоваться на сайте Киа (возможно сменился логин/пароль доступа к сайту)<br>'
-      task.description = task.description + currentDate() + '<pre>' + e.toString() + '</pre>'
+      task.description += currentDate() + ' Закончили выполнение, т.к. не смогли авторизоваться на сайте Киа (возможно сменился логин/пароль доступа к сайту)<br>'
+      task.description += currentDate() + '<pre>' + e.toString() + '</pre>'
       task.finished_at = currentMySqlDate()
       task.status = TASK_RUN_STATUS_ERROR
       await saveTaskRunFinishedToDb(task.connection, task)
@@ -848,8 +846,8 @@ const processSimpleTask = async ({ page, data: task }) => {
     await page.waitFor(FREE_SKLAD_LEFT_SIDEBAR_SELECTOR, { timeout: GENERAL_TIMEOUT })
     log('We got FREE_SKLAD_LEFT_SIDEBAR_SELECTOR')
   } catch (e) {
-    task.description = currentDate() + ' Ошибка при входе на сайт киа: не смогли переключиться на вкладку "Свободный склад"'
-    task.description = task.description + currentDate() + '<pre>' + e.toString() + '</pre>'
+    task.description += currentDate() + ' Ошибка при входе на сайт киа: не смогли переключиться на вкладку "Свободный склад"'
+    task.description += currentDate() + '<pre>' + e.toString() + '</pre>'
     task.finished_at = currentMySqlDate()
     task.status = TASK_RUN_STATUS_ERROR
     await saveTaskRunFinishedToDb(task.connection, task)
@@ -872,8 +870,8 @@ const processSimpleTask = async ({ page, data: task }) => {
     await page.waitFor(FREE_SKLAD_IFRAME_SELECTOR, { timeout: GENERAL_TIMEOUT })
     log('We got FREE_SKLAD_IFRAME_SELECTOR')
   } catch (e) {
-    task.description = currentDate() + ' Ошибка при входе на сайт киа: не смогли найти вкладку "Свободный склад"'
-    task.description = task.description + currentDate() + '<pre>' + e.toString() + '</pre>'
+    task.description += currentDate() + ' Ошибка при входе на сайт киа: не смогли найти вкладку "Свободный склад"'
+    task.description += currentDate() + '<pre>' + e.toString() + '</pre>'
     task.finished_at = currentMySqlDate()
     task.status = TASK_RUN_STATUS_ERROR
     await saveTaskRunFinishedToDb(task.connection, task)
@@ -887,8 +885,8 @@ const processSimpleTask = async ({ page, data: task }) => {
     await firstFrame.waitFor(FREE_SKLAD_CONTENT_IFRAME, { timeout: GENERAL_TIMEOUT })
     log('We got FREE_SKLAD_CONTENT_IFRAME')
   } catch (e) {
-    task.description = currentDate() + ' Ошибка при входе на сайт киа: не смогли найти iframe "Свободный склад"'
-    task.description = task.description + currentDate() + '<pre>' + e.toString() + '</pre>'
+    task.description += currentDate() + ' Ошибка при входе на сайт киа: не смогли найти iframe "Свободный склад"'
+    task.description += currentDate() + '<pre>' + e.toString() + '</pre>'
     task.finished_at = currentMySqlDate()
     task.status = TASK_RUN_STATUS_ERROR
     await saveTaskRunFinishedToDb(task.connection, task)
@@ -905,7 +903,7 @@ const processSimpleTask = async ({ page, data: task }) => {
     }
   }
   if (formFrame === false) {
-    task.description = currentDate() + ' Ошибка при входе на сайт киа: не дождались загрузки iframe "Свободный склад"'
+    task.description += currentDate() + ' Ошибка при входе на сайт киа: не дождались загрузки iframe "Свободный склад"'
     task.finished_at = currentMySqlDate()
     task.status = TASK_RUN_STATUS_ERROR
     await saveTaskRunFinishedToDb(task.connection, task)
@@ -914,14 +912,14 @@ const processSimpleTask = async ({ page, data: task }) => {
   }
   log('Switched to free sklad search page', task)
 
-  description = currentDate() + ' начали выполнять задачу:<br>'
-  description += '<ul>'
-  description += '<li><b>Модель</b>: ' + task.model_name + '</li>'
-  description += '<li><b>Код производителя</b>: ' + task.manufacture_code_name + '</li>'
-  description += '<li><b>Цвет салона</b>: ' + task.color_inside_name + '</li>'
-  description += '<li><b>Цвет кузова</b>: ' + task.color_outside_name + '</li>'
-  description += '<li><b>Требуемое количество</b>: ' + task.amount + '</li>'
-  description += '</ul>'
+  task.description += currentDate() + ' начали выполнять задачу:<br>'
+  task.description += '<ul>'
+  task.description += '<li><b>Модель</b>: ' + task.model_name + '</li>'
+  task.description += '<li><b>Код производителя</b>: ' + task.manufacture_code_name + '</li>'
+  task.description += '<li><b>Цвет салона</b>: ' + task.color_inside_name + '</li>'
+  task.description += '<li><b>Цвет кузова</b>: ' + task.color_outside_name + '</li>'
+  task.description += '<li><b>Требуемое количество</b>: ' + task.amount + '</li>'
+  task.description += '</ul>'
   let flag = true
   let remainingAmount = task.amount
   let totalOrdered = 0
@@ -954,11 +952,11 @@ const processSimpleTask = async ({ page, data: task }) => {
     const manufactureCode = (stage < 1) ? task.manufacture_code : ''
     if (manufactureCode.length > 0) {
       result = await formFrame.select(FORM_MANUFACTURE_CODE_SELECTOR, manufactureCode)
-      let canWeOrderAlternative = (parseInt(task.more_auto) === 1);
-      let couldNotSelectRequired = (result.length === 0);
+      let canWeOrderAlternative = (parseInt(task.more_auto) === 1)
+      let couldNotSelectRequired = (result.length === 0)
       if (couldNotSelectRequired && !canWeOrderAlternative) {
         log('Could not setup task.manufacture_code: ' + task.manufacture_code, task)
-        task.description = task.description + '<br>' + currentDate() + `В фильтре не найден код модели ${task.manufacture_code}`
+        task.description += '<br>' + currentDate() + `В фильтре не найден код модели ${task.manufacture_code}`
         break
       }
     } else {
@@ -1002,7 +1000,7 @@ const processSimpleTask = async ({ page, data: task }) => {
       await formFrame.waitFor(PAGING_SELECTOR, { timeout: GENERAL_TIMEOUT })
       log('[simple] Sent search request', task)
     } catch (e) {
-      task.description = task.description + '<br>' + currentDate() + `Не дождались завершения поиска. Ждал ${GENERAL_TIMEOUT}мс`
+      task.description += '<br>' + currentDate() + `Не дождались завершения поиска. Ждал ${GENERAL_TIMEOUT}мс`
       log('[simple] Search failed', task)
       break
     }
@@ -1011,7 +1009,7 @@ const processSimpleTask = async ({ page, data: task }) => {
     let fullpath = task.currentScreenshotPath + '/' + filename
     await page.screenshot({ path: fullpath, fullPage: true })
     screenshots.push({ name: 'Скриншот #' + (ind++) + '. Результат поискового запроса', filepath: fullpath })
-    description += currentDate() + ' послали поисковый запрос<br>'
+    task.description += currentDate() + ' послали поисковый запрос<br>'
     log(`Saved screenshot at ${fullpath}`, task)
 
     if (task.searchResultExists) {
@@ -1023,7 +1021,7 @@ const processSimpleTask = async ({ page, data: task }) => {
       const currentOrderAmount = 1
       do {
         log('Look through page ' + pageCount, task)
-        description += currentDate() + ' Страница ' + pageCount + '<br>'
+        task.description += currentDate() + ' Страница ' + pageCount + '<br>'
         let orderTable = await formFrame.$(ORDER_TABLE)
         let outerHtmlOrderTable = await orderTable.getProperty('outerHTML')
         let ordersTableHtml = await outerHtmlOrderTable.jsonValue()
@@ -1099,7 +1097,7 @@ const processSimpleTask = async ({ page, data: task }) => {
           task.reachedMaximum = false
           await formFrame.click(FORM_CHANGE_ORDER_BUTTON)
           if (task.searchResultExists === false) {
-            description += currentDate() + ' Достигнут максимум заказа авто<br>'
+            task.description += currentDate() + ' Достигнут максимум заказа авто<br>'
             log('Reached maximum cars', task)
             badManufactureCode = false
             flag = false
@@ -1109,7 +1107,7 @@ const processSimpleTask = async ({ page, data: task }) => {
 
             orderedManufactureCodes.push(orders[chosen].manufacture_code)
             badManufactureCode = false
-            description += currentDate() + ' Требуемые авто с кодом производителя ' + orders[chosen].manufacture_code + ' найдены<br>'
+            task.description += currentDate() + ' Требуемые авто с кодом производителя ' + orders[chosen].manufacture_code + ' найдены<br>'
 
             remainingAmount -= currentOrderAmount
             totalOrdered += currentOrderAmount
@@ -1118,7 +1116,7 @@ const processSimpleTask = async ({ page, data: task }) => {
           }
         } else {
           log('Could not find suitable auto at page ' + pageCount, task)
-          description += currentDate() + ' Требуемые авто на странице ' + pageCount + ' не найдены<br>'
+          task.description += currentDate() + ' Требуемые авто на странице ' + pageCount + ' не найдены<br>'
           let condition = false
           if (pageCount === 1) {
             condition = await formFrame.$(FIRST_PAGE_NEXT_SELECTOR) !== null
@@ -1127,7 +1125,7 @@ const processSimpleTask = async ({ page, data: task }) => {
           }
           if (condition) {
             log('Next page exists, switch to it', task)
-            description += currentDate() + ' Есть следующая страница, идем на нее<br>'
+            task.description += currentDate() + ' Есть следующая страница, идем на нее<br>'
             badManufactureCode = true
             if (pageCount === 1) {
               await formFrame.click(FIRST_PAGE_NEXT_SELECTOR)
@@ -1138,7 +1136,7 @@ const processSimpleTask = async ({ page, data: task }) => {
             pageCount++
           } else {
             log('No next page exists, stop search', task)
-            description += currentDate() + ' Следующей страницы нет, прекращаем поиски<br>'
+            task.description += currentDate() + ' Следующей страницы нет, прекращаем поиски<br>'
             badManufactureCode = false
           }
         }
@@ -1147,16 +1145,16 @@ const processSimpleTask = async ({ page, data: task }) => {
       if (task.reachedMaximum) {
         flag = false
       } else if (chosen !== false) {
-        description += currentDate() + ' заказали ' + currentOrderAmount + ' авто с параметрами:<br>'
-        description += '<ul>'
-        description += '<li><b>Модель</b>: ' + orders[chosen].model + '</li>'
-        description += '<li><b>Код производителя</b>: ' + orders[chosen].manufacture_code + '</li>'
-        description += '<li><b>Описание</b>: ' + orders[chosen].description + '</li>'
-        description += '<li><b>Цвет салона</b>: ' + orders[chosen].color_inside + '</li>'
-        description += '<li><b>Цвет кузова</b>: ' + orders[chosen].color_outside + '</li>'
-        description += '<li><b>Год выпуска</b>: ' + orders[chosen].year + '</li>'
-        description += '<li><b>Код склада</b>: ' + orders[chosen].storage_code + '</li>'
-        description += '</ul>'
+        task.description += currentDate() + ' заказали ' + currentOrderAmount + ' авто с параметрами:<br>'
+        task.description += '<ul>'
+        task.description += '<li><b>Модель</b>: ' + orders[chosen].model + '</li>'
+        task.description += '<li><b>Код производителя</b>: ' + orders[chosen].manufacture_code + '</li>'
+        task.description += '<li><b>Описание</b>: ' + orders[chosen].description + '</li>'
+        task.description += '<li><b>Цвет салона</b>: ' + orders[chosen].color_inside + '</li>'
+        task.description += '<li><b>Цвет кузова</b>: ' + orders[chosen].color_outside + '</li>'
+        task.description += '<li><b>Год выпуска</b>: ' + orders[chosen].year + '</li>'
+        task.description += '<li><b>Код склада</b>: ' + orders[chosen].storage_code + '</li>'
+        task.description += '</ul>'
 
         let filename = +new Date() + '_' + Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15) + '.png'
         let fullpath = task.currentScreenshotPath + '/' + filename
@@ -1170,15 +1168,15 @@ const processSimpleTask = async ({ page, data: task }) => {
         await formFrame.click(ORDER_BUTTON)
         await formFrame.waitFor(DELAY_AFTER_ORDER)
 
-        description += currentDate() + ' всего авто с нужными параметрами заказано ' + totalOrdered + ' штук<br>'
-        description += currentDate() + ' осталось заказать ' + remainingAmount + ' штук<br>'
+        task.description += currentDate() + ' всего авто с нужными параметрами заказано ' + totalOrdered + ' штук<br>'
+        task.description += currentDate() + ' осталось заказать ' + remainingAmount + ' штук<br>'
 
         if (remainingAmount <= 0) {
           flag = false
           break
         }
       } else {
-        description += currentDate() + ' требуемые авто не найдены<br>'
+        task.description += currentDate() + ' требуемые авто не найдены<br>'
         if (task.more_auto && stage < 1) {
           stage++
           flag = true
@@ -1188,7 +1186,7 @@ const processSimpleTask = async ({ page, data: task }) => {
       }
     } else {
       log('Search result does not exists', task)
-      description += currentDate() + ' требуемые авто не найдены<br>'
+      task.description += currentDate() + ' требуемые авто не найдены<br>'
       if (task.more_auto && stage < 1) {
         log('More auto mode enabled, go to next stage', task)
         stage++
@@ -1236,11 +1234,10 @@ const processSimpleTask = async ({ page, data: task }) => {
     log('So we have ordered nothing', task)
   }
   if (additionalDescription.length > 0) {
-    description += currentDate() + ' ' + additionalDescription + '<br>'
+    task.description += currentDate() + ' ' + additionalDescription + '<br>'
   }
 
   task.task_id = task.id
-  task.description = description
   task.amount_ordered = totalOrdered
   task.ordered_manufacture_codes = orderedManufactureCodes.join(',')
 
@@ -1309,7 +1306,7 @@ const processComplexTask = async ({ page, data: task }) => {
   log(`Saved task_run with id=${task.task_run_id} and start date ${task.started_at}`, task)
 
   if (bannedCompaniesIds.includes(task.company_id)) {
-    task.description = currentDate() + ' Закончили выполнение, т.к. компания находится в списке забаненных (возможно сменился логин/пароль доступа к сайту)'
+    task.description += currentDate() + ' Закончили выполнение, т.к. компания находится в списке забаненных (возможно сменился логин/пароль доступа к сайту)'
     await saveTaskRunFinishedToDb(task.connection, task)
     log(`Stop executing ${task.id} because company ${task.company_id} marked as banned`, task)
     return
@@ -1318,20 +1315,20 @@ const processComplexTask = async ({ page, data: task }) => {
   let screenshots = []
   let formFrame = await loginAndSwitchToFreeSklad(page, task)
   if (formFrame === false) {
-    task.description = task.description + '<br>' + currentDate() + ' Ошибка при входе на сайт киа: не смогли залогиниться и переключиться на вкладку "Свободный склад"'
+    task.description += '<br>' + currentDate() + ' Ошибка при входе на сайт киа: не смогли залогиниться и переключиться на вкладку "Свободный склад"'
     task.finished_at = currentMySqlDate()
     task.status = TASK_RUN_STATUS_ERROR
     await saveTaskRunFinishedToDb(task.connection, task)
     log(`Saved failed task_run with id=${task.task_run_id} and finish date ${task.finished_at}`, task)
     return
   }
-  let description = logInfoAboutSearch(task, true)
+  logInfoAboutSearch(task, true)
 
   task.color_outside = ''
   let additionalDescription = ''
   let orderedManufactureCodesByTaskRun = []
   let totalOrdered = 0
-  let searchResultExists = await sendSearchRequest(page, formFrame, task, additionalDescription)
+  let searchResultExists = await sendSearchRequest(page, formFrame, task)
   if (searchResultExists) {
     let currentPage = 1
     let pageCount = 0
@@ -1367,7 +1364,7 @@ const processComplexTask = async ({ page, data: task }) => {
         currentPageCommonColors[task.colorPreferences[i]] = 0
       }
       log('Look through page ' + currentPage, task)
-      description += currentDate() + ' Страница ' + currentPage + '<br>'
+      task.description += currentDate() + ' Страница ' + currentPage + '<br>'
       let orderTable = await formFrame.$(ORDER_TABLE)
       let outerHtmlOrderTable = await orderTable.getProperty('outerHTML')
       let ordersTableHtml = await outerHtmlOrderTable.jsonValue()
@@ -1442,7 +1439,7 @@ const processComplexTask = async ({ page, data: task }) => {
           continue
         }
         if (currentPageSpecificColors.hasOwnProperty(colorCode)) {
-          description += currentDate() + ' на странице ' + currentPage + ' для кода модели '
+          task.description += currentDate() + ' на странице ' + currentPage + ' для кода модели '
             + task.manufacture_code + ' нашли цвет ' + colorCode + ' в количестве '
             + currentPageSpecificColors[colorCode] + ' штук<br>'
         }
@@ -1452,7 +1449,7 @@ const processComplexTask = async ({ page, data: task }) => {
           continue
         }
         if (currentPageCommonColors.hasOwnProperty(colorCode)) {
-          description += currentDate() + ' на странице ' + currentPage + ' для произвольного кода модели'
+          task.description += currentDate() + ' на странице ' + currentPage + ' для произвольного кода модели'
             + ' нашли цвет ' + colorCode + ' в количестве '
             + currentPageCommonColors[colorCode] + ' штук<br>'
         }
@@ -1466,7 +1463,7 @@ const processComplexTask = async ({ page, data: task }) => {
       }
       if (condition) {
         log('Next page exists, switch to it', task)
-        description += currentDate() + ' Есть следующая страница, идем на нее<br>'
+        task.description += currentDate() + ' Есть следующая страница, идем на нее<br>'
         nextPageExists = true
         if (currentPage === 1) {
           await formFrame.click(FIRST_PAGE_NEXT_SELECTOR)
@@ -1479,7 +1476,7 @@ const processComplexTask = async ({ page, data: task }) => {
         screenshots.push(await saveScreenshot(task, page, name))
       } else {
         log('No next page exists, stop search', task)
-        description += currentDate() + ' Следующей страницы нет, прекращаем поиски<br>'
+        task.description += currentDate() + ' Следующей страницы нет, прекращаем поиски<br>'
         nextPageExists = false
       }
     } while (nextPageExists)
@@ -1490,18 +1487,18 @@ const processComplexTask = async ({ page, data: task }) => {
     for (let colorCode in specificManufactureCodeQueue) {
       if (specificManufactureCodeQueue.hasOwnProperty(colorCode)) {
         log('Order task with manufacture_code = ' + task.manufacture_code + ' and color = ' + colorCode, task)
-        description += currentDate() + ' Сперва заказываем согласно коду производителя из задачи: ' + task.manufacture_code + ' и приоритетный цвет: ' + colorCode + '<br>'
+        task.description += currentDate() + ' Сперва заказываем согласно коду производителя из задачи: ' + task.manufacture_code + ' и приоритетный цвет: ' + colorCode + '<br>'
         task.color_outside = colorCode
         let remainBefore = task.remain
-        description += logInfoAboutSearch(task, false)
-        task = await orderTask(page, formFrame, task, description, false, screenshots)
+        task.description += logInfoAboutSearch(task, false)
+        task = await orderTask(page, formFrame, task, false, screenshots)
         if (task.reachedMaximum) {
           break
         }
         let remainAfter = task.remain
         let ordered = remainBefore - remainAfter
         totalOrdered += ordered
-        description += currentDate() + ' на данном этапе заказано: ' + ordered + ' штук, всего заказано: ' + totalOrdered + ', осталось: ' + task.remain + '<br>'
+        task.description += currentDate() + ' на данном этапе заказано: ' + ordered + ' штук, всего заказано: ' + totalOrdered + ', осталось: ' + task.remain + '<br>'
         if (task.remain <= 0) {
           break
         }
@@ -1515,12 +1512,12 @@ const processComplexTask = async ({ page, data: task }) => {
         if (commonManufactureCodeQueue.hasOwnProperty(colorCode)) {
           let manufactureCodes = task.alreadyOrderedManufactureCodes
           log('Order task with any manufacture_code and color ' + colorCode, task)
-          description += currentDate() + ' Теперь заказываем произвольный код производителя и приоритетный цвет: ' + colorCode + '<br>'
+          task.description += currentDate() + ' Теперь заказываем произвольный код производителя и приоритетный цвет: ' + colorCode + '<br>'
           task.manufacture_code = ''
           task.color_outside = colorCode
           let remainBefore = task.remain
-          description += logInfoAboutSearch(task, false)
-          task = await orderTask(page, formFrame, task, description, manufactureCodes, screenshots)
+          task.description += logInfoAboutSearch(task, false)
+          task = await orderTask(page, formFrame, task, manufactureCodes, screenshots)
           if (task.reachedMaximum) {
             break
           }
@@ -1531,7 +1528,7 @@ const processComplexTask = async ({ page, data: task }) => {
           if (task.orderedManufactureCode !== false) {
             orderedManufactureCodesByTaskRun.push(task.orderedManufactureCode)
           }
-          description += currentDate() + ' на данном этапе заказано: ' + ordered + ' штук, всего заказано: ' + totalOrdered + ', осталось: ' + task.remain + '<br>'
+          task.description += currentDate() + ' на данном этапе заказано: ' + ordered + ' штук, всего заказано: ' + totalOrdered + ', осталось: ' + task.remain + '<br>'
           if (task.remain <= 0) {
             break
           }
@@ -1546,8 +1543,8 @@ const processComplexTask = async ({ page, data: task }) => {
       log('So we have ordered: ' + totalOrdered, task)
       formFrame = await switchToFreeSkladAndSaveScreenshot(page, formFrame, screenshots, task)
       if (formFrame === false) {
-        task.description = currentDate() + ' Ошибка при входе на сайт киа: не смогли найти вкладку "Свободный склад"<br>'
-        task.description = task.description + currentDate() + ' <pre>' + e.toString() + '</pre>'
+        task.description += currentDate() + ' Ошибка при входе на сайт киа: не смогли найти вкладку "Свободный склад"<br>'
+        task.description += currentDate() + ' <pre>' + e.toString() + '</pre>'
         task.finished_at = currentMySqlDate()
         task.status = TASK_RUN_STATUS_ERROR
         await saveTaskRunFinishedToDb(task.connection, task)
@@ -1560,14 +1557,10 @@ const processComplexTask = async ({ page, data: task }) => {
   } else {
     screenshots.push(await saveScreenshot(task, page, 'Результат поиска нужного авто. ' + additionalDescription))
     log('Search result does not exists', task)
-    if (additionalDescription.length > 0) {
-      description += currentDate() + ' ' + additionalDescription + '<br>'
-    }
-    description += currentDate() + ' требуемые авто не найдены<br>'
+    task.description += currentDate() + ' требуемые авто не найдены<br>'
   }
 
   task.task_id = task.id
-  task.description = description
   task.amount_ordered = totalOrdered
   task.ordered_manufacture_codes = orderedManufactureCodesByTaskRun.join(',')
 
@@ -1662,6 +1655,7 @@ async function addValidTasksToQueue (connection, currentScreenshotPath) {
     tasks[i].currentScreenshotPath = currentScreenshotPath
     tasks[i].connection = connection
     tasks[i].credentials = await getCredentials(connection, tasks[i].company_id)
+    tasks[i].description = currentDate() + " Добавляем задачу в очередь на выполнение<br>";
     if (isSimpleTask(tasks[i], colorPreferences)) {
       log('Added task for processSimpleTask', tasks[i])
       await cluster.queue(tasks[i], processSimpleTask)
@@ -1708,7 +1702,7 @@ async function robot (connection) {
 
     task.finished_at = currentMySqlDate()
     task.status = TASK_RUN_STATUS_ERROR
-    task.description = task.description + '<br><br>' + currentDate() + ` Ошибка при работе робота: <b>${err.message}</b><br><pre>${err.stack}</pre>`
+    task.description += '<br><br>' + currentDate() + ` Ошибка при работе робота: <b>${err.message}</b><br><pre>${err.stack}</pre>`
     await saveTaskRunFinishedToDb(task.connection, task)
     log(`Saved error task_run with id=${task.task_run_id} and finish date ${task.finished_at}`, task)
   })
