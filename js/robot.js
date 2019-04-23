@@ -524,8 +524,9 @@ async function sendSearchRequest (page, formFrame, task, additionalDescription) 
     const manufactureCodeDescription = task.more_auto ? task.manufacture_code + ' and other' : task.manufacture_code
     result = await formFrame.select(FORM_MANUFACTURE_CODE_SELECTOR, manufactureCode)
     log('Manufacture code: ' + manufactureCodeDescription, task)
-    let condition = (result.length > 0) || ((result.length === 0) && (task.more_auto == 1))
-    if (condition) {
+    let canWeOrderAlternative = (parseInt(task.more_auto) === 1);
+    let couldNotSelectRequired = (result.length === 0);
+    if (couldNotSelectRequired && !canWeOrderAlternative) {
       log('Could not setup task.manufacture_code: ' + task.manufacture_code, task)
       task.description = task.description + '<br>' + currentDate() + `В фильтре не найден код модели ${task.manufacture_code}`
       return false
@@ -953,10 +954,11 @@ const processSimpleTask = async ({ page, data: task }) => {
     const manufactureCode = (stage < 1) ? task.manufacture_code : ''
     if (manufactureCode.length > 0) {
       result = await formFrame.select(FORM_MANUFACTURE_CODE_SELECTOR, manufactureCode)
-      log('Manufacture code: ' + manufactureCode, task)
-      if ((task.goal == 0) && (result.length === 0)) {
-        log('Could not setup task.manufacture_code: ' + manufactureCode, task)
-        additionalDescription = `В фильтре не найден код производителя ${manufactureCode}`
+      let canWeOrderAlternative = (parseInt(task.more_auto) === 1);
+      let couldNotSelectRequired = (result.length === 0);
+      if (couldNotSelectRequired && !canWeOrderAlternative) {
+        log('Could not setup task.manufacture_code: ' + task.manufacture_code, task)
+        task.description = task.description + '<br>' + currentDate() + `В фильтре не найден код модели ${task.manufacture_code}`
         break
       }
     } else {
