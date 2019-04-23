@@ -98,7 +98,7 @@ function isValidTimeToLaunch () {
   return ((hours === 11) && (minutes >= 55) && (seconds >= 0)) || (hours >= 12) && (hours < 21)
 }
 
-function isTimeToWait() {
+function isTimeToWait () {
   let date = new Date()
   let hours = date.getHours()
   let minutes = date.getMinutes()
@@ -516,7 +516,7 @@ async function sendSearchRequest (page, formFrame, task, additionalDescription) 
   await formFrame.waitFor(DELAY_AFTER_SELECT_MODEL)
   if (result.length === 0) {
     log('Could not setup task.model: ' + task.model, task)
-    task.description = task.description + "<br>" + currentDate() + `В фильтре не найдена модель ${task.model}`
+    task.description = task.description + '<br>' + currentDate() + `В фильтре не найдена модель ${task.model}`
     return false
   }
   const manufactureCode = task.more_auto ? '' : task.manufacture_code
@@ -527,7 +527,7 @@ async function sendSearchRequest (page, formFrame, task, additionalDescription) 
     let condition = (result.length > 0) || ((result.length === 0) && (task.more_auto == 1))
     if (condition) {
       log('Could not setup task.manufacture_code: ' + task.manufacture_code, task)
-      task.description = task.description + "<br>" + currentDate() + `В фильтре не найден код модели ${task.manufacture_code}`
+      task.description = task.description + '<br>' + currentDate() + `В фильтре не найден код модели ${task.manufacture_code}`
       return false
     }
   } else {
@@ -539,7 +539,7 @@ async function sendSearchRequest (page, formFrame, task, additionalDescription) 
     log('Color inside: ' + task.color_inside, task)
     if (result.length === 0) {
       log('Could not setup task.color_inside: ' + task.color_inside, task)
-      task.description = task.description + "<br>" + currentDate() + `В фильтре не найден цвет салона ${task.color_inside}`
+      task.description = task.description + '<br>' + currentDate() + `В фильтре не найден цвет салона ${task.color_inside}`
       return false
     }
   } else {
@@ -552,7 +552,7 @@ async function sendSearchRequest (page, formFrame, task, additionalDescription) 
     log('Color outside: ' + colorOutsideDescription, task)
     if (result.length === 0) {
       log('Could not setup task.color_outside: ' + task.color_outside, task)
-      task.description = task.description + "<br>" + currentDate() + `В фильтре не найден цвет кузова ${task.color_outside}`
+      task.description = task.description + '<br>' + currentDate() + `В фильтре не найден цвет кузова ${task.color_outside}`
       return false
     }
   } else {
@@ -565,11 +565,17 @@ async function sendSearchRequest (page, formFrame, task, additionalDescription) 
     await formFrame.click(FORM_ONLY_AVAILABLE_SELECTOR)
     log('Setup only available checkbox to true', task)
   }
-  log('Send search request', task)
+  log('[complex] Send search request', task)
 
   await formFrame.click(FORM_REQUEST_BUTTON_SELECTOR)
-  await formFrame.waitFor(DELAY_FOR_SEARCH_RESULT)
-  log('[complex] Sent search request', task)
+  try {
+    await formFrame.waitFor(PAGING_SELECTOR, { timeout: GENERAL_TIMEOUT })
+    log('[complex] Sent search request', task)
+  } catch (e) {
+    task.description = task.description + '<br>' + currentDate() + `Не дождались завершения поиска. Ждал ${GENERAL_TIMEOUT}мс`
+    log('[complex] Search failed', task)
+    return false
+  }
 
   return task.searchResultExists
 }
@@ -990,8 +996,14 @@ const processSimpleTask = async ({ page, data: task }) => {
 
     log('Send search request', task)
     await formFrame.click(FORM_REQUEST_BUTTON_SELECTOR)
-    await formFrame.waitFor(DELAY_FOR_SEARCH_RESULT)
-    log('[simple] Sent search request', task)
+    try {
+      await formFrame.waitFor(PAGING_SELECTOR, { timeout: GENERAL_TIMEOUT })
+      log('[simple] Sent search request', task)
+    } catch (e) {
+      task.description = task.description + '<br>' + currentDate() + `Не дождались завершения поиска. Ждал ${GENERAL_TIMEOUT}мс`
+      log('[simple] Search failed', task)
+      break
+    }
 
     let filename = +new Date() + '_' + Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15) + '.png'
     let fullpath = task.currentScreenshotPath + '/' + filename
