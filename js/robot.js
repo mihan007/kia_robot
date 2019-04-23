@@ -19,6 +19,7 @@ const CREDS = {
 }
 const mysql = require('mysql')
 const fs = require('fs')
+const logger = require('./utils/logger')
 const mysqlUtilities = require('mysql-utilities')
 const { Cluster } = require('puppeteer-cluster')
 const loginUrl = 'https://kmr.dealer-portal.net/irj/portal'
@@ -526,7 +527,7 @@ async function sendSearchRequest (page, formFrame, task) {
     let couldNotSelectRequired = (result.length === 0)
     if (couldNotSelectRequired && !canWeOrderAlternative) {
       log('Could not setup task.manufacture_code: ' + task.manufacture_code, task)
-      task.description += '<br>' + currentDate() + `В фильтре не найден код модели ${task.manufacture_code}`
+      logger.logToTask(task, `В фильтре не найден код модели ${task.manufacture_code}`)
       return false
     }
   } else {
@@ -956,7 +957,7 @@ const processSimpleTask = async ({ page, data: task }) => {
       let couldNotSelectRequired = (result.length === 0)
       if (couldNotSelectRequired && !canWeOrderAlternative) {
         log('Could not setup task.manufacture_code: ' + task.manufacture_code, task)
-        task.description += '<br>' + currentDate() + `В фильтре не найден код модели ${task.manufacture_code}`
+        logger.logToTask(task, `В фильтре не найден код модели ${task.manufacture_code}`)
         break
       }
     } else {
@@ -1655,7 +1656,7 @@ async function addValidTasksToQueue (connection, currentScreenshotPath) {
     tasks[i].currentScreenshotPath = currentScreenshotPath
     tasks[i].connection = connection
     tasks[i].credentials = await getCredentials(connection, tasks[i].company_id)
-    tasks[i].description = currentDate() + " Добавляем задачу в очередь на выполнение<br>";
+    tasks[i].description = currentDate() + ' Добавляем задачу в очередь на выполнение<br>'
     if (isSimpleTask(tasks[i], colorPreferences)) {
       log('Added task for processSimpleTask', tasks[i])
       await cluster.queue(tasks[i], processSimpleTask)
