@@ -451,7 +451,7 @@ async function loginAndSwitchToFreeSklad (page, task) {
 
   while (!isValidTimeToSwitchToSearch()) {
     let delayBetweenCheck = 100
-    log(`Waiting for ${delayBetweenCheck}ms before push search button`)
+    log(`Waiting for ${delayBetweenCheck}ms before push search button`, task)
     await delay(delayBetweenCheck)
   }
 
@@ -864,7 +864,7 @@ const processSimpleTask = async ({ page, data: task }) => {
 
   while (!isValidTimeToSwitchToSearch()) {
     let delayBetweenCheck = 100
-    log(`Waiting for ${delayBetweenCheck}ms before push search button`)
+    log(`Waiting for ${delayBetweenCheck}ms before push search button`, task)
     await delay(delayBetweenCheck)
   }
 
