@@ -5,11 +5,11 @@ module.exports = {
 
   currentDate: function () {
     let date = new Date()
-    return '[' + date.getFullYear().toString() + '-' + pad2(date.getMonth() + 1) + '-' + pad2(date.getDate())
-      + ' ' + pad2(date.getHours()) + ':' + pad2(date.getMinutes()) + ':' + pad2(date.getSeconds()) + ']'
+    return '[' + date.getFullYear().toString() + '-' + this.pad2(date.getMonth() + 1) + '-' + this.pad2(date.getDate())
+      + ' ' + this.pad2(date.getHours()) + ':' + this.pad2(date.getMinutes()) + ':' + this.pad2(date.getSeconds()) + ']'
   },
 
   logToTask: function (task, logLine) {
-    task.description += currentDate() + ' ' + logLine + '<br>'
+    task.description += this.currentDate() + ' ' + logLine + '<br>'
   }
 }
