@@ -802,9 +802,15 @@ const processSimpleTask = async ({ page, data: task }) => {
 
   if (!task.searchDialogHandled) {
     page.on('dialog', async dialog => {
-      task.searchResultExists = false
+      log('Got dialog with message:"' + dialog.message() + '"', task)
+      let message = dialog.message()
+      if (message !== 'ВЫ НАХОДИТЕСЬ В СТОП-ЛИСТЕ!') {
+        log('It is message that no search result, so task.searchResultExists = false', task)
+        task.searchResultExists = false
+      } else {
+        log('It is message about stop list so dismiss it', task)
+      }
       await dialog.dismiss()
-      log(`For ${task.id} modal pops up so searchResultExists = false`, task)
     })
     log(`For ${task.id} modal pops up so searchDialogHandled = true`, task)
     task.searchDialogHandled = true
