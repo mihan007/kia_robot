@@ -873,9 +873,9 @@ const processSimpleTask = async ({ page, data: task }) => {
 
   await page.click(FREE_SKLAD_LEFT_SIDEBAR_SELECTOR)
   try {
-    log('We wait for FREE_SKLAD_IFRAME_SELECTOR')
+    log('We wait for FREE_SKLAD_IFRAME_SELECTOR', task)
     await page.waitFor(FREE_SKLAD_IFRAME_SELECTOR, { timeout: GENERAL_TIMEOUT })
-    log('We got FREE_SKLAD_IFRAME_SELECTOR')
+    log('We got FREE_SKLAD_IFRAME_SELECTOR', task)
   } catch (e) {
     task.description += currentDate() + ' Ошибка при входе на сайт киа: не смогли найти вкладку "Свободный склад"'
     task.description += currentDate() + '<pre>' + e.toString() + '</pre>'
@@ -887,10 +887,10 @@ const processSimpleTask = async ({ page, data: task }) => {
   }
 
   let firstFrame = await page.frames().find(f => f.name() === 'contentAreaFrame')
-  log('We wait for FREE_SKLAD_IFRAME_SELECTOR')
+  log('We wait for FREE_SKLAD_IFRAME_SELECTOR', task)
   try {
     await firstFrame.waitFor(FREE_SKLAD_CONTENT_IFRAME, { timeout: GENERAL_TIMEOUT })
-    log('We got FREE_SKLAD_CONTENT_IFRAME')
+    log('We got FREE_SKLAD_CONTENT_IFRAME', task)
   } catch (e) {
     task.description += currentDate() + ' Ошибка при входе на сайт киа: не смогли найти iframe "Свободный склад"'
     task.description += currentDate() + '<pre>' + e.toString() + '</pre>'
