@@ -1274,6 +1274,8 @@ async function waitForLaunch (task) {
     let delayMs = 50 + Math.ceil(Math.random() * 100 * 1000)
     log(`Wait task ${task.id} to launch to not overkill kia server`, task)
     await delay(delayMs)
+  } else {
+    log(`No need to wait, let's go`, task)
   }
 }
 
