@@ -507,19 +507,54 @@ function logInfoAboutSearch (task, isFirstStage) {
   task.description += currentDate() + ' послали поисковый запрос<br>'
 }
 
+async function waitUntilWeGetManufactureCodeOptions (formFrame, task) {
+  let counter = 0
+  let itemsCount = 0
+  do {
+    log(`waitUntilWeGetManufactureCodeOptions, counter: ${counter}`, task)
+    let innerManufactureHtml = await (await (await formFrame.$(FORM_MANUFACTURE_CODE_SELECTOR)).getProperty('innerHTML')).jsonValue()
+    let $manufacture = cheerio.load(innerManufactureHtml)
+    itemsCount = parseInt($manufacture('option').length)
+    log(`waitUntilWeGetManufactureCodeOptions, itemsCount: ${itemsCount}`, task)
+    if (itemsCount === 0) {
+      log(`waitUntilWeGetManufactureCodeOptions, delay: ${DELAY_AFTER_SELECT_MODEL}`, task)
+      await delay(DELAY_AFTER_SELECT_MODEL)
+    }
+    counter++
+  } while ((counter < 5) && (itemsCount === 0))
+
+  return itemsCount
+}
+
 async function sendSearchRequest (page, formFrame, task) {
   task.searchResultExists = true
   log('Setup search params', task)
   let result = await formFrame.select(FORM_MODEL_SELECTOR, task.model)
   log('Task model: ' + task.model, task)
-  await formFrame.waitFor(DELAY_AFTER_SELECT_MODEL)
   if (result.length === 0) {
     log('Could not setup task.model: ' + task.model, task)
     task.description += '<br>' + currentDate() + `В фильтре не найдена модель ${task.model}`
     return false
   }
+
   const manufactureCode = task.more_auto ? '' : task.manufacture_code
+
+  try {
+    await formFrame.waitFor(FORM_MANUFACTURE_CODE_SELECTOR, { timeout: GENERAL_TIMEOUT })
+  } catch (e) {
+    task.description += '<br>' + currentDate() + `Не дождались появления поля код комплектации. Ждали ${GENERAL_TIMEOUT}мс`
+    log('[complex] Search failed', task)
+    return false
+  }
+
   if (manufactureCode.length > 0) {
+
+    let itemsCount = await waitUntilWeGetManufactureCodeOptions(formFrame, task)
+    if (itemsCount === 0) {
+      logger.logToTask(task, `Не дождались загрузки опций в код модели`)
+      return false
+    }
+
     const manufactureCodeDescription = task.more_auto ? task.manufacture_code + ' and other' : task.manufacture_code
     result = await formFrame.select(FORM_MANUFACTURE_CODE_SELECTOR, manufactureCode)
     log('Manufacture code: ' + manufactureCodeDescription, task)
@@ -958,6 +993,13 @@ const processSimpleTask = async ({ page, data: task }) => {
     await formFrame.waitFor(DELAY_AFTER_SELECT_MODEL)
     const manufactureCode = (stage < 1) ? task.manufacture_code : ''
     if (manufactureCode.length > 0) {
+
+      let itemsCount = await waitUntilWeGetManufactureCodeOptions(formFrame, task)
+      if (itemsCount === 0) {
+        logger.logToTask(task, `Не дождались загрузки опций в код модели`)
+        break
+      }
+
       result = await formFrame.select(FORM_MANUFACTURE_CODE_SELECTOR, manufactureCode)
       let canWeOrderAlternative = (parseInt(task.more_auto) === 1)
       let couldNotSelectRequired = (result.length === 0)
