@@ -517,10 +517,13 @@ async function waitUntilWeGetManufactureCodeOptions (formFrame, task) {
   let itemsCount = 0
   do {
     log(`waitUntilWeGetManufactureCodeOptions, counter: ${counter}`, task)
-    let innerManufactureHtml = await (await (await formFrame.$(FORM_MANUFACTURE_CODE_SELECTOR)).getProperty('innerHTML')).jsonValue()
-    let $manufacture = cheerio.load(innerManufactureHtml)
-    itemsCount = parseInt($manufacture('option').length)
-    log(`waitUntilWeGetManufactureCodeOptions, itemsCount: ${itemsCount}`, task)
+    let manufactureField = await formFrame.$(FORM_MANUFACTURE_CODE_SELECTOR)
+    if (manufactureField) {
+      let innerManufactureHtml = await (await manufactureField.getProperty('innerHTML')).jsonValue()
+      let $manufacture = cheerio.load(innerManufactureHtml)
+      itemsCount = parseInt($manufacture('option').length)
+      log(`waitUntilWeGetManufactureCodeOptions, itemsCount: ${itemsCount}`, task)
+    }
     if (itemsCount === 0) {
       log(`waitUntilWeGetManufactureCodeOptions, delay: ${DELAY_AFTER_SELECT_MODEL}`, task)
       await delay(DELAY_AFTER_SELECT_MODEL)
@@ -554,7 +557,6 @@ async function sendSearchRequest (page, formFrame, task) {
   }
 
   if (manufactureCode.length > 0) {
-
     let itemsCount = await waitUntilWeGetManufactureCodeOptions(formFrame, task)
     if (itemsCount === 0) {
       logger.logToTask(task, `Не дождались загрузки опций в код модели`)
@@ -999,7 +1001,6 @@ const processSimpleTask = async ({ page, data: task }) => {
     await formFrame.waitFor(DELAY_AFTER_SELECT_MODEL)
     const manufactureCode = (stage < 1) ? task.manufacture_code : ''
     if (manufactureCode.length > 0) {
-
       let itemsCount = await waitUntilWeGetManufactureCodeOptions(formFrame, task)
       if (itemsCount === 0) {
         logger.logToTask(task, `Не дождались загрузки опций в код модели`)
