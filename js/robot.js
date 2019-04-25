@@ -528,6 +528,7 @@ async function waitUntilWeGetManufactureCodeOptions (formFrame, task) {
     counter++
   } while ((counter < 5) && (itemsCount === 0))
 
+  logger.logToTask(task, `Для модели ${task.model} нашли ${itemsCount} кодов производителя`)
   return itemsCount
 }
 
