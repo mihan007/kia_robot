@@ -538,6 +538,13 @@ async function waitUntilWeGetManufactureCodeOptions (formFrame, task) {
 async function sendSearchRequest (page, formFrame, task) {
   task.searchResultExists = true
   log('Setup search params', task)
+  try {
+    await formFrame.waitFor(FORM_MODEL_SELECTOR, { timeout: GENERAL_TIMEOUT })
+  } catch (e) {
+    logger.logToTask(task, `Не дождались появления поля модель. Ждали ${GENERAL_TIMEOUT}мс`)
+    log('[complex] Search failed', task)
+    return false
+  }
   let result = await formFrame.select(FORM_MODEL_SELECTOR, task.model)
   log('Task model: ' + task.model, task)
   if (result.length === 0) {
@@ -991,6 +998,13 @@ const processSimpleTask = async ({ page, data: task }) => {
     let result = []
     task.searchResultExists = true
     log('Setup search params', task)
+    try {
+      await formFrame.waitFor(FORM_MODEL_SELECTOR, { timeout: GENERAL_TIMEOUT })
+    } catch (e) {
+      logger.logToTask(task, `Не дождались появления поля модель. Ждали ${GENERAL_TIMEOUT}мс`)
+      log('[simle] Search failed', task)
+      break
+    }
     result = await formFrame.select(FORM_MODEL_SELECTOR, task.model)
     log('Task model: ' + task.model, task)
     if ((task.goal == 0) && (result.length === 0)) {
