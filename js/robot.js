@@ -142,6 +142,11 @@ function pad2 (n) {
   return n < 10 ? '0' + n : n
 }
 
+function fileSuffixDate () {
+  let date = new Date()
+  return date.getFullYear().toString() + '_' + pad2(date.getMonth() + 1) + '_' + pad2(date.getDate())
+}
+
 function currentDate () {
   let date = new Date()
   return '[' + date.getFullYear().toString() + '-' + pad2(date.getMonth() + 1) + '-' + pad2(date.getDate())
@@ -163,8 +168,8 @@ function log (message, taskInfo) {
     messageToLog = currentDate() + ' [' + taskInfo.id + '] ' + message
   }
 
-  fs.appendFile(process.env.LOG_PATH, messageToLog + '\n', function (err) {
-  })
+  let currentLogPath = process.env.LOG_PATH + fileSuffixDate() + '.log'
+  fs.appendFile(currentLogPath, messageToLog + '\n', function (err) {})
 
   if (!CREDS.enableLogging) {
     return
