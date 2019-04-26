@@ -547,9 +547,10 @@ async function sendSearchRequest (page, formFrame, task) {
   }
   let result = await formFrame.select(FORM_MODEL_SELECTOR, task.model)
   log('Task model: ' + task.model, task)
+  logger.logToTask(task, `Выбрали в поле Модель значение ${task.model}`)
   if (result.length === 0) {
     log('Could not setup task.model: ' + task.model, task)
-    task.description += '<br>' + currentDate() + `В фильтре не найдена модель ${task.model}`
+    logger.logToTask(task, `В фильтре не найдена модель ${task.model}`)
     return false
   }
 
@@ -1009,8 +1010,10 @@ const processSimpleTask = async ({ page, data: task }) => {
     log('Task model: ' + task.model, task)
     if ((task.goal == 0) && (result.length === 0)) {
       log('Could not setup task.model: ' + task.model, task)
-      additionalDescription = `В фильтре не найдена модель ${task.model}`
+      logger.logToTask(task, `В фильтре не найдена модель ${task.model}`)
       break
+    } else {
+      logger.logToTask(task, `Выбрали в поле Модель значение ${task.model}`)
     }
     await formFrame.waitFor(DELAY_AFTER_SELECT_MODEL)
     const manufactureCode = (stage < 1) ? task.manufacture_code : ''
