@@ -1754,6 +1754,7 @@ async function robot (connection) {
 
   const timeoutToExecuteAllTasks = 10 * 60 * 1000
   log(`Timeout to execute all tasks ${timeoutToExecuteAllTasks}`)
+  log(`Launch cluster with concurrency: CONCURRENCY_CONTEXT and maxConcurrency: ${MAX_CONCURRENCY}`)
 
   cluster = await Cluster.launch({
     concurrency: Cluster.CONCURRENCY_CONTEXT,
