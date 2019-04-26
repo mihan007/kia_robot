@@ -899,9 +899,9 @@ const processSimpleTask = async ({ page, data: task }) => {
   log('Switching to free sklad search page', task)
   await page.click(SELL_TAB_SELECTOR)
   try {
-    log('We wait for FREE_SKLAD_LEFT_SIDEBAR_SELECTOR')
+    log('We wait for FREE_SKLAD_LEFT_SIDEBAR_SELECTOR', task)
     await page.waitFor(FREE_SKLAD_LEFT_SIDEBAR_SELECTOR, { timeout: GENERAL_TIMEOUT })
-    log('We got FREE_SKLAD_LEFT_SIDEBAR_SELECTOR')
+    log('We got FREE_SKLAD_LEFT_SIDEBAR_SELECTOR', task)
   } catch (e) {
     task.description += currentDate() + ' Ошибка при входе на сайт киа: не смогли переключиться на вкладку "Свободный склад"'
     task.description += currentDate() + '<pre>' + e.toString() + '</pre>'
@@ -1335,7 +1335,7 @@ function cleanCodes (specificManufactureCodeQueue) {
 async function waitForLaunch (task) {
   if (isTimeToWait()) {
     let delayMs = 50 + Math.ceil(Math.random() * 100 * 1000)
-    log(`Wait task ${task.id} to launch to not overkill kia server`, task)
+    log(`Wait task ${task.id} ${delayMs}ms to launch to not overkill kia server`, task)
     await delay(delayMs)
   } else {
     log(`No need to wait, let's go`, task)
