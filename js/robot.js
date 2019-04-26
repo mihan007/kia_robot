@@ -566,7 +566,7 @@ async function sendSearchRequest (page, formFrame, task) {
   if (manufactureCode.length > 0) {
     let itemsCount = await waitUntilWeGetManufactureCodeOptions(formFrame, task)
     if (itemsCount === 0) {
-      logger.logToTask(task, `Не дождались загрузки опций в код модели`)
+      logger.logToTask(task, `Не дождались загрузки опций в код производителя`)
       return false
     }
 
@@ -1017,7 +1017,7 @@ const processSimpleTask = async ({ page, data: task }) => {
     if (manufactureCode.length > 0) {
       let itemsCount = await waitUntilWeGetManufactureCodeOptions(formFrame, task)
       if (itemsCount === 0) {
-        logger.logToTask(task, `Не дождались загрузки опций в код модели`)
+        logger.logToTask(task, `Не дождались загрузки опций в код производителя`)
         break
       }
 
