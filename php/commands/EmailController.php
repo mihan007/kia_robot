@@ -55,7 +55,7 @@ class EmailController extends Controller
             } else {
                 $companyEmails = explode(',', $company->notification_email);
                 foreach ($companyEmails as $companyEmail) {
-                    $to[] = $companyEmail;
+                    $to[] = trim($companyEmail);
                 }
             }
 
@@ -71,13 +71,19 @@ class EmailController extends Controller
             if (sizeof($filtered) > 0) {
                 echo "Sending notification about " . sizeof($filtered) . " task runs for company {$company->name}({$company->id})\n";
                 $subject = 'Результат работы системы автозаказа';
-                \Yii::$app->mailer->compose('/email/robot', [
-                    'taskRuns' => $filtered
-                ])
-                    ->setFrom($from)
-                    ->setTo($to)
-                    ->setSubject($subject)
-                    ->send();
+                foreach ($to as $userEmail) {
+                    try {
+                        \Yii::$app->mailer->compose('/email/robot', [
+                            'taskRuns' => $filtered
+                        ])
+                            ->setFrom($from)
+                            ->setTo($userEmail)
+                            ->setSubject($subject)
+                            ->send();
+                    } catch (\Exception $exception) {
+                        \Yii::error("Error sending email to $userEmail");
+                    }
+                }
             } else {
                 echo "No notification as of now for company {$company->name}({$company->id})\n";
             }
@@ -183,7 +189,7 @@ class EmailController extends Controller
      */
     public function actionAboutSimilarTask()
     {
-        $yesterday = time() - 24*3600;
+        $yesterday = time() - 24 * 3600;
         $start = date('Y-m-d 00:00:00', $yesterday);
         $end = date('Y-m-d 23:59:59', $yesterday);
 
@@ -202,7 +208,7 @@ class EmailController extends Controller
                 continue;
             }
             $processed[] = $task->id;
-            $suitableForCompare = (strlen($task->model_value)>0) && (strlen($task->manufacture_code_value)>0);
+            $suitableForCompare = (strlen($task->model_value) > 0) && (strlen($task->manufacture_code_value) > 0);
             if (!$suitableForCompare) {
                 continue;
             }
@@ -215,7 +221,7 @@ class EmailController extends Controller
                 ->andWhere(['!=', 'company_id', $task->company_id])
                 ->all();
             $similarGroup = [];
-            if (sizeof($similarTasks)>0) {
+            if (sizeof($similarTasks) > 0) {
                 $similarGroup = [
                     'main' => $task,
                     'similar' => []
@@ -225,11 +231,11 @@ class EmailController extends Controller
                 $similarGroup['similar'][] = $similarTask;
                 $processed[] = $similarTask->id;
             }
-            if (sizeof($similarGroup)>0) {
+            if (sizeof($similarGroup) > 0) {
                 $result[] = $similarGroup;
             }
         }
-        if (sizeof($result)>0) {
+        if (sizeof($result) > 0) {
             $from = [
                 'robot@turbodealer.ru' => 'Робот Турбодилера'
             ];
@@ -238,7 +244,7 @@ class EmailController extends Controller
                 'is@turbodealer.ru',
                 'dav.kirill.86@gmail.com'
             ];
-            echo "Sending notification about ".sizeof($result)." similar tasks\n";
+            echo "Sending notification about " . sizeof($result) . " similar tasks\n";
             $subject = 'Робот Киа: найдены похожие задачи';
             \Yii::$app->mailer->compose('/email/similar', [
                 'result' => $result
@@ -299,7 +305,7 @@ class EmailController extends Controller
                 //'is@turbodealer.ru',
                 //'dav.kirill.86@gmail.com'
             ];
-            $subject = 'Некорректный логин/пароль к сайту Киа у компании '.$company->name;
+            $subject = 'Некорректный логин/пароль к сайту Киа у компании ' . $company->name;
             \Yii::$app->mailer->compose('/email/banned_td', [
                 'company' => $company
             ])
