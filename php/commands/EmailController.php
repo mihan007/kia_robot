@@ -81,7 +81,7 @@ class EmailController extends Controller
                             ->setSubject($subject)
                             ->send();
                     } catch (\Exception $exception) {
-                        \Yii::error("Error sending email to $userEmail");
+                        \Yii::error("Error sending email to $userEmail: {$exception->getMessage()}");
                     }
                 }
             } else {

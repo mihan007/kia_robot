@@ -26,10 +26,17 @@ $config = [
             'class' => 'yii\caching\FileCache',
         ],
         'log' => [
+            'traceLevel' => YII_DEBUG ? 3 : 0,
             'targets' => [
                 [
                     'class' => 'yii\log\FileTarget',
                     'levels' => ['error', 'warning'],
+                ],
+                [
+                    'class' => 'notamedia\sentry\SentryTarget',
+                    'dsn' => 'https://36125ad847a04c91ad874213d3a12a40:eebaecd0906f4f3aafc42f8951f15f65@sentry.turbodealer.ru/4',
+                    'levels' => ['error', 'warning'],
+                    'context' => true // Write the context information. The default is true.
                 ],
             ],
         ],
