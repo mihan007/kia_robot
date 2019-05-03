@@ -749,8 +749,16 @@ async function orderTask (page, formFrame, task, manufactureCodes, screenshots) 
 
         screenshots.push(await saveScreenshot(task, page, 'Окно заказа нужной комплектации авто'))
 
-        await formFrame.click(ORDER_BUTTON)
-        await formFrame.waitFor(DELAY_AFTER_ORDER)
+        let isOrderButtonExists = await formFrame.$(ORDER_BUTTON)
+        if (isOrderButtonExists) {
+          await formFrame.click(ORDER_BUTTON)
+          logger.logToTask(task, 'Нажали кнопку заказа')
+          await formFrame.waitFor(DELAY_AFTER_ORDER)
+          logger.logToTask(task, `Подождали ${DELAY_AFTER_ORDER}мс`)
+        } else {
+          logger.logToTask(task, 'Не нашли кнопку заказа')
+          break
+        }
 
         if (manufactureCodes !== false) {
           manufactureCodes.push(orders[chosen].manufacture_code)
@@ -1238,8 +1246,16 @@ const processSimpleTask = async ({ page, data: task }) => {
         })
         log(`Saved screenshot ${fullpath}`, task)
 
-        await formFrame.click(ORDER_BUTTON)
-        await formFrame.waitFor(DELAY_AFTER_ORDER)
+        let isOrderButtonExists = await formFrame.$(ORDER_BUTTON)
+        if (isOrderButtonExists) {
+          await formFrame.click(ORDER_BUTTON)
+          logger.logToTask(task, 'Нажали кнопку заказа')
+          await formFrame.waitFor(DELAY_AFTER_ORDER)
+          logger.logToTask(task, `Подождали ${DELAY_AFTER_ORDER}мс`)
+        } else {
+          logger.logToTask(task, 'Не нашли кнопку заказа')
+          break
+        }
 
         task.description += currentDate() + ' всего авто с нужными параметрами заказано ' + totalOrdered + ' штук<br>'
         task.description += currentDate() + ' осталось заказать ' + remainingAmount + ' штук<br>'
