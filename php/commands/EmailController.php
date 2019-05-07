@@ -302,8 +302,8 @@ class EmailController extends Controller
             ];
             $to = [
                 'mk@turbodealer.ru',
-                //'is@turbodealer.ru',
-                //'dav.kirill.86@gmail.com'
+                'is@turbodealer.ru',
+                'dav.kirill.86@gmail.com'
             ];
             $subject = 'Некорректный логин/пароль к сайту Киа у компании ' . $company->name;
             \Yii::$app->mailer->compose('/email/banned_td', [
