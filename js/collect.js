@@ -2,6 +2,8 @@ const puppeteer = require('puppeteer');
 const cheerio = require('cheerio');
 require('dotenv').config()
 const CREDS = {
+    username: 'KRU7802400',
+    password: 'Optima@0319',
     mysqlHost: process.env.MYSQL_HOST,
     mysqlUsername: process.env.MYSQL_USER,
     mysqlPassword: process.env.MYSQL_PASSWORD,
