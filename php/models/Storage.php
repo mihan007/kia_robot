@@ -61,7 +61,7 @@ class Storage extends \yii\db\ActiveRecord
             'available' => 'Available',
             'reserved' => 'Reserved',
             'page' => 'Page',
-            'created_at' => 'Created At',
+            'created_at' => 'Добавлена',
         ];
     }
 }

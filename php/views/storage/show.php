@@ -55,7 +55,11 @@ $this->params['breadcrumbs'][] = $this->title;
             'dataProvider' => $dataProvider,
             'filterModel' => $searchModel,
             'columns' => [
-                'created_at:datetime',
+                [
+                    'label' => 'Добавлена',
+                    'attribute' => 'created_at',
+                    'format' => 'datetime'
+                ],
                 [
                     'label' => 'Модель',
                     'class' => 'yii\grid\DataColumn',
