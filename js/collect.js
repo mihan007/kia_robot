@@ -101,13 +101,16 @@ function makeUniqueScreenshotName() {
     return +new Date() + '_' + Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15) + '.png';
 }
 
-async function saveScreenshot(currentScreenshotPath, page, name) {
-    let fullpath = currentScreenshotPath + "/" + makeUniqueScreenshotName();
-    await page.screenshot({path: fullpath, fullPage: true});
+async function saveScreenshot (page, name) {
+    let currentScreenshotPath = CREDS.screenshotPath
+    let fullpath = currentScreenshotPath + '/' + makeUniqueScreenshotName()
+    await page.screenshot({ path: fullpath, fullPage: true })
+    log(`Saved screenshot ${fullpath}`, task)
+
     return {
         name: name,
         filepath: fullpath
-    };
+    }
 }
 
 /** Db **/
