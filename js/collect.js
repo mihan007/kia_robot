@@ -101,18 +101,6 @@ function makeUniqueScreenshotName() {
     return +new Date() + '_' + Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15) + '.png';
 }
 
-async function saveScreenshot (page, name) {
-    let currentScreenshotPath = CREDS.screenshotPath
-    let fullpath = currentScreenshotPath + '/' + makeUniqueScreenshotName()
-    await page.screenshot({ path: fullpath, fullPage: true })
-    log(`Saved screenshot ${fullpath}`, task)
-
-    return {
-        name: name,
-        filepath: fullpath
-    }
-}
-
 /** Db **/
 
 async function connectToDb() {
@@ -348,9 +336,7 @@ function analyzeSearchResult(searchResult, storageSessionId, currentPage) {
 
 const runner = async ({page, data: task}) => {
     let formFrame = await loginAndSwitchToFreeSklad(page, CREDS.username, CREDS.password);
-    screenshots.push(await saveScreenshot(task.currentScreenshotPath, page, 'Вход в систему осуществлен'));
     await saveCurrentStorageToDb(page, formFrame, task.storageSessionId);
-    screenshots.push(await saveScreenshot(task.currentScreenshotPath, page, 'Послали поисковый запрос'));
 };
 
 async function robot(storageSessionId) {
