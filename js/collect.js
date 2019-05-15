@@ -1,7 +1,23 @@
 const puppeteer = require('puppeteer');
 const cheerio = require('cheerio');
-const env = process.env.APP_ROLE || 'local';
-const CREDS = (env === 'production') ? require('./creds_production') : require('./creds_local');
+require('dotenv').config()
+const CREDS = {
+    mysqlHost: process.env.MYSQL_HOST,
+    mysqlUsername: process.env.MYSQL_USER,
+    mysqlPassword: process.env.MYSQL_PASSWORD,
+    mysqlDatabase: process.env.MYSQL_DATABASE,
+
+    chromeVisible: process.env.CHROME_VISIBLE === 'true',
+    enableLogging: process.env.ENABLE_LOGGING === 'true',
+
+    maxConcurrency: parseInt(process.env.MAX_CONCURRENCY),
+    monitor: process.env.JOB_MONITORING === 'true',
+
+    screenshotPath: process.env.SCREENSHOT_PATH,
+    currentWorkerName: process.env.CURRENT_WORKER_NAME,
+
+    delayForSearch: process.env.DELAY
+}
 const mysql = require('mysql');
 const fs = require('fs');
 const mysqlUtilities = require('mysql-utilities');
