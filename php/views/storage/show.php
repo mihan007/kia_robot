@@ -55,11 +55,13 @@ $this->params['breadcrumbs'][] = $this->title;
             'dataProvider' => $dataProvider,
             'filterModel' => $searchModel,
             'columns' => [
+                'created_at:datetime',
                 [
                     'label' => 'Модель',
                     'class' => 'yii\grid\DataColumn',
                     'format' => 'raw',
-                    'filter' => Html::dropDownList('model', $searchModel['model'], $filterItems['model'], ['class' => 'form-control']),
+                    'filter' => Html::dropDownList('model', $searchModel['model'], $filterItems['model'],
+                        ['class' => 'form-control']),
                     'value' => function ($data) {
                         return $data['model'];
                     },
@@ -68,7 +70,8 @@ $this->params['breadcrumbs'][] = $this->title;
                     'label' => 'Код производителя',
                     'class' => 'yii\grid\DataColumn',
                     'format' => 'raw',
-                    'filter' => Html::textInput('manufacture_code', $searchModel['manufacture_code'], ['class' => 'form-control']),
+                    'filter' => Html::textInput('manufacture_code', $searchModel['manufacture_code'],
+                        ['class' => 'form-control']),
                     'value' => function ($data) {
                         return $data['manufacture_code'];
                     },
@@ -77,7 +80,8 @@ $this->params['breadcrumbs'][] = $this->title;
                     'label' => 'Описание',
                     'class' => 'yii\grid\DataColumn',
                     'format' => 'raw',
-                    'filter' => Html::textInput('description', $searchModel['description'], ['class' => 'form-control']),
+                    'filter' => Html::textInput('description', $searchModel['description'],
+                        ['class' => 'form-control']),
                     'value' => function ($data) {
                         return $data['description'];
                     },
@@ -86,7 +90,8 @@ $this->params['breadcrumbs'][] = $this->title;
                     'label' => 'Цвет кузова',
                     'class' => 'yii\grid\DataColumn',
                     'format' => 'raw',
-                    'filter' => Html::dropDownList('color_outside', $searchModel['color_outside'], $filterItems['color_outside'], ['class' => 'form-control']),
+                    'filter' => Html::dropDownList('color_outside', $searchModel['color_outside'],
+                        $filterItems['color_outside'], ['class' => 'form-control']),
                     'value' => function ($data) {
                         return $data['color_outside'];
                     },
@@ -95,7 +100,8 @@ $this->params['breadcrumbs'][] = $this->title;
                     'label' => 'Цвет салона',
                     'class' => 'yii\grid\DataColumn',
                     'format' => 'raw',
-                    'filter' => Html::dropDownList('color_inside', $searchModel['color_inside'], $filterItems['color_inside'], ['class' => 'form-control']),
+                    'filter' => Html::dropDownList('color_inside', $searchModel['color_inside'],
+                        $filterItems['color_inside'], ['class' => 'form-control']),
                     'value' => function ($data) {
                         return $data['color_inside'];
                     },
@@ -104,7 +110,8 @@ $this->params['breadcrumbs'][] = $this->title;
                     'label' => 'Год',
                     'class' => 'yii\grid\DataColumn',
                     'format' => 'raw',
-                    'filter' => Html::dropDownList('year', $searchModel['year'], $filterItems['year'], ['class' => 'form-control']),
+                    'filter' => Html::dropDownList('year', $searchModel['year'], $filterItems['year'],
+                        ['class' => 'form-control']),
                     'value' => function ($data) {
                         return $data['year'];
                     },
@@ -113,7 +120,8 @@ $this->params['breadcrumbs'][] = $this->title;
                     'label' => 'Код склада',
                     'class' => 'yii\grid\DataColumn',
                     'format' => 'raw',
-                    'filter' => Html::textInput('storage_code', $searchModel['storage_code'], ['class' => 'form-control']),
+                    'filter' => Html::textInput('storage_code', $searchModel['storage_code'],
+                        ['class' => 'form-control']),
                     'value' => function ($data) {
                         return $data['storage_code'];
                     },

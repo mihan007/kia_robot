@@ -60,6 +60,7 @@ class StorageController extends Controller
             }
             $usedKeys[] = $key;
             $data[] = [
+                'created_at' => $item->created_at,
                 'model_name' => $item->model,
                 'model' => $this->getModelName($item->model),
                 'manufacture_code' => $item->manufacture_code,
