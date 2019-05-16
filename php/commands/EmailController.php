@@ -44,7 +44,7 @@ class EmailController extends Controller
                 ->all();
 
             $from = [
-                'robot@turbodealer.ru' => 'Робот Турбодилера'
+                'robot@robotzakaz.ru' => 'Робот Киа'
             ];
             $to = [
                 'mk@turbodealer.ru',
@@ -93,32 +93,40 @@ class EmailController extends Controller
     /**
      * Рассылает отчет о заказанных вчера(по умолчанию) авто
      *
-     * @param bool $date
+     * @param bool $dateStart
+     * @throws \yii\base\InvalidConfigException
      */
-    public function actionSummary($date = false)
+    public function actionSummary($dateStart = false, $dateEnd = false)
     {
-        if ($date) {
-            $yesterday = strtotime($date);
-            $yesterdayStartOfDay = date('Y-m-d', $yesterday) . " 00:00:00";
-            $yesterdayEndOfDay = date('Y-m-d', $yesterday) . " 23:59:59";
+        if ($dateStart) {
+            $dateStartTimestamp = strtotime($dateStart);
+            $dateStartStartOfDay = date('Y-m-d', $dateStartTimestamp) . " 00:00:00";
+
         } else {
-            $yesterday = time() - 24 * 3600;
-            $yesterdayStartOfDay = date('Y-m-d', $yesterday) . " 00:00:00";
-            $yesterdayEndOfDay = date('Y-m-d', $yesterday) . " 23:59:59";
+            $dateStartTimestamp = time() - 24 * 3600;
+            $dateStartStartOfDay = date('Y-m-d', $dateStartTimestamp) . " 00:00:00";
+
+        }
+        if ($dateEnd) {
+            $dateEndTimestamp = strtotime($dateEnd);
+            $dateEndEndOfDay = date('Y-m-d', $dateEndTimestamp) . " 23:59:59";
+        } else {
+            $dateEndTimestamp = time() - 24 * 3600;
+            $dateEndEndOfDay = date('Y-m-d', $dateEndTimestamp) . " 23:59:59";
         }
         /**
          * @var TaskRun[] $taskRuns
          */
         $taskRuns = TaskRun::find()
-            ->where(['>=', 'created_at', $yesterdayStartOfDay])
-            ->andWhere(['<=', 'created_at', $yesterdayEndOfDay])
+            ->where(['>=', 'created_at', $dateStartStartOfDay])
+            ->andWhere(['<=', 'created_at', $dateEndEndOfDay])
             ->all();
         $tasks = [];
         $greatTotal = 0;
         foreach ($taskRuns as $taskRun) {
             if (!isset($tasks[$taskRun->task_id])) {
                 $tasks[$taskRun->task_id] = [
-                    'create_date' => \Yii::$app->formatter->format($taskRun->task->created_at, 'datetime'),
+                    'create_date' => \Yii::$app->formatter->asDatetime($taskRun->task->created_at),
                     'description' => $taskRun->task->getDescription(),
                     'total' => $taskRun->amount_ordered,
                     'count' => 1
@@ -132,7 +140,7 @@ class EmailController extends Controller
         }
 
         $from = [
-            'robot@turbodealer.ru' => 'Робот Турбодилера',
+            'robot@robotzakaz.ru' => 'Робот Киа',
         ];
         $to = [
             'mk@turbodealer.ru' => 'Куклин Михаил',
@@ -140,10 +148,14 @@ class EmailController extends Controller
             'is@turbodealer.ru' => 'Сняткова Ирина',
             'dav.kirill.86@gmail.com' => 'Давыдовский Кирилл'
         ];
-        $subject = 'Робот Киа: отчет о заказанных авто за ' . date('d.m.Y', $yesterday);
+        $dateRange = date('d.m.Y', $dateStartTimestamp);
+        if (date('d.m.Y', $dateEndTimestamp) != $dateRange) {
+            $dateRange .= " - ".date('d.m.Y', $dateEndTimestamp);
+        }
+        $subject = 'Робот Киа: отчет о заказанных авто за ' . $dateRange;
         $viewData = [
             'data' => $tasks,
-            'date' => date('d.m.Y', $yesterday),
+            'date' => $dateRange,
             'greatTotal' => $greatTotal
         ];
         $this->saveSummaryReport($subject, $viewData);
@@ -161,7 +173,7 @@ class EmailController extends Controller
     public function actionFields()
     {
         $from = [
-            'robot@turbodealer.ru' => 'Робот Турбодилера',
+            'robot@robotzakaz.ru' => 'Робот Киа',
         ];
         $to = [
             'mk@turbodealer.ru' => 'Куклин Михаил',
@@ -237,7 +249,7 @@ class EmailController extends Controller
         }
         if (sizeof($result) > 0) {
             $from = [
-                'robot@turbodealer.ru' => 'Робот Турбодилера'
+                'robot@robotzakaz.ru' => 'Робот Киа'
             ];
             $to = [
                 'mk@turbodealer.ru',
@@ -272,7 +284,7 @@ class EmailController extends Controller
         foreach ($companies as $company) {
             echo "Sending notification about {$company->name} banned to company contacts\n";
             $from = [
-                'robot@turbodealer.ru' => 'Робот Турбодилера'
+                'robot@robotzakaz.ru' => 'Робот Киа'
             ];
             $to = [
                 'mk@turbodealer.ru',
@@ -298,7 +310,7 @@ class EmailController extends Controller
             echo "Sending notification about {$company->name} banned to Turbodealer contacts\n";
 
             $from = [
-                'robot@turbodealer.ru' => 'Робот Турбодилера'
+                'robot@robotzakaz.ru' => 'Робот Киа'
             ];
             $to = [
                 'mk@turbodealer.ru',

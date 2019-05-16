@@ -53,9 +53,9 @@ $config = [
             'useFileTransport' => false,
             'transport' => [
                 'class' => 'Swift_SmtpTransport',
-                'host' => 'email-smtp.us-west-2.amazonaws.com',
-                'username' => 'AKIAINCE6WE3QPMH7YDQ',
-                'password' => 'Apu2aQP87uvyb02gxNpWyavurHogerS4Goh/xBZ/lWkp',
+                'host' => 'smtp.yandex.ru',
+                'username' => 'robot@robotzakaz.ru',
+                'password' => 'JSFHR9ygrOz7',
                 'port' => '465',
                 'encryption' => 'ssl',
             ],
