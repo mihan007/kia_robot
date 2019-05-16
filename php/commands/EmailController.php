@@ -158,7 +158,6 @@ class EmailController extends Controller
             'date' => $dateRange,
             'greatTotal' => $greatTotal
         ];
-        $this->saveSummaryReport($subject, $viewData);
 
         \Yii::$app->mailer->compose('/email/summary', $viewData)
             ->setFrom($from)
@@ -187,7 +186,6 @@ class EmailController extends Controller
             'models' => $models,
             'header' => $subject,
         ];
-        $this->saveFieldsReport($subject, $viewData);
 
         \Yii::$app->mailer->compose('/email/fields', $viewData)
             ->setFrom($from)
