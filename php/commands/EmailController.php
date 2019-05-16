@@ -13,6 +13,7 @@ use app\models\Task;
 use app\models\TaskRun;
 use app\models\Report;
 use yii\console\Controller;
+use yii\helpers\Html;
 
 /**
  * This command echoes the first argument that you have entered.
@@ -120,6 +121,7 @@ class EmailController extends Controller
         $taskRuns = TaskRun::find()
             ->where(['>=', 'created_at', $dateStartStartOfDay])
             ->andWhere(['<=', 'created_at', $dateEndEndOfDay])
+            ->orderBy(['task_id' => SORT_ASC])
             ->all();
         $tasks = [];
         $greatTotal = 0;
@@ -127,6 +129,8 @@ class EmailController extends Controller
             if (!isset($tasks[$taskRun->task_id])) {
                 $tasks[$taskRun->task_id] = [
                     'create_date' => \Yii::$app->formatter->asDatetime($taskRun->task->created_at),
+                    'id' => Html::a($taskRun->task_id,
+                        'https://lk.robotzakaz.ru/index.php?r=task%2Fview&id=' . $taskRun->task_id),
                     'description' => $taskRun->task->getDescription(),
                     'total' => $taskRun->amount_ordered,
                     'count' => 1
@@ -150,7 +154,7 @@ class EmailController extends Controller
         ];
         $dateRange = date('d.m.Y', $dateStartTimestamp);
         if (date('d.m.Y', $dateEndTimestamp) != $dateRange) {
-            $dateRange .= " - ".date('d.m.Y', $dateEndTimestamp);
+            $dateRange .= " - " . date('d.m.Y', $dateEndTimestamp);
         }
         $subject = 'Робот Киа: отчет о заказанных авто за ' . $dateRange;
         $viewData = [

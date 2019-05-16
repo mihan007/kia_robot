@@ -16,6 +16,7 @@
         <thead>
         <tr>
             <th>Дата создания заказа</th>
+            <th>ID заказа</th>
             <th>Заказ</th>
             <th>Количество запусков</th>
             <th>Заказано авто, шт</th>
@@ -25,6 +26,7 @@
         <?php foreach ($data as $taskInfo): ?>
         <tr valign="middle">
             <td><?php echo $taskInfo['create_date'] ?></td>
+            <td><?php echo $taskInfo['id'] ?></td>
             <td><?php echo $taskInfo['description'] ?></td>
             <td align="center"><?php echo $taskInfo['count'] ?></td>
             <td align="center"><?php echo $taskInfo['total'] ?></td>
