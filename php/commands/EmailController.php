@@ -9,11 +9,14 @@ namespace app\commands;
 
 use app\models\Company;
 use app\models\Model;
+use app\models\Storage;
 use app\models\Task;
 use app\models\TaskRun;
 use app\models\Report;
 use yii\console\Controller;
+use yii\helpers\BaseConsole;
 use yii\helpers\Html;
+use yii\log\Logger;
 
 /**
  * This command echoes the first argument that you have entered.
@@ -330,6 +333,75 @@ class EmailController extends Controller
 
             $company->notified_about_ban = 1;
             $company->save(false);
+        }
+    }
+
+    public function actionMatchTasks()
+    {
+        $result = [];
+        $tasks = Task::find()->where(['deleted_at' => 0]);
+        /**
+         * @var Task $task
+         */
+        $tasksCount = 0;
+        foreach ($tasks->each() as $task) {
+            if ($task->ordered >= $task->amount) {
+                continue;
+            }
+            $tasksCount++;
+            $searchParams = [];
+            if ($task->model_value) {
+                $searchParams['model'] = $task->model_value;
+            }
+            if ($task->manufacture_code_value) {
+                $searchParams['manufacture_code'] = $task->manufacture_code_value;
+            }
+            if ($task->color_outside_value) {
+                $searchParams['color_outside'] = $task->color_outside_value;
+            }
+            if ($task->color_inside_value) {
+                $searchParams['color_inside'] = $task->color_inside_value;
+            }
+            $taskCreatedAt = date('Y-m-d H:i:s', $task->created_at);
+            $storageItems = Storage::find()
+                ->where($searchParams)
+                ->andWhere(['>=', 'created_at', $taskCreatedAt])
+                ->orderBy(['created_at' => SORT_DESC])
+                ->all();
+            if (sizeof($storageItems)>0) {
+                $result[] = [
+                    'task' => $task,
+                    'storageItems' => $storageItems
+                ];
+            }
+            BaseConsole::output("{$tasksCount} tasks processed. Found ".sizeof($result)." items to notify about");
+        }
+        $from = [
+            'robot@robotzakaz.ru' => 'Робот Турбодилера'
+        ];
+        $to = [
+            'mk@turbodealer.ru',
+            //'is@turbodealer.ru',
+            //'dav.kirill.86@gmail.com'
+        ];
+        if (sizeof($result)>0) {
+            $subject = 'Нашли совпадение задач со складом';
+            \Yii::$app->mailer->compose('/email/storage_matched', [
+                'result' => $result
+            ])
+                ->setFrom($from)
+                ->setTo($to)
+                ->setSubject($subject)
+                ->send();
+        } else {
+            $subject = 'Не нашли совпадение задач со складом';
+            \Yii::$app->mailer->compose('/email/storage_non_matched', [
+                'tasksCount' => $tasksCount
+            ])
+                ->setFrom($from)
+                ->setTo($to)
+                ->setSubject($subject)
+                ->send();
         }
     }
 }

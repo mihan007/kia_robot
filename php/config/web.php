@@ -42,8 +42,8 @@ $config = [
             'transport' => [
                 'class' => 'Swift_SmtpTransport',
                 'host' => 'smtp.yandex.ru',
-                'username' => 'robot@turbodealer.ru',
-                'password' => 'l$i@5L#LY6Eq',
+                'username' => 'robot@robotzakaz.ru',
+                'password' => 'JSFHR9ygrOz7',
                 'port' => '465',
                 'encryption' => 'ssl',
             ],
