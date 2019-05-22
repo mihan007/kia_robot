@@ -366,6 +366,7 @@ class EmailController extends Controller
             $storageItems = Storage::find()
                 ->where($searchParams)
                 ->andWhere(['>=', 'created_at', $taskCreatedAt])
+                ->andWhere(['=', 'notified', 0])
                 ->orderBy(['created_at' => SORT_DESC])
                 ->all();
             if (sizeof($storageItems)>0) {
@@ -373,6 +374,9 @@ class EmailController extends Controller
                     'task' => $task,
                     'storageItems' => $storageItems
                 ];
+                foreach ($storageItems as $storageItem) {
+                    $storageItem->updateAttributes(['notified' => 1]);
+                }
             }
             BaseConsole::output("{$tasksCount} tasks processed. Found ".sizeof($result)." items to notify about");
         }
