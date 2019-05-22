@@ -381,8 +381,8 @@ class EmailController extends Controller
         ];
         $to = [
             'mk@turbodealer.ru',
-            //'is@turbodealer.ru',
-            //'dav.kirill.86@gmail.com'
+            'is@turbodealer.ru',
+            'dav.kirill.86@gmail.com'
         ];
         if (sizeof($result)>0) {
             $subject = 'Нашли совпадение задач со складом';
