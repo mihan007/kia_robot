@@ -67,9 +67,10 @@ class EmailController extends Controller
             foreach ($taskRuns as $taskRun) {
                 if ($taskRun->amount_ordered > 0) {
                     $filtered[] = $taskRun;
+                } else {
+                    $taskRun->notified = 1;
+                    $taskRun->update(false, ['notified']);
                 }
-                $taskRun->notified = 1;
-                $taskRun->update(false, ['notified']);
             }
 
             if (sizeof($filtered) > 0) {
@@ -84,6 +85,9 @@ class EmailController extends Controller
                             ->setTo($userEmail)
                             ->setSubject($subject)
                             ->send();
+                        foreach ($filtered as $taskRun) {
+                            $taskRun->updateAttributes(['notified' => 1]);
+                        }
                     } catch (\Exception $exception) {
                         \Yii::error("Error sending email to $userEmail: {$exception->getMessage()}");
                     }
