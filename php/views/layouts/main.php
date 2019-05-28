@@ -104,6 +104,7 @@ AppAsset::register($this);
 </footer>
 
 <?php $this->endBody() ?>
+<script type='text/javascript' async defer src='https://robotzakaz.push4site.com/sdk'></script>
 </body>
 </html>
 <?php $this->endPage() ?>
