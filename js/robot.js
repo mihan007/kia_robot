@@ -1775,6 +1775,8 @@ async function robot (connection) {
   log(`Timeout to execute all tasks ${timeoutToExecuteAllTasks}`)
   log(`Launch cluster with concurrency: CONCURRENCY_CONTEXT and maxConcurrency: ${MAX_CONCURRENCY}`)
 
+  log(`Clean up banned companies list`)
+  bannedCompaniesIds = [];
   cluster = await Cluster.launch({
     concurrency: Cluster.CONCURRENCY_CONTEXT,
     maxConcurrency: MAX_CONCURRENCY,
