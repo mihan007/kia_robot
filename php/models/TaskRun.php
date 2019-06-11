@@ -22,6 +22,7 @@ use Yii;
  * @property int $created_at
  * @property int $updated_at
  * @property int $notified
+ * @property int $push_notified
  *
  * @property Task $task
  * @property TaskRunScreenshot[] $taskRunScreenshots

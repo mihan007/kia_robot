@@ -23,7 +23,7 @@ use yii\helpers\Url;
         <li><b>Цвет Салон:</b>&nbsp;<?= $mainTask->color_inside_name ?></li>
         <li><b>Цвет Кузов:</b>&nbsp;<?= $mainTask->color_outside_name ?></li>
         <li><b>План, шт.:</b>&nbsp;<?= $mainTask->amount ?></li>
-        <li><b>Факт, шт.:</b>&nbsp;<?= $mainTask->getAmountOrdered() ?></li>
+        <li><b>Факт, шт.:</b>&nbsp;<?= $mainTask->getOrdered() ?></li>
         <li><b>Просмотр:</b> <?= Url::to(['task/view', 'id' => $mainTask->id]) ?></li>
     </ul>
     <h3>Похожие задачи</h3>
@@ -43,7 +43,7 @@ use yii\helpers\Url;
             <li><b>Цвет Салон:</b>&nbsp;<?= $similarTask->color_inside_name ?></li>
             <li><b>Цвет Кузов:</b>&nbsp;<?= $similarTask->color_outside_name ?></li>
             <li><b>План, шт.:</b>&nbsp;<?= $similarTask->amount ?></li>
-            <li><b>Факт, шт.:</b>&nbsp;<?= $similarTask->getAmountOrdered() ?></li>
+            <li><b>Факт, шт.:</b>&nbsp;<?= $similarTask->getOrdered() ?></li>
             <li><b>Просмотр:</b> <?= Url::to(['task/view', 'id' => $similarTask->id]) ?></li>
         </ul>
     <?php endforeach ?>

@@ -127,16 +127,6 @@ class Task extends \yii\db\ActiveRecord
         return $this->hasMany(TaskRun::className(), ['task_id' => 'id']);
     }
 
-    public function getAmountOrdered()
-    {
-        $ordered = 0;
-        foreach ($this->taskRuns as $taskRun) {
-            $ordered += $taskRun->amount_ordered;
-        }
-
-        return $ordered;
-    }
-
     public function getGoalLabel()
     {
         if ($this->goal == self::GOAL_COMMON) {

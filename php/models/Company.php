@@ -19,6 +19,7 @@ use yii\validators\EmailValidator;
  * @property int $updated_at
  * @property int $banned_at
  * @property int $notified_about_ban
+ * @property int $push_notification_tag
  */
 class Company extends \yii\db\ActiveRecord
 {
