@@ -8,16 +8,9 @@
 namespace app\commands;
 
 use app\models\Company;
-use app\models\Model;
-use app\models\Storage;
-use app\models\Task;
 use app\models\TaskRun;
-use app\models\Report;
 use yii\console\Controller;
-use yii\helpers\BaseConsole;
-use yii\helpers\Html;
 use yii\helpers\Url;
-use yii\log\Logger;
 use yii\httpclient\Client;
 
 /**
