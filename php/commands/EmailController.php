@@ -418,7 +418,7 @@ class EmailController extends Controller
         $from = 'robot@turbodealer.ru';
         \Yii::$app->mailer->compose('/email/test', [])
             ->setFrom($from)
-            ->setTo(['logistic@kia78.ru', 'mk@turbodealer.ru'])
+            ->setTo(['logistic@kia78.ru', 'mk@turbodealer.ru','is@turbodealer.ru','79210859325@yandex.ru'])
             ->setSubject('Тестовое письмо от робота за '.date('Y-m-d H:i:s'))
             ->send();
     }
