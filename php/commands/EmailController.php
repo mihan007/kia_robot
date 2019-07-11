@@ -412,4 +412,16 @@ class EmailController extends Controller
                 ->send();
         }
     }
+
+    public function actionTest()
+    {
+        $from = [
+            'robot@robotzakaz.ru' => 'Робот Киа'
+        ];
+        \Yii::$app->mailer->compose('/email/test', [])
+            ->setFrom($from)
+            ->setTo(['logistic@kia78.ru', 'mk@turbodealer.ru'])
+            ->setSubject('Тестовое письмо от робота за '.date('Y-m-d H:i:s'))
+            ->send();
+    }
 }

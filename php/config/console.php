@@ -38,6 +38,11 @@ $config = [
                     'levels' => ['error', 'warning'],
                     'context' => true // Write the context information. The default is true.
                 ],
+                [
+                    'class' => 'yii\log\FileTarget',
+                    'logFile' => '@runtime/logs/smtp.log',
+                    'categories' => ['yii\swiftmailer\Logger::add'],
+                ],
             ],
         ],
         'db' => $db,
@@ -50,6 +55,7 @@ $config = [
         ],
         'mailer' => [
             'class' => 'yii\swiftmailer\Mailer',
+            'enableSwiftMailerLogging' => true,
             'useFileTransport' => false,
             'transport' => [
                 'class' => 'Swift_SmtpTransport',
