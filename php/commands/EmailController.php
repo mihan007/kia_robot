@@ -415,9 +415,7 @@ class EmailController extends Controller
 
     public function actionTest()
     {
-        $from = [
-            'robot@robotzakaz.ru' => 'Робот Киа'
-        ];
+        $from = 'robot@turbodealer.ru';
         \Yii::$app->mailer->compose('/email/test', [])
             ->setFrom($from)
             ->setTo(['logistic@kia78.ru', 'mk@turbodealer.ru'])
