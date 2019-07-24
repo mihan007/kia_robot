@@ -56,7 +56,7 @@ if (Yii::$app->user->isAdmin || Yii::$app->user->isLeadManager) {
         'class' => 'yii\grid\DataColumn',
         'format' => 'raw',
         'value' => function ($model) {
-            return $model->user->username;
+            return $model->user ? $model->user->username : 'Н/Д';
         },
     ];
 }

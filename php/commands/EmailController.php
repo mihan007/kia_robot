@@ -42,6 +42,7 @@ class EmailController extends Controller
 
         foreach ($companies as $company) {
             $taskRuns = TaskRun::find()
+                ->select(TaskRun::fieldsToSelect())
                 ->where(['notified' => 0])
                 ->andWhere(['company_id' => $company->id])
                 ->orderBy(['id' => 'ASC'])
@@ -126,6 +127,7 @@ class EmailController extends Controller
          * @var TaskRun[] $taskRuns
          */
         $taskRuns = TaskRun::find()
+            ->select(TaskRun::fieldsToSelect())
             ->where(['>=', 'created_at', $dateStartStartOfDay])
             ->andWhere(['<=', 'created_at', $dateEndEndOfDay])
             ->orderBy(['task_id' => SORT_ASC])

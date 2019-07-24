@@ -22,11 +22,11 @@ class TaskRunController extends Controller
     public function actionIndex()
     {
         if (Yii::$app->user->isAdmin) {
-            $query = TaskRun::find()->orderBy('id DESC');
+            $query = TaskRun::find()->select(TaskRun::fieldsToSelect())->orderBy('id DESC');
         } elseif (Yii::$app->user->isLeadManager) {
-            $query = TaskRun::find()->where(['company_id' => Yii::$app->user->companyId])->orderBy('id DESC');
+            $query = TaskRun::find()->select(TaskRun::fieldsToSelect())->where(['company_id' => Yii::$app->user->companyId])->orderBy('id DESC');
         } else {
-            $query = TaskRun::find()->where(['user_id' => Yii::$app->user->id])->orderBy('id DESC');
+            $query = TaskRun::find()->select(TaskRun::fieldsToSelect())->where(['user_id' => Yii::$app->user->id])->orderBy('id DESC');
         }
         $dataProvider = new ActiveDataProvider([
             'query' => $query,

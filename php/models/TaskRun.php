@@ -79,6 +79,28 @@ class TaskRun extends \yii\db\ActiveRecord
         ];
     }
 
+    public static function fieldsToSelect()
+    {
+        return [
+            'id',
+            'task_id',
+            'model_name',
+            'model_value',
+            'manufacture_code_name',
+            'manufacture_code_value',
+            'color_inside_name',
+            'color_inside_value',
+            'color_outside_name',
+            'color_outside_value',
+            'amount',
+            'amount_ordered',
+            'created_at',
+            'updated_at',
+            'push_notified',
+            'company_id'
+        ];
+    }
+
     /**
      * @return \yii\db\ActiveQuery
      */

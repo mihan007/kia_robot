@@ -109,13 +109,18 @@ class TaskController extends Controller
     {
         $task = $this->findModel($id);
         if (Yii::$app->user->isAdmin) {
-            $query = TaskRun::find()->where(['task_id' => $task->id])->orderBy('id DESC');
+            $query = TaskRun::find()
+                ->select(TaskRun::fieldsToSelect())
+                ->where(['task_id' => $task->id])
+                ->orderBy('id DESC');
         } else if (Yii::$app->user->isLeadManager) {
             if ($task->company_id != Yii::$app->user->companyId) {
                 throw new HttpException(403, 'Доступ запрещен');
             }
 
-            $query = TaskRun::find()->where([
+            $query = TaskRun::find()
+                ->select(TaskRun::fieldsToSelect())
+                ->where([
                 'task_id' => $task->id,
                 'company_id' => Yii::$app->user->companyId
             ])->orderBy('id DESC');
@@ -124,7 +129,9 @@ class TaskController extends Controller
                 throw new HttpException(403, 'Доступ запрещен');
             }
 
-            $query = TaskRun::find()->where([
+            $query = TaskRun::find()
+                ->select(TaskRun::fieldsToSelect())
+                ->where([
                 'task_id' => $task->id,
                 'user_id' => Yii::$app->user->id
             ])->orderBy('id DESC');
