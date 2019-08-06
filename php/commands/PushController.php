@@ -40,6 +40,7 @@ class PushController extends Controller
 
         foreach ($companies as $company) {
             $taskRuns = TaskRun::find()
+                ->select(TaskRun::fieldsToSelect())
                 ->where(['push_notified' => 0, 'company_id' => $company->id])
                 ->andWhere(['>', 'amount_ordered', 0])
                 ->orderBy(['id' => 'ASC'])
